@@ -84,6 +84,15 @@ export default function PregnancyForm({ id, onSwitchToMother }: { id?: string, o
     if (!gravida.trim()) e.gravida = "Gravida is required";
     if (!parity.trim()) e.parity = "Parity is required";
     if (!lmp) e.lmp = "LMP date is required";
+    
+    if (gravida.trim() && parity.trim()) {
+      const g = parseInt(gravida, 10);
+      const p = parseInt(parity, 10);
+      if (p > g) {
+        e.parity = "Parity cannot be greater than Gravida";
+      }
+    }
+    
     return e;
   };
 

@@ -54,24 +54,18 @@ export default function BottomNavigation() {
           const Icon = tab.icon;
           const active = isActive(tab.path);
 
-          if (tab.isAction) {
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                activeOpacity={0.9}
-                onPress={() => tab.path && router.push(tab.path as any)}
-                className="items-center justify-center -top-1"
-                style={{ flex: 1.25 }}
-              >
-                <View className="bg-primary w-14 h-14 rounded-full items-center justify-center shadow-lg shadow-blue-500/40 border-[3.5px] border-blue-50">
-                  <Plus size={28} color="white" strokeWidth={3.5} />
-                </View>
-                <Text className="text-[8px] mt-1 font-bold text-primary uppercase tracking-tighter">
-                  Registration
-                </Text>
-              </TouchableOpacity>
-            );
-          }
+        if (tab?.isAction) {
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              activeOpacity={0.8}
+              onPress={() => tab.path && pathname !== tab.path && router.replace(tab.path as any)}
+              className="bg-primary -mt-12 w-16 h-16 rounded-full items-center justify-center shadow-xl shadow-blue-200 border-4 border-white"
+            >
+              <Plus size={32} color="white" strokeWidth={3} />
+            </TouchableOpacity>
+          );
+        }
 
           return (
             <TouchableOpacity

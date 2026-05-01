@@ -13,7 +13,7 @@ import { CheckCircle2 } from "lucide-react-native";
 import { useLanguage } from "@/context/LanguageContext";
 import CustomHeader from "@/components/CustomHeader";
 import learnContent from "@/assets/data/learnContent.json";
-import { FileText, Activity, Heart, Baby, HeartPulse, Stethoscope, Users, Droplet, Syringe, Brain } from "lucide-react-native";
+import { FileText, Activity, Heart, Baby, HeartPulse, Stethoscope, Users, Droplet, Syringe, Brain, ChevronDown, ChevronUp } from "lucide-react-native";
 import AppSegmentedControl from "@/components/common/AppSegmentedControl";
 
 const SWIPE_THRESHOLD = 60;
@@ -40,6 +40,88 @@ const TRIMESTER_COLORS = [
   { accent: "#10B981", border: "#10B981", dot: "#10B981", activeText: "#10B981", activeBg: "#10B981" },
   { accent: "#10B981", border: "#10B981", dot: "#10B981", activeText: "#10B981", activeBg: "#10B981" },
 ];
+
+const ExpandablePointsCard = ({ points, renderMarkdown }: any) => {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!points || points.length === 0) return null;
+
+  const firstPoint = points[0];
+  const restPoints = points.slice(1);
+
+  return (
+    <View className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mb-2">
+      <TouchableOpacity 
+        onPress={() => setExpanded(!expanded)} 
+        activeOpacity={0.7}
+        className="p-4 flex-row items-center justify-between"
+      >
+        <View className="flex-1 mr-3">
+           <Text className="text-[14px] text-gray-800 leading-6" numberOfLines={expanded ? undefined : 3}>
+             {renderMarkdown(firstPoint)}
+           </Text>
+           {!expanded && <Text className="text-[12px] text-blue-500 mt-1 font-bold">Tap to see more details...</Text>}
+        </View>
+        {expanded ? <ChevronUp size={20} color="#6B7280" /> : <ChevronDown size={20} color="#6B7280" />}
+      </TouchableOpacity>
+      
+      {expanded && restPoints.length > 0 && (
+        <View className="px-4 pb-4 gap-3 bg-gray-50 pt-4 border-t border-gray-100">
+          {restPoints.map((point: string, pIdx: number) => (
+            <View key={pIdx} className="flex-row">
+              <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+              <Text className="text-[14px] text-gray-700 ml-3 flex-1 leading-6">
+                {renderMarkdown(point)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
+
+const ExpandableMethodCard = ({ title, points, renderMarkdown }: any) => {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!points || points.length === 0) return null;
+
+  const firstPoint = points[0];
+  const restPoints = points.slice(1);
+
+  return (
+    <View className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mb-3">
+      <TouchableOpacity 
+        onPress={() => setExpanded(!expanded)} 
+        activeOpacity={0.7}
+        className="p-4 flex-row items-center justify-between"
+      >
+        <View className="flex-1 mr-3">
+           <Text className="text-[15px] font-bold text-gray-800 leading-6">
+             {title}
+           </Text>
+           <Text className="text-[14px] text-gray-600 mt-1 leading-6" numberOfLines={expanded ? undefined : 2}>
+             {renderMarkdown(firstPoint)}
+           </Text>
+        </View>
+        {expanded ? <ChevronUp size={20} color="#6B7280" /> : <ChevronDown size={20} color="#6B7280" />}
+      </TouchableOpacity>
+      
+      {expanded && restPoints.length > 0 && (
+        <View className="px-4 pb-4 gap-3 bg-gray-50 pt-4 border-t border-gray-100">
+          {restPoints.map((point: string, pIdx: number) => (
+            <View key={pIdx} className="flex-row">
+              <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+              <Text className="text-[14px] text-gray-700 ml-3 flex-1 leading-6">
+                {renderMarkdown(point)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
 
 export default function GuidelineDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -160,10 +242,10 @@ export default function GuidelineDetailScreen() {
     : content?.title || t("learn_details.details");
 
   return (
-    <View className="flex-1 bg-white pb-10">
+    <View className="flex-1 bg-white pb-16">
       <CustomHeader 
         title={pageTitle}
-        onBackPress={() => router.push("/dashboard/guidelines")}
+        onBackPress={() => router.back()}
         className="pt-12 pb-4 px-5 border-b border-gray-100 bg-white"
       />
 
@@ -224,37 +306,12 @@ export default function GuidelineDetailScreen() {
 
             {/* Tab Bar */}
             <View className="mb-6 px-1">
-              {isCheckups ? (
-                <AppSegmentedControl
-                  values={tabTitles}
-                  segmentIndex={activeTab}
-                  setSegmentIndex={switchTab}
-                  size="large"
-                />
-              ) : (
-                <View className="flex-row p-1 rounded-xl">
-                  {tabTitles.map((title, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      onPress={() => switchTab(index)}
-                      activeOpacity={0.7}
-                      className={`flex-1 py-3 items-center border-b-2`}
-                      style={{
-                        borderBottomColor: activeTab === index ? activeColor.accent : 'transparent'
-                      }}
-                    >
-                      <Text
-                        className={`font-bold text-[12px]`}
-                        style={{
-                          color: activeTab === index ? activeColor.accent : '#6B7280'
-                        }}
-                      >
-                        {title}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
+              <AppSegmentedControl
+                values={tabTitles}
+                segmentIndex={activeTab}
+                setSegmentIndex={switchTab}
+                size="large"
+              />
             </View>
 
             {/* Swipeable Tab Content */}
@@ -338,16 +395,32 @@ export default function GuidelineDetailScreen() {
                 <Text className="text-[15px] font-bold text-gray-800 mb-3 ml-1">
                   {(section.title || section.category || "").replace(/###\s*/g, "")}
                 </Text>
-                <View className="gap-2.5">
-                  {section.points?.map((point: string, pIdx: number) => (
-                    <View key={`point-${idx}-${pIdx}`} className="flex-row bg-white border border-gray-100 p-3.5 rounded-xl">
-                      <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                      <Text className="text-[14px] text-gray-700 ml-3 flex-1 leading-6">
-                        {renderMarkdown(point)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                
+                {section.methods ? (
+                  <View className="gap-1">
+                    {section.methods.map((method: any, mIdx: number) => (
+                      <ExpandableMethodCard 
+                        key={`method-${idx}-${mIdx}`} 
+                        title={method.name} 
+                        points={method.points} 
+                        renderMarkdown={renderMarkdown} 
+                      />
+                    ))}
+                  </View>
+                ) : (section.title?.includes("i-Pill") || section.title?.includes("आकस्मिक")) ? (
+                  <ExpandablePointsCard points={section.points} renderMarkdown={renderMarkdown} />
+                ) : (
+                  <View className="gap-2.5">
+                    {section.points?.map((point: string, pIdx: number) => (
+                      <View key={`point-${idx}-${pIdx}`} className="flex-row bg-white border border-gray-100 p-3.5 rounded-xl">
+                        <View className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                        <Text className="text-[14px] text-gray-700 ml-3 flex-1 leading-6">
+                          {renderMarkdown(point)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
             ))}
           </View>

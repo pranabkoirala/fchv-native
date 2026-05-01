@@ -78,7 +78,7 @@ function NutritionCard({
         </View>
 
         <View className="flex-1">
-          <Text className="text-[#1E293B] font-black text-base">
+          <Text className="text-[#1E293B] font-bold text-base">
             {content.title}
           </Text>
           <Text
@@ -112,7 +112,7 @@ function NutritionCard({
             <View className="flex-row items-center mb-1.5">
               <Pill size={14} color={item.color} strokeWidth={2.5} />
               <Text
-                className="font-black text-xs ml-1.5"
+                className="font-bold text-xs ml-1.5"
                 style={{ color: item.color }}
               >
                 {t("nutrition_page.dosage_label")}
@@ -127,7 +127,7 @@ function NutritionCard({
           <View className="bg-[#FFFBEB] rounded-2xl p-3">
             <View className="flex-row items-center mb-2">
               <Lightbulb size={14} color="#D97706" strokeWidth={2.5} />
-              <Text className="text-[#D97706] font-black text-xs ml-1.5">
+              <Text className="text-[#D97706] font-bold text-xs ml-1.5">
                 {t("nutrition_page.tips_label")}
               </Text>
             </View>
@@ -157,7 +157,7 @@ export default function NutritionsScreen() {
     activeTab === "pregnant" ? (nutritionData.pregnant as any) : (nutritionData.child as any);
 
   const handleBack = useCallback(() => {
-    router.push('/dashboard/guidelines');
+    router.back();
   }, [router]);
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   TextInput,
   ImageBackground,
   Image,
+  InteractionManager,
+  ActivityIndicator
 } from "react-native";
 import {
   Search,
@@ -90,6 +92,13 @@ const GUIDELINES = [
 export default function GuidelinesIndexScreen() {
   const [search, setSearch] = useState("");
   const { t } = useLanguage();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    });
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]">
@@ -101,6 +110,11 @@ export default function GuidelinesIndexScreen() {
         className="pt-10 pb-2 px-5"
       />
 
+      {!isReady ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#E11D48" />
+        </View>
+      ) : (
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -170,7 +184,7 @@ export default function GuidelinesIndexScreen() {
           </View>
         </View>
 
-        <View className="mt-10">
+        {/* <View className="mt-10">
           <View className="flex-row justify-between items-center px-5 mb-5">
             <Text className="text-[#1E293B] text-xl font-bold">{t("learn_page.recently_viewed")}</Text>
             <TouchableOpacity>
@@ -190,7 +204,6 @@ export default function GuidelinesIndexScreen() {
                 className="mr-4"
                 style={{ width: 180 }}
               >
-                {/* Thumbnail */}
                 <View className="relative rounded-2xl overflow-hidden mb-3" style={{ height: 110 }}>
                   <Image
                     source={{ uri: v.thumb }}
@@ -209,7 +222,7 @@ export default function GuidelinesIndexScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
+        </View> */}
 
         <View className="px-5 mt-10">
           <Text className="text-[#1E293B] text-xl font-bold mb-5">{t("learn_page.all_guidelines")}</Text>
@@ -235,6 +248,7 @@ export default function GuidelinesIndexScreen() {
         </View>
 
       </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

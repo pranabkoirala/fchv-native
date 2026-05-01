@@ -180,7 +180,7 @@
           "title": "३. स्तनपान गराउने सही तरिका र आसन",
           "points": [
             "**सजिलो आसन:** स्तनपान गराउँदा बच्चाको टाउको र पूरै शरीरलाई हातले आड दिनुहोस्। बच्चाको अनुहार स्तनतर्फ फर्किएको हुनुपर्छ।",
-            "**सही मिलावट (Latch):** बच्चाको मुख राम्ररी खोल्न लगाई मुन्टो वरिपरिको कालो भाग (Areola) को धेरैजसो हिस्सा मुखभित्र पारेको सुनिश्चित गर्नुहोस्।",
+            "**सही मिलावट (Latch):** बच्चाको मुख राम्ररी खोल्न लगाई स्तनको मुन्टो र वरिपरिको कालो भाग (Areola) को धेरैजसो हिस्सा मुखभित्र पारेको सुनिश्चित गर्नुहोस्।",
             "**पालैपालो खुवाउनुहोस्:** पहिले एउटा स्तनको दूध पूर्ण रूपमा खुवाएर मात्र अर्को स्तनको दूध खुवाउनुहोस्।"
           ]
         },
@@ -247,7 +247,7 @@
         "बच्चा १५ महिनाको हुनु अगावै नेपाल सरकारले तोकेका सबै खोपहरू लगाइसक्नुहोस्।",
         "हरेक पटक स्वास्थ्य संस्था जाँदा बच्चाको 'खोप कार्ड' अनिवार्य रूपमा लिएर जानुहोस्।",
         "खोप लगाएपछि हल्का ज्वरो आउनु वा सुई लगाएको ठाउँमा सामान्य दुखाइ हुनु स्वाभाविक हो।",
-        "सामान्य रुघाखोकी वा हल्का ज्वरो आएको बेला खोप लगाउन ढिला नगर्नुहोस्।"
+        "सामान्य रुघाखोकी वा हल्का ज्वरो आए पनि समयमै खोप लगाउनुपर्छ।"
       ],
       "sections": [
         {
@@ -298,72 +298,197 @@
       "sections": [
         {
           "title": "1. Short-Term Methods",
-          "points": [
-            "**Pills:** Take the pill every day at the same time.",
-            "**Condoms:** Use condoms to prevent pregnancy and protect from sexually transmitted infections (STIs).",
-            "**Injectables (Depo-Provera):** Visit the health facility every 3 months for the injection."
+          "methods": [
+            {
+              "name": "Daily Contraceptive Pills (OCPs)",
+              "points": [
+                "Oral Contraceptive Pills (OCPs) are used to prevent unintended pregnancy and regulate menstrual cycles. They contain hormones that prevent the release of an egg.",
+                "**Side Effects:** May cause nausea, headaches, breast tenderness, or spotting. Most side effects subside after a few months.",
+                "**How to take:** Take one pill every day at the same time. If you miss a pill, take it as soon as you remember.",
+                "**Who should not use:** Do not use if you are pregnant. If you have conditions such as severe liver disease, a history of blood clots, heart disease, or breast cancer, these pills should only be used with caution and after seeking medical advice.",
+                "**Advantages:** Highly effective when taken daily; can regulate menstrual cycles.",
+                "**Disadvantages:** Must be taken daily; does not protect against STIs."
+              ]
+            },
+            {
+              "name": "Emergency Contraceptive Pill (i-Pill)",
+              "points": [
+                "Emergency contraceptive pills are used to prevent pregnancy after unprotected sex. It contains Levonorgestrel, which prevents the release of an egg or fertilization.",
+                "**Side Effects:** May cause nausea, vomiting, lower abdominal pain, tiredness, headache, dizziness, or irregular bleeding. Most effects subside quickly.",
+                "**How to take:** Take by mouth as soon as possible, ideally within 72 hours of unprotected sex. Some emergency pills work up to 5 days, but earlier use is more effective.",
+                "**Who should not use:** Do not use if already pregnant (it does not work if pregnancy has already started) or if allergic to its ingredients. Consult a doctor if breastfeeding or if you have severe liver/heart conditions."
+              ]
+            },
+            {
+              "name": "Condoms",
+              "points": [
+                "A thin sheath worn on the penis during sex.",
+                "**Who can use:** Men and their partners.",
+                "**Who should not use:** Safe for almost everyone. Use non-latex alternatives if allergic to latex.",
+                "**Advantages:** Protects against both pregnancy and STIs/HIV; easy to obtain.",
+                "**Disadvantages:** Must be used correctly every single time; can tear or slip if not used properly."
+              ]
+            },
+            {
+              "name": "Injectables (Depo-Provera)",
+              "points": [
+                "An injection given every 3 months.",
+                "**Who can use:** Women wanting medium-term protection without a daily routine.",
+                "**Who should not use:** Women who are pregnant, have severe high blood pressure, or breast cancer.",
+                "**Advantages:** Highly effective and private; only needed 4 times a year.",
+                "**Disadvantages:** May cause irregular bleeding; fertility may take a few months to return after stopping."
+              ]
+            }
           ]
         },
         {
           "title": "2. Long-Acting Methods",
-          "points": [
-            "**Implants:** A small rod placed under the skin of the arm that works for up to 5 years.",
-            "**IUCD (Copper T):** A small device placed inside the womb that can prevent pregnancy for up to 12 years."
+          "methods": [
+            {
+              "name": "Implants",
+              "points": [
+                "A small, flexible rod placed under the skin of the upper arm, effective for 3–5 years depending on type.",
+                "**Advantages:** Highly effective; lasts 3–5 years depending on type; fertility returns quickly after removal.",
+                "**Disadvantages:** Requires a trained health worker for insertion/removal; may cause irregular bleeding."
+              ]
+            },
+            {
+              "name": "IUCD (Copper T)",
+              "points": [
+                "A small device placed inside the uterus to prevent pregnancy for 5–12 years depending on type.",
+                "**Advantages:** Long-term; hormone-free; immediate return of fertility.",
+                "**Disadvantages:** May cause heavier periods initially; requires professional insertion."
+              ]
+            }
           ]
         },
         {
           "title": "3. Permanent Methods",
-          "points": [
-            "**Minilap (Female Sterilization):** Choose this permanent method if you do not want more children.",
-            "**Vasectomy (Male Sterilization):** A simple, safe, and permanent method for men."
+          "methods": [
+            {
+              "name": "Minilap (Female Sterilization)",
+              "points": [
+                "A permanent surgical method where fallopian tubes are blocked.",
+                "**Who can use:** Women certain they do not want more children.",
+                "**Advantages:** Permanent; no further routines needed."
+              ]
+            },
+            {
+              "name": "Vasectomy (Male Sterilization)",
+              "points": [
+                "A simple, permanent surgical method for men.",
+                "**Advantages:** Very safe, quick, and highly effective.",
+                "**Disadvantages:** Permanent; takes a few months to become fully effective."
+              ]
+            }
           ]
         },
         {
           "title": "4. Myths vs Facts",
           "points": [
-            "**Myth:** Contraceptives make you infertile. **Fact:** Most methods are reversible, and fertility usually returns after stopping.",
-            "**Myth:** Family planning is only for women. **Fact:** Men also have an equal role and can use condoms or vasectomy."
+            "**Myth:** Contraceptives make you infertile. **Fact:** Most methods are reversible; fertility returns after stopping.",
+            "**Myth:** Family planning is only for women. **Fact:** Men play an equal role and can use condoms or vasectomy."
           ]
         }
       ]
     },
     "np": {
       "title": "परिवार नियोजन",
-      "description": "परिवार नियोजनले तपाईं र तपाईंको जीवनसाथीलाई स्वस्थ परिवारको लागि कति सन्तान जन्माउने र दुई बच्चाबीच कति अन्तर राख्ने भनेर निर्णय गर्न मद्दत गर्छ।",
+      "description": "परिवार नियोजनले तपाईं र तपाईंको जीवनसाथीलाई स्वस्थ परिवारको लागि कति सन्तान जन्माउने र दुई बच्चाबीचको जन्मान्तर कति राख्ने भनेर निर्णय गर्न मद्दत गर्छ।",
       "key_points": [
-        "अर्को बच्चाको योजना बनाउनु अघि कम्तीमा २ वर्ष पर्खनुहोस्।",
-        "परिवार नियोजनले आमा र बच्चा दुवैलाई स्वस्थ राख्न मद्दत गर्छ।",
-        "स्वास्थ्य संस्थामा धेरै सुरक्षित, प्रभावकारी र नि:शुल्क साधनहरू उपलब्ध छन्।",
-        "दम्पतीले सँगै छलफल गरी आफ्नो लागि सबैभन्दा उपयुक्त साधन छान्नुहोस्।"
+        "एक बच्चा जन्माएपछि अर्को बच्चाको योजना बनाउनु अघि कम्तीमा २ वर्ष पर्खनुहोस्।",
+        "परिवार नियोजनले आमा र बच्चा दुवैको स्वास्थ्य राम्रो बनाउन मद्दत गर्छ।",
+        "स्वास्थ्य संस्थामा सुरक्षित, प्रभावकारी र नि:शुल्क साधनहरू उपलब्ध छन्।",
+        "श्रीमान् र श्रीमती दुवैले सँगै छलफल गरी उपयुक्त साधन छान्नुहोस्।"
       ],
       "sections": [
         {
-          "title": "१. छोटो अवधिका साधनहरू",
-          "points": [
-            "**पिल्स (खाने चक्की):** हरेक दिन एउटै समयमा चक्की खानुहोस्।",
-            "**कन्डम:** अनिच्छित गर्भ र यौनजन्य सङ्क्रमण (STIs) बाट बच्न कन्डमको प्रयोग गर्नुहोस्।",
-            "**सुई (डिपो-प्रोभेरा):** सुई लगाउन हरेक ३ महिनामा स्वास्थ्य संस्था जानुहोस्।"
+          "title": "१. अल्पकालीन वा छोटो अवधिका साधनहरू",
+          "methods": [
+            {
+              "name": "नियमित खाने चक्की (पिल्स)",
+              "points": [
+                "यसले अनिच्छित गर्भ रोक्न र महिनावारी नियमित गर्न मद्दत गर्छ। यसले अण्डाशयबाट अण्डा निस्कन दिँदैन।",
+                "**दुष्प्रभाव:** वाकवाकी लाग्ने, टाउको दुख्ने, वा स्तन दुख्ने हुन सक्छ। धेरैजसोमा यो केही समयपछि आफैं ठिक हुन्छ।",
+                "**कसरी प्रयोग गर्ने:** हरेक दिन एउटै समयमा एक चक्की खानुहोस्। बिर्सिएको खण्डमा याद आउने बित्तिकै खानुहोस्।",
+                "**कसले प्रयोग गर्नु हुँदैन:** गर्भवती महिलाहरूले यसको प्रयोग गर्नु हुँदैन। कलेजोको गम्भीर रोग, रगत जम्ने समस्या, मुटुको रोग वा स्तन क्यान्सर जस्ता समस्या भएका महिलाहरूले डाक्टरको सल्लाह लिएर मात्र विशेष सावधानीका साथ यसको प्रयोग गर्नुपर्छ।",
+                "**फाइदा:** नियमति खाँदा निकै प्रभावकारी हुन्छ र महिनावारी नियमित बनाउँछ।",
+                "**बेफाइदा:** दिनहुँ खान सम्झनुपर्छ र यसले यौनजन्य सङ्क्रमणबाट बचाउँदैन।"
+              ]
+            },
+            {
+              "name": "आकस्मिक गर्भनिरोधक चक्की (i-Pill)",
+              "points": [
+                "असुरक्षित यौनसम्पर्क भएको अवस्थामा अनिच्छित गर्भ बस्न नदिन यो प्रयोग गरिन्छ। यसले अण्डाशयबाट अण्डा निस्कन वा निषेचन हुन रोक्छ।",
+                "**दुष्प्रभाव:** वाकवाकी लाग्ने, वान्ता हुने, पेट दुख्ने, टाउको दुख्ने वा महिनावारी गडबड हुने हुन सक्छ।",
+                "**कसरी प्रयोग गर्ने:** असुरक्षित यौनसम्पर्क भएको ७२ घण्टाभित्र जति सक्दो चाँडो यो चक्की खानुपर्छ। केही आकस्मिक चक्कीहरूले ५ दिनसम्म पनि काम गर्छन्, तर जति चाँडो खायो त्यति नै धेरै प्रभावकारी हुन्छ।",
+                "**सावधानी:** यो नियमित प्रयोग गर्ने साधन होइन। पहिले नै गर्भ बसिसकेको अवस्थामा यसले काम गर्दैन।"
+              ]
+            },
+            {
+              "name": "कन्डम",
+              "points": [
+                "यौन सम्पर्कको बेला पुरुषको लिङ्गमा लगाइने पातलो साधन।",
+                "**फाइदा:** गर्भ रोक्नुका साथै एचआइभी र अन्य यौनजन्य सङ्क्रमणबाट पनि बचाउँछ।",
+                "**बेफाइदा:** हरेक पटक सही तरिकाले प्रयोग गर्नुपर्छ; सही तरिकाले प्रयोग नगरेमा च्यातिने वा फुत्किने डर हुन्छ।"
+              ]
+            },
+            {
+              "name": "सुई (डिपो-प्रोभेरा)",
+              "points": [
+                "यो हरेक ३ महिनामा लगाइने गर्भनिरोधक सुई हो।",
+                "**फाइदा:** वर्षमा ४ पटक मात्र लगाए पुग्ने र गोपनीयता कायम रहने।",
+                "**बेफाइदा:** महिनावारीमा गडबडी हुन सक्छ र सुई छोडेपछि पुनः गर्भधारण हुन केही महिना लाग्न सक्छ।"
+              ]
+            }
           ]
         },
         {
           "title": "२. लामो अवधिका साधनहरू",
-          "points": [
-            "**इम्प्लान्ट:** पाखुराको छालामुनि राखिने सानो रड हो, जसले ५ वर्षसम्म काम गर्छ।",
-            "**कपर टी (IUCD):** पाठेघरभित्र राखिने सानो साधन हो, जसले १२ वर्षसम्म गर्भ रहन दिँदैन।"
+          "methods": [
+            {
+              "name": "इम्प्लान्ट",
+              "points": [
+                "पाखुराको छालामुनि राखिने सानो लचिलो रड, जसले प्रकार अनुसार ३ देखि ५ वर्षसम्म काम गर्छ।",
+                "**फाइदा:** प्रकार अनुसार ३ देखि ५ वर्षसम्म ढुक्क हुने र निकालेपछि छिट्टै गर्भधारण गर्न सकिने।",
+                "**बेफाइदा:** राख्न र निकाल्न स्वास्थ्यकर्मीको सहयोग चाहिन्छ।"
+              ]
+            },
+            {
+              "name": "कपर टी (IUCD)",
+              "points": [
+                "पाठेघर भित्र राखिने सानो साधन, जसले प्रकार अनुसार ५ देखि १२ वर्षसम्म गर्भ रहन दिँदैन।",
+                "**फाइदा:** लामो समयसम्म प्रभावकारी र हर्मोन नहुने।",
+                "**बेफाइदा:** सुरुमा महिनावारी हुँदा धेरै रगत बग्न सक्छ।"
+              ]
+            }
           ]
         },
         {
           "title": "३. स्थायी साधनहरू",
-          "points": [
-            "**मिनिल्याप (महिला बन्ध्याकरण):** थप सन्तान नचाहेमा यो स्थायी साधन रोज्नुहोस्।",
-            "**भ्यासेक्टोमी (पुरुष बन्ध्याकरण):** पुरुषका लागि सरल, सुरक्षित र स्थायी साधन हो।"
+          "methods": [
+            {
+              "name": "मिनिल्याप (महिला बन्ध्याकरण)",
+              "points": [
+                "महिलाको डिम्बबाहिनी नली बाँधेर गरिने स्थायी परिवार नियोजन।",
+                "**कसले गर्ने:** अब थप सन्तान नचाहने महिलाहरूले।",
+                "**फाइदा:** एक पटक गरेपछि जीवनभर ढुक्क हुने।"
+              ]
+            },
+            {
+              "name": "भ्यासेक्टोमी (पुरुष बन्ध्याकरण)",
+              "points": [
+                "पुरुषको शुक्रकीट बहने नली बाँधेर गरिने सरल र स्थायी विधि।",
+                "**फाइदा:** धेरै सुरक्षित, सरल र छिटो हुने प्रक्रिया।"
+              ]
+            }
           ]
         },
         {
           "title": "४. भ्रम र यथार्थ",
           "points": [
-            "**भ्रम:** परिवार नियोजनका साधनले बाँझोपन गराउँछ। **यथार्थ:** धेरैजसो साधनहरू अस्थायी हुन्छन् र प्रयोग गर्न छोडेपछि पुनः गर्भधारण गर्ने क्षमता फर्किन्छ।",
-            "**भ्रम:** परिवार नियोजन महिलाहरूका लागि मात्र हो। **यथार्थ:** यसमा पुरुषको पनि समान भूमिका हुन्छ। उनीहरूले कन्डम प्रयोग गर्न वा भ्यासेक्टोमी (स्थायी बन्ध्याकरण) गराउन सक्छन्।"
+            "**भ्रम:** परिवार नियोजनका साधनले बाँझोपन गराउँछ। **यथार्थ:** धेरैजसो साधन अस्थायी हुन्छन् र प्रयोग छोडेपछि सन्तान जन्माउन सकिन्छ।",
+            "**भ्रम:** यो महिलाहरूको मात्र जिम्मेवारी हो। **यथार्थ:** सन्तानको योजनामा पुरुषको पनि समान भूमिका हुन्छ।"
           ]
         }
       ]
@@ -896,7 +1021,7 @@
           "points": [
             "**बच्चाको विकास:** धेरै तनावले बच्चाको वृद्धि विकासमा असर पुऱ्याउनुका साथै समय अगावै बच्चा जन्मिने जोखिम बढाउन सक्छ।",
             "**आमाको स्वास्थ्य:** राम्रो मानसिक स्वास्थ्यले गर्भावस्थामा हुने शारीरिक र हर्मोनजन्य परिवर्तनहरूलाई सहन मद्दत गर्दछ।",
-            "**आत्मीय सम्बन्ध:** मन शान्त र खुसी हुँदा आमाले आफ्नो बच्चासँग अझ प्रगाढ सम्बन्ध गाँस्न सक्नुहुन्छ।"
+            "**आत्मीय सम्बन्ध:** मन शान्त र खुसी हुँदा आमाले बच्चासँग अझ राम्रो माया र नजिकको सम्बन्ध बनाउन सक्नुहुन्छ।"
           ]
         },
         {
@@ -911,7 +1036,7 @@
         {
           "title": "३. मानसिक स्वास्थ्य कमजोर हुँदा देखिने लक्षणहरू",
           "points": [
-            "**लगातारको उदासी:** विना कारण धेरै दुःखी हुने, एक्लै बस्न मन लाग्ने वा बारम्बार रुन आउने।",
+            "**उदासी:** विना कारण धेरै दुःखी हुने, एक्लै बस्न मन लाग्ने वा बारम्बार रुन आउने।",
             "**अत्यधिक चिन्ता:** सधैं केही नराम्रो होला कि भनेर डराउने वा चिन्ताका कारण निद्रा नलाग्ने।",
             "**रुचि हराउनु:** पहिले मन पर्ने कामहरूमा रुचि नहुने वा बच्चा र परिवारप्रति लगाव कम भएको महसुस हुने।",
             "**शारीरिक समस्या:** धेरै थकान हुने, बारम्बार टाउको दुख्ने वा खानामा अरुचि हुने।"
@@ -921,7 +1046,7 @@
           "title": "४. धेरै गाह्रो महसुस भएमा के गर्ने?",
           "points": [
             "**मनका कुरा नछुपाउनुहोस्:** आफ्ना भावनाहरू नलुकाई आफूले विश्वास गरेको व्यक्तिलाई खुलेर भन्नुहोस्।",
-            "**विज्ञको सल्लाह लिनुहोस्:** गाह्रो महसुस भएमा स्वास्थ्य संस्थामा गएर स्वास्थ्यकर्मी वा परामर्शदातासँग कुरा गर्नुहोस्।",
+            "**स्वास्थ्यकर्मीको सल्लाह लिनुहोस्:** गाह्रो महसुस भएमा स्वास्थ्य संस्थामा गएर स्वास्थ्यकर्मी वा परामर्शदातासँग कुरा गर्नुहोस्।",
             "**अनुभव साटासाट:** अन्य गर्भवती महिलाहरूसँग कुराकानी गर्दा तपाईंलाई एक्लो महसुस हुँदैन र सहयोग मिल्छ।",
             "**आफूलाई माया गर्नुहोस्:** गर्भावस्था चुनौतीपूर्ण समय हो, त्यसैले आफूले सकेको गर्ने र आफूलाई दोष नदिने गर्नुहोस्।"
           ]
