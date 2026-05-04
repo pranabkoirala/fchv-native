@@ -6,7 +6,7 @@ import Colors from "../constants/Colors";
 import React from "react";
 
 interface InputFieldProps extends React.ComponentProps<typeof TextInput> {
-  label: string;
+  label?: string;
   subLabel?: string;
   leftIcon?: React.ReactNode;
   containerClassName?: string;
