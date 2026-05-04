@@ -10,7 +10,7 @@ import {
   Alert
 } from "react-native";
 import { Calendar, Edit, X, Save, ArrowLeft, Check } from "lucide-react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { CalendarPicker, AdToBs, BsToAd } from "react-native-nepali-picker";
 import * as Crypto from 'expo-crypto';
 import { createMaternalDeath } from "../../hooks/database/models/MaternalDeathModel";
 import { MaternalDeathStoreType } from "../../hooks/database/types/maternalDeathModal";
@@ -35,7 +35,12 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
 
   const [deathDay, setDeathDay] = useState(new Date().getDate());
   const [deathMonth, setDeathMonth] = useState(new Date().getMonth() + 1);
-  const [deathYear, setDeathYear] = useState(2081);
+  const [deathYear, setDeathYear] = useState(new Date().getFullYear());
+
+  const getAdString = (y: number, m: number, d: number) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const toNepali = (y: number, m: number, d: number) => {
+    try { return AdToBs(getAdString(y, m, d)); } catch { return getAdString(y, m, d); }
+  };
   const [remarks, setRemarks] = useState('');
 
   // Inline errors
@@ -47,15 +52,6 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
   const [errDeathPlaceOther, setErrDeathPlaceOther] = useState(false);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setDeathDay(selectedDate.getDate());
-      setDeathMonth(selectedDate.getMonth() + 1);
-      setDeathYear(selectedDate.getFullYear());
-    }
-  };
 
   const handleSaveMaternalDeath = async () => {
     let hasError = false;
@@ -99,7 +95,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       setDeathPlaceOther('');
       setDeathDay(new Date().getDate());
       setDeathMonth(new Date().getMonth() + 1);
-      setDeathYear(2081);
+      setDeathYear(new Date().getFullYear());
       setRemarks('');
       
       // Reset errors
@@ -121,11 +117,6 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
   const FieldLabel = ({ label, hasError }: { label: string; hasError: boolean }) => (
     <View className="flex-row items-center justify-between mb-2">
       <Text className="text-[13px] text-slate-700 font-medium">{label} <Text className="text-red-500">*</Text></Text>
-      {hasError && (
-        <View className="bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-          <Text className="text-red-500 text-[10px] font-bold uppercase">Required</Text>
-        </View>
-      )}
     </View>
   );
 
@@ -137,21 +128,14 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       onRequestClose={onClose}
     >
       <SafeAreaView className="flex-1 bg-[#F8FAFC]">
-        <View className="flex-row items-center justify-between p-4 bg-white">
-          {/* <Pressable onPress={onClose}>
-            <ArrowLeft size={24} color="#0056D2" />
-          </Pressable> */}
-          <Text className="text-slate-900 text-[17px] font-bold">मातृ मृत्यु विवरण</Text>
+        <View className="flex-row items-center justify-between p-5 bg-white">
+          <Text className="text-slate-900 text-[17px] font-semibold">मातृ मृत्यु विवरण</Text>
           <Pressable onPress={onClose} className="bg-slate-100 p-1 rounded-full">
             <X size={18} color="#64748B" />
           </Pressable>
         </View>
-        {/* Progress bar */}
-        <View className="h-[3px] bg-blue-100 w-full mb-2">
-          <View className="h-full bg-[#0056D2]" style={{ width: '100%' }} />
-        </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} className="px-6 flex-1 mt-2">
+        <ScrollView showsVerticalScrollIndicator={false} className="px-6 flex-1 mt-6">
           <View className="gap-y-6 pb-6">
 
             {/* Death Date */}
@@ -164,21 +148,34 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                 <View className="flex-row items-center">
                   <Calendar size={18} color="#0056D2" />
                   <Text className="text-slate-800 text-[14px] ml-3">
-                    {deathDay}/{deathMonth}/{deathYear}
+                    {toNepali(deathYear, deathMonth, deathDay)}
                   </Text>
                 </View>
                 <View className="bg-blue-50 p-2 rounded-lg">
                   <Edit size={14} color="#0056D2" />
                 </View>
               </Pressable>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={new Date(deathYear, deathMonth - 1, deathDay)}
-                  mode="date"
-                  display="default"
-                  onChange={onDateChange}
-                />
-              )}
+              <CalendarPicker
+                visible={showDatePicker}
+                onClose={() => setShowDatePicker(false)}
+                onDateSelect={(bsDate) => {
+                  setShowDatePicker(false);
+                  try {
+                    const adDate = BsToAd(bsDate);
+                    const parts = adDate.split('-');
+                    setDeathYear(parseInt(parts[0], 10));
+                    setDeathMonth(parseInt(parts[1], 10));
+                    setDeathDay(parseInt(parts[2], 10));
+                  } catch (e) { console.error(e); }
+                }}
+                language="np"
+                theme="light"
+                brandColor="#0056D2"
+                date={toNepali(deathYear, deathMonth, deathDay)}
+                dayTextStyle={{ fontWeight: 'normal' }}
+                weekTextStyle={{ fontWeight: 'normal' }}
+                titleTextStyle={{ fontWeight: 'normal' }}
+              />
             </View>
 
             {/* Condition of Death */}
@@ -188,13 +185,12 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                 {[
                   { value: 'Pregnant', label: 'गर्भवती (Pregnant)' },
                   { value: 'Labor', label: 'सुत्केरी व्यथा (Labor)' },
-                  { value: 'Post_delivery', label: 'सुत्केरी (Postpartum)' },
-                  { value: 'Other', label: 'अन्य (Other)' }
+                  { value: 'Post_delivery', label: 'सुत्केरी (Postpartum)' }
                 ].map((c) => (
                   <Pressable
                     key={c.value}
                     onPress={() => { setDeathCondition(c.value); setErrDeathCondition(false); }}
-                    className={`w-[48%] p-3.5 rounded-xl border flex-row items-center justify-between min-h-[70px] ${deathCondition === c.value
+                    className={`w-[48%] p-3.5 rounded-xl border flex-row items-center justify-between ${deathCondition === c.value
                       ? 'bg-blue-50/40 border-[#0056D2]'
                       : errDeathCondition ? 'bg-white border-red-300' : 'bg-white border-slate-200'
                       }`}
@@ -210,17 +206,6 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                   </Pressable>
                 ))}
               </View>
-              {deathCondition === 'Other' && (
-                <TextInput
-                  placeholder="अवस्था खुलाउनुहोस् (Specify)..."
-                  className={`mt-3 bg-white border p-3.5 rounded-xl text-slate-900 text-[13px] ${errDeathConditionOther ? 'border-red-400' : 'border-slate-200'}`}
-                  onChangeText={(v) => { setDeathConditionOther(v); if (v.trim()) setErrDeathConditionOther(false); }}
-                  value={deathConditionOther}
-                />
-              )}
-              {errDeathConditionOther && (
-                <Text className="text-red-500 text-[11px] mt-1">अवस्था खुलाउनुहोस् (Please specify).</Text>
-              )}
             </View>
 
             {/* Delivery Place */}
@@ -235,12 +220,12 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                   <Pressable
                     key={c.value}
                     onPress={() => { setDeliveryPlace(c.value); setErrDeliveryPlace(false); }}
-                    className={`w-[31%] p-3.5 rounded-xl border items-center justify-center ${deliveryPlace === c.value
-                      ? 'bg-[#0056D2] border-[#0056D2]'
+                    className={`w-[31%] p-3 rounded-xl border items-center justify-center ${deliveryPlace === c.value
+                      ? 'bg-blue-50/40 border-primary'
                       : errDeliveryPlace ? 'bg-white border-red-300' : 'bg-white border-slate-200'
                       }`}
                   >
-                    <Text className={`text-[12px] font-medium text-center ${deliveryPlace === c.value ? 'text-white' : 'text-slate-500'}`}>{c.label}</Text>
+                    <Text className={`text-[13px] font-medium text-center ${deliveryPlace === c.value ? 'text-primary' : 'text-slate-500'}`}>{c.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -270,11 +255,11 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                     key={c.value}
                     onPress={() => { setDeathPlace(c.value); setErrDeathPlace(false); }}
                     className={`w-[31%] p-3.5 rounded-xl border items-center justify-center ${deathPlace === c.value
-                      ? 'bg-[#0056D2] border-[#0056D2]'
+                      ? 'bg-blue-50/40 border-primary'
                       : errDeathPlace ? 'bg-white border-red-300' : 'bg-white border-slate-200'
                       }`}
                   >
-                    <Text className={`text-[12px] font-medium text-center ${deathPlace === c.value ? 'text-white' : 'text-slate-500'}`}>{c.label}</Text>
+                    <Text className={`text-[13px] font-medium text-center ${deathPlace === c.value ? 'text-primary' : 'text-slate-500'}`}>{c.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -311,10 +296,10 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
         <View className="p-4 bg-white border-t border-slate-100">
           <Pressable
             onPress={handleSaveMaternalDeath}
-            className="bg-[#0056D2] w-full py-4 rounded-full flex-row items-center justify-center mt-1 mb-1"
+            className="bg-primary w-full py-4 rounded-xl flex-row items-center justify-center mt-1 mb-1"
           >
             <Save size={18} color="white" />
-            <Text className="text-white font-bold text-[15px] ml-2">विवरण सुरक्षित गर्नुहोस् (Save Record)</Text>
+            <Text className="text-white font-bold text-[15px] ml-2">विवरण सुरक्षित गर्नुहोस्</Text>
           </Pressable>
         </View>
       </SafeAreaView>

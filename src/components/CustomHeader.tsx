@@ -47,7 +47,7 @@ export default function CustomHeader({
           <ChevronLeft size={22} color={Colors.textPrimary || "#1E293B"} strokeWidth={2.5} />
         </TouchableOpacity>
         <View className="flex-1">
-          <Text className="font-bold text-xl ml-1" style={{ color: Colors.textPrimary || "#1E293B" }}>
+          <Text className="font-semibold text-lg ml-1" style={{ color: Colors.textPrimary || "#1E293B" }}>
             {title}
           </Text>
           {subtitle && (

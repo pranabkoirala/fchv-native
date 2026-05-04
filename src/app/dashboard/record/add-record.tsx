@@ -10,58 +10,99 @@ import {
   Animated,
   Dimensions,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { User, Calendar, Baby, Activity, CheckCircle2, ChevronLeft, ChevronRight, Save, Pill, Plus } from "lucide-react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { User, Calendar, Baby, Activity, CheckCircle2, ChevronLeft, ChevronRight, Save, Pill, Plus, Check } from "lucide-react-native";
+import { CalendarPicker, AdToBs, BsToAd } from "react-native-nepali-picker";
 import { FieldLabel, BoxInput, SelectInput } from "../../../components/FormElements";
+import CustomHeader from "../../../components/CustomHeader";
 import { createHmisRecord, getNextSerialNo, getHmisRecord } from "../../../hooks/database/models/HmisRecordModel";
 import { useToast } from "../../../context/ToastContext";
+import { useTranslation } from "react-i18next";
 import "../../../global.css";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const StepIndicator = ({ currentStep }: { currentStep: number }) => {
+const StepIndicator = ({ currentStep, t }: { currentStep: number, t: any }) => {
   const steps = [
-    { icon: User, label: "Basic" },
-    { icon: Calendar, label: "Dates" },
-    { icon: Activity, label: "ANC" },
-    { icon: Pill, label: "Meds" },
-    { icon: Baby, label: "PNC" },
+    { icon: User, label: t("add_record.steps.mother") },
+    { icon: Activity, label: t("add_record.steps.anc") },
+    { icon: Pill, label: t("add_record.steps.meds") },
+    { icon: Baby, label: t("add_record.steps.pnc") },
   ];
 
   return (
-    <View className="flex-row items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
-      {steps.map((s, i) => {
-        const Icon = s.icon;
-        const isActive = i <= currentStep;
-        const isCurrent = i === currentStep;
-        return (
-          <View key={i} className="items-center flex-1">
-            <View className={`w-8 h-8 rounded-xl items-center justify-center ${isActive ? 'bg-primary' : 'bg-gray-100'}`}>
-              <Icon size={16} color={isActive ? "white" : "#94A3B8"} strokeWidth={isCurrent ? 3 : 2} />
+    <View className="pt-6 pb-8 bg-white border-b border-gray-50">
+      <View className="px-8 flex-row items-center justify-between">
+        {steps.map((s, i) => {
+          const Icon = s.icon;
+          const isActive = i <= currentStep;
+          const isCurrent = i === currentStep;
+          const isLast = i === steps.length - 1;
+          const isLineActive = i < currentStep;
+
+          return (
+            <View key={i} className={`flex-row items-center ${!isLast ? 'flex-1' : ''}`}>
+              <View className="items-center relative">
+                <View 
+                  className={`w-12 h-12 rounded-full items-center justify-center border-[2.5px] z-10 bg-white
+                    ${isCurrent ? 'border-primary bg-primary' : 
+                      isActive ? 'border-primary' : 
+                      'border-slate-200'}`}
+                >
+                  {isActive && !isCurrent ? (
+                    <Check size={22} color="#5993f0ff" strokeWidth={3.5} />
+                  ) : (
+                    <Icon 
+                      size={20} 
+                      color={isCurrent ? "#5993f0ff" : "#94A3B8"} 
+                      strokeWidth={isCurrent ? 2.5 : 2} 
+                    />
+                  )}
+                </View>
+                <Text 
+                  className={`text-[10px] font-black uppercase tracking-wider absolute -bottom-6 w-20 text-center
+                    ${isCurrent ? 'text-primary' : isActive ? 'text-slate-700' : 'text-slate-400'}`}
+                >
+                  {s.label}
+                </Text>
+              </View>
+
+              {!isLast && (
+                <View className="flex-1 h-[3px] mx-2 bg-slate-100 rounded-full overflow-hidden">
+                  <View className={`h-full ${isLineActive ? 'bg-primary' : 'bg-transparent'}`} />
+                </View>
+              )}
             </View>
-            <Text className={`text-[8px] mt-1 font-bold ${isActive ? 'text-primary' : 'text-gray-400'}`}>{s.label}</Text>
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
   );
 };
 
 export default function AddRecordScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { showToast } = useToast();
   const [step, setStep] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  const getAdString = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const toNepali = (d: Date | null) => {
+    if (!d) return "";
+    try { return AdToBs(getAdString(d)); } catch { return getAdString(d); }
+  };
+
   // Date states
   const [lmpDate, setLmpDate] = useState<Date | null>(null);
   const [showLmpPicker, setShowLmpPicker] = useState(false);
   const [eddDate, setEddDate] = useState<Date | null>(null);
+  const [showEddPicker, setShowEddPicker] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -107,8 +148,18 @@ export default function AddRecordScreen() {
                         mother_age: String(record.mother_age || ""),
                         serial_no: record.serial_no || 0,
                     } as any);
+                    let initialLmp = null;
                     if (record.lmp_year && record.lmp_month && record.lmp_day) {
-                        setLmpDate(new Date(record.lmp_year, record.lmp_month - 1, record.lmp_day));
+                        initialLmp = new Date(record.lmp_year, record.lmp_month - 1, record.lmp_day);
+                        setLmpDate(initialLmp);
+                    }
+                    if (record.edd_year && record.edd_month && record.edd_day) {
+                        setEddDate(new Date(record.edd_year, record.edd_month - 1, record.edd_day));
+                    } else if (initialLmp) {
+                        const edd = new Date(initialLmp);
+                        edd.setDate(edd.getDate() + 7);
+                        edd.setMonth(edd.getMonth() + 9);
+                        setEddDate(edd);
                     }
                 }
             } else {
@@ -133,43 +184,31 @@ export default function AddRecordScreen() {
     }).start();
   }, [step]);
 
-  // Calculate EDD and suggest ANC weeks automatically
+  // Suggest ANC weeks automatically based on dates
   useEffect(() => {
-    if (lmpDate) {
-      // 1. Calculate EDD
-      const edd = new Date(lmpDate);
-      edd.setDate(edd.getDate() + 7);
-      edd.setMonth(edd.getMonth() + 9);
-      setEddDate(edd);
-
-      // 2. Calculate Gestational Weeks for the record date
+    if (lmpDate && eddDate) {
+      // 1. Calculate Gestational Weeks for the record date
       const recordDate = new Date(formData.date_year, formData.date_month - 1, formData.date_day);
       const diffTime = recordDate.getTime() - lmpDate.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       const weeks = Math.floor(diffDays / 7);
 
-      // 3. Update Form Data
+      // 2. Update Form Data
       setFormData(prev => {
         const newData = {
           ...prev,
           lmp_day: lmpDate.getDate(),
           lmp_month: lmpDate.getMonth() + 1,
           lmp_year: lmpDate.getFullYear(),
-          edd_day: edd.getDate(),
-          edd_month: edd.getMonth() + 1,
-          edd_year: edd.getFullYear(),
+          edd_day: eddDate.getDate(),
+          edd_month: eddDate.getMonth() + 1,
+          edd_year: eddDate.getFullYear(),
         };
 
-        // If we are editing, we ONLY want to auto-select if the user is 
-        // explicitly changing the LMP to something new, OR if it's a new record.
-        // To handle this, we check if AND weeks are all currently 0 or if we're in create mode.
         const anyAncSelected = prev.checkup_12 || prev.checkup_16 || prev.checkup_20_24 || prev.checkup_28 || 
                                prev.checkup_32 || prev.checkup_34 || prev.checkup_36 || prev.checkup_38_40;
 
-        // Force update if LMP changed or it's new. 
-        // But for safety, we'll reset only the standard week columns if we're auto-matching.
         if (weeks > 0) {
-            // Reset all first
             newData.checkup_12 = 0; newData.checkup_16 = 0; newData.checkup_20_24 = 0; newData.checkup_28 = 0;
             newData.checkup_32 = 0; newData.checkup_34 = 0; newData.checkup_36 = 0; newData.checkup_38_40 = 0;
 
@@ -187,7 +226,7 @@ export default function AddRecordScreen() {
         return newData;
       });
     }
-  }, [lmpDate, formData.date_day, formData.date_month, formData.date_year]);
+  }, [lmpDate, eddDate, formData.date_day, formData.date_month, formData.date_year]);
 
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -203,8 +242,21 @@ export default function AddRecordScreen() {
   const validateStep = (s: number) => {
     const e: Record<string, string> = {};
     if (s === 0) {
-      if (!formData.mother_name.trim()) e.mother_name = "Name is required";
-      if (!String(formData.mother_age).trim()) e.mother_age = "Age is required";
+      if (!formData.mother_name.trim()) e.mother_name = t("add_record.validation.name_req");
+      const ageStr = String(formData.mother_age).trim();
+      if (!ageStr) {
+        e.mother_age = t("add_record.validation.age_req");
+      } else {
+        const ageNum = parseInt(ageStr, 10);
+        if (isNaN(ageNum) || ageNum < 18) {
+          e.mother_age = t("add_record.validation.age_min");
+        } else if (ageNum >= 55) {
+          e.mother_age = t("add_record.validation.age_max");
+        }
+      }
+
+      if (!lmpDate) e.lmpDate = t("add_record.validation.lmp_req");
+      if (!eddDate) e.eddDate = t("add_record.validation.edd_req");
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -212,7 +264,7 @@ export default function AddRecordScreen() {
 
   const nextStep = () => {
     if (validateStep(step)) {
-      if (step < 4) setStep(step + 1);
+      if (step < 3) setStep(step + 1);
       else handleSave();
     }
   };
@@ -222,7 +274,7 @@ export default function AddRecordScreen() {
   };
 
   const skipStep = () => {
-    if (step < 4) setStep(step + 1);
+    if (step < 3) setStep(step + 1);
   };
 
   const handleSave = async () => {
@@ -265,11 +317,11 @@ export default function AddRecordScreen() {
         family_planning_used: formData.family_planning_used,
         remarks: formData.remarks,
       });
-      showToast(id ? "Record updated successfully" : "Record saved successfully");
+      showToast(id ? t("add_record.actions.update_success") : t("add_record.actions.save_success"));
       router.back();
     } catch (error) {
       console.error(error);
-      showToast("Failed to save record");
+      showToast(t("add_record.actions.save_failed"));
     } finally {
       setIsLoading(false);
     }
@@ -279,16 +331,16 @@ export default function AddRecordScreen() {
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={() => onToggle(value === 1 ? 0 : 1)}
-      className={`flex-1 flex-row items-center p-3 rounded-xl border mb-2 ${value === 1 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}
+      className={`flex-1 flex-row items-center py-4 rounded-xl px-3 border mb-2 border-gray-300 ${value ===1 ? "border border-primary bg-blue-50/40" : ""} `}
     >
-      <View className={`w-4 h-4 rounded mr-2 items-center justify-center border ${value === 1 ? 'bg-primary border-primary' : 'bg-white border-gray-300'}`}>
-        {value === 1 && <CheckCircle2 size={12} color="white" strokeWidth={3} />}
+      <View className={`w-4 h-4 rounded mr-2 items-center justify-center border bg-white border-gray-400`}>
+        {value === 1 && <Check size={12} color="#6B7280" strokeWidth={3} />}
       </View>
-      <Text className={`text-[12px] font-bold ${value === 1 ? 'text-primary' : 'text-gray-500'}`}>{label}</Text>
+      <Text className={`text-[14px] text-gray-500`}>{label}</Text>
     </TouchableOpacity>
   );
 
-  const showSkip = id ? (step < 4) : (step >= 2 && step < 4);
+  const showSkip = id ? (step < 3) : (step >= 1 && step < 3);
 
   if (isInitialLoading) {
       return (
@@ -302,18 +354,12 @@ export default function AddRecordScreen() {
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
       
-      {/* Header */}
-      <View className="px-6 pt-14 pb-4 flex-row items-center border-b border-gray-50">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <ChevronLeft size={24} color="#1E293B" />
-        </TouchableOpacity>
-        <View>
-            <Text className="text-lg font-black text-[#1E293B]">{id ? "Edit HMIS Entry" : "New HMIS Entry"}</Text>
-            <Text className="text-[10px] text-gray-400 font-bold">Auto-Serial: #{formData.serial_no}</Text>
-        </View>
-      </View>
+      <CustomHeader 
+        title={id ? t("add_record.title_edit") : t("add_record.title_new")} 
+        className="border-b border-slate-100"
+      />
 
-      <StepIndicator currentStep={step} />
+      <StepIndicator currentStep={step} t={t} />
 
       <KeyboardAvoidingView
         className="flex-1"
@@ -323,198 +369,253 @@ export default function AddRecordScreen() {
           style={{
             flex: 1,
             flexDirection: "row",
-            width: SCREEN_WIDTH * 5,
+            width: SCREEN_WIDTH * 4,
             transform: [{ translateX: slideAnim }],
           }}
         >
-          {/* Step 1: Basic Info */}
+          {/* Step 1: Basic Info & Dates */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6">
-              <View className="bg-blue-50 p-4 rounded-2xl mb-6 border border-blue-100">
-                  <Text className="text-primary font-black text-xs uppercase mb-1">Registration Context</Text>
-                  <Text className="text-gray-600 text-[13px]">Registering for: <Text className="font-bold">{formData.date_day}/{formData.date_month}/{formData.date_year}</Text></Text>
-              </View>
-
-              <FieldLabel label="Mother's Full Name (आमाको नाम)" />
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <FieldLabel label={t("add_record.basic_info.mother_name")} />
               <BoxInput
-                placeholder="Full Name"
+                placeholder={t("add_record.basic_info.mother_name_placeholder")}
                 value={formData.mother_name}
                 onChangeText={(v) => updateField("mother_name", v)}
                 error={errors.mother_name}
               />
 
-              <FieldLabel label="Age (उमेर)" />
+              <FieldLabel label={t("add_record.basic_info.age")} />
               <BoxInput
-                placeholder="Age"
+                placeholder={t("add_record.basic_info.age_placeholder")}
                 value={String(formData.mother_age)}
                 onChangeText={(v) => updateField("mother_age", v)}
                 keyboardType="numeric"
                 error={errors.mother_age}
               />
-            </ScrollView>
-          </View>
 
-          {/* Step 2: Dates */}
-          <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6">
-              <FieldLabel label="LMP Date (अन्तिम रजस्वला मिति)" />
-              <TouchableOpacity
-                onPress={() => setShowLmpPicker(true)}
-                className="bg-gray-100 rounded-2xl h-14 border border-gray-200 px-4 flex-row items-center justify-between mb-6"
-              >
-                <Text className={`text-base ${lmpDate ? 'text-[#1E293B]' : 'text-gray-400'}`}>
-                  {lmpDate ? lmpDate.toLocaleDateString() : "Select LMP Date"}
-                </Text>
-                <Calendar size={20} color="#94A3B8" />
-              </TouchableOpacity>
-
-              {showLmpPicker && (
-                <DateTimePicker
-                  value={lmpDate || new Date()}
-                  mode="date"
-                  display="default"
-                  onChange={(event, date) => {
-                    setShowLmpPicker(false);
-                    if (date) setLmpDate(date);
-                  }}
-                />
-              )}
-
-              <FieldLabel label="Auto-calculated EDD (प्रसूतिको अनुमानित मिति)" />
-              <View className="bg-green-50 p-4 rounded-2xl border border-green-100 mb-6 flex-row items-center">
-                  <Calendar size={20} color="#10B981" className="mr-3" />
-                  <Text className="text-[#065F46] font-bold text-base">
-                    {eddDate ? eddDate.toLocaleDateString() : "Waiting for LMP..."}
+              <FieldLabel label={t("add_record.basic_info.lmp_date")} />
+              <View className="mb-6">
+                <TouchableOpacity
+                  onPress={() => setShowLmpPicker(true)}
+                  className={`rounded-xl h-14 border ${errors.lmpDate ? 'border-red-300' : 'border-gray-300'} px-4 flex-row items-center justify-between`}
+                >
+                  <Text className={`text-base ${lmpDate ? 'text-[#1E293B]' : 'text-gray-400'}`}>
+                    {lmpDate ? toNepali(lmpDate) : t("add_record.basic_info.select_lmp")}
                   </Text>
+                  <Calendar size={20} color="#94A3B8" />
+                </TouchableOpacity>
+                {errors.lmpDate && <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.lmpDate}</Text>}
               </View>
 
-              <FieldLabel label="Counseling Given? (जीवन सुरक्षा परामर्श)" />
+              <CalendarPicker
+                visible={showLmpPicker}
+                onClose={() => setShowLmpPicker(false)}
+                onDateSelect={(bsDate) => {
+                  setShowLmpPicker(false);
+                  try {
+                    const adDate = BsToAd(bsDate);
+                    const parts = adDate.split('-');
+                    const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                    setLmpDate(dateObj);
+                    setErrors(prev => { const newErrs = {...prev}; delete newErrs.lmpDate; delete newErrs.eddDate; return newErrs; });
+                    const edd = new Date(dateObj);
+                    edd.setDate(edd.getDate() + 7);
+                    edd.setMonth(edd.getMonth() + 9);
+                    setEddDate(edd);
+                  } catch (e) { console.error(e); }
+                }}
+                language="np"
+                theme="light"
+                brandColor="#5993f0"
+                date={lmpDate ? toNepali(lmpDate) : undefined}
+                dayTextStyle={{ fontWeight: 'normal' }}
+                weekTextStyle={{ fontWeight: 'normal' }}
+                titleTextStyle={{ fontWeight: 'normal' }}
+              />
+
+              <FieldLabel label={t("add_record.basic_info.edd_date")} />
+              <View className="mb-6">
+                <TouchableOpacity
+                  onPress={() => setShowEddPicker(true)}
+                  className={`rounded-xl h-14 border ${errors.eddDate ? 'border-red-300' : 'border-gray-300'} px-4 flex-row items-center justify-between`}
+                >
+                  <Text className={`text-base ${eddDate ? 'text-[#1E293B]' : 'text-gray-400'}`}>
+                    {eddDate ? toNepali(eddDate) : t("add_record.basic_info.select_edd")}
+                  </Text>
+                  <Calendar size={20} color="#94A3B8" />
+                </TouchableOpacity>
+                {errors.eddDate && <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.eddDate}</Text>}
+              </View>
+
+              <CalendarPicker
+                visible={showEddPicker}
+                onClose={() => setShowEddPicker(false)}
+                onDateSelect={(bsDate) => {
+                  setShowEddPicker(false);
+                  try {
+                    const adDate = BsToAd(bsDate);
+                    const parts = adDate.split('-');
+                    const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                    setEddDate(dateObj);
+                    setErrors(prev => { const newErrs = {...prev}; delete newErrs.lmpDate; delete newErrs.eddDate; return newErrs; });
+                    const lmp = new Date(dateObj);
+                    lmp.setDate(lmp.getDate() - 7);
+                    lmp.setMonth(lmp.getMonth() - 9);
+                    setLmpDate(lmp);
+                  } catch (e) { console.error(e); }
+                }}
+                language="np"
+                theme="light"
+                brandColor="#5993f0"
+                date={eddDate ? toNepali(eddDate) : undefined}
+                dayTextStyle={{ fontWeight: 'normal' }}
+                weekTextStyle={{ fontWeight: 'normal' }}
+                titleTextStyle={{ fontWeight: 'normal' }}
+              />
+
+              <FieldLabel label={t("add_record.basic_info.counseling_given")} />
               <View className="flex-row gap-4 mb-4">
-                 <ToggleBox label="Yes (छ)" value={formData.counseling_given} onToggle={(v) => updateField("counseling_given", v)} />
+                 <ToggleBox label={t("add_record.basic_info.yes")} value={formData.counseling_given} onToggle={(v) => updateField("counseling_given", v)} />
               </View>
             </ScrollView>
           </View>
 
           {/* Step 3: ANC Visits */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6">
-              <Text className="text-gray-400 font-bold mb-4 text-xs">Select the weeks when check-up was done:</Text>
-              <View className="flex-row gap-2">
-                 <ToggleBox label="12 Week" value={formData.checkup_12} onToggle={(v) => updateField("checkup_12", v)} />
-                 <ToggleBox label="16 Week" value={formData.checkup_16} onToggle={(v) => updateField("checkup_16", v)} />
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <Text className="text-gray-700 mb-4 text-md">{t("add_record.anc_visits.subtitle")}</Text>
+              <View className="flex-row gap-4">
+                 <ToggleBox label={t("add_record.anc_visits.wk12")} value={formData.checkup_12} onToggle={(v) => updateField("checkup_12", v)} />
+                 <ToggleBox label={t("add_record.anc_visits.wk16")} value={formData.checkup_16} onToggle={(v) => updateField("checkup_16", v)} />
               </View>
-              <View className="flex-row gap-2">
-                 <ToggleBox label="20-24 Wk" value={formData.checkup_20_24} onToggle={(v) => updateField("checkup_20_24", v)} />
-                 <ToggleBox label="28 Week" value={formData.checkup_28} onToggle={(v) => updateField("checkup_28", v)} />
+              <View className="flex-row gap-4">
+                 <ToggleBox label={t("add_record.anc_visits.wk20_24")} value={formData.checkup_20_24} onToggle={(v) => updateField("checkup_20_24", v)} />
+                 <ToggleBox label={t("add_record.anc_visits.wk28")} value={formData.checkup_28} onToggle={(v) => updateField("checkup_28", v)} />
               </View>
-              <View className="flex-row gap-2">
-                 <ToggleBox label="32 Week" value={formData.checkup_32} onToggle={(v) => updateField("checkup_32", v)} />
-                 <ToggleBox label="34 Week" value={formData.checkup_34} onToggle={(v) => updateField("checkup_34", v)} />
+              <View className="flex-row gap-4">
+                 <ToggleBox label={t("add_record.anc_visits.wk32")} value={formData.checkup_32} onToggle={(v) => updateField("checkup_32", v)} />
+                 <ToggleBox label={t("add_record.anc_visits.wk34")} value={formData.checkup_34} onToggle={(v) => updateField("checkup_34", v)} />
               </View>
-              <View className="flex-row gap-2">
-                 <ToggleBox label="36 Week" value={formData.checkup_36} onToggle={(v) => updateField("checkup_36", v)} />
-                 <ToggleBox label="38-40 Wk" value={formData.checkup_38_40} onToggle={(v) => updateField("checkup_38_40", v)} />
+              <View className="flex-row gap-4">
+                 <ToggleBox label={t("add_record.anc_visits.wk36")} value={formData.checkup_36} onToggle={(v) => updateField("checkup_36", v)} />
+                 <ToggleBox label={t("add_record.anc_visits.wk38_40")} value={formData.checkup_38_40} onToggle={(v) => updateField("checkup_38_40", v)} />
               </View>
-              <FieldLabel label="Other Week (अन्य)" />
-              <BoxInput placeholder="Enter other weeks" value={formData.checkup_other} onChangeText={(v) => updateField("checkup_other", v)} />
+              <FieldLabel label={t("add_record.anc_visits.other_wk")} />
+              <BoxInput placeholder={t("add_record.anc_visits.other_wk_placeholder")} value={formData.checkup_other} onChangeText={(v) => updateField("checkup_other", v)} />
             </ScrollView>
           </View>
 
           {/* Step 4: Meds */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6">
-              <FieldLabel label="Iron 180 (Pregnancy)" />
-              <ToggleBox label="Received (पाएको)" value={formData.iron_preg_received} onToggle={(v) => updateField("iron_preg_received", v)} />
-
-              <FieldLabel label="Iron 45 (Post-delivery)" />
-              <ToggleBox label="Received (पाएको)" value={formData.iron_pnc_received} onToggle={(v) => updateField("iron_pnc_received", v)} />
-
-              <FieldLabel label="Vitamin 'A' (Post-delivery)" />
-              <ToggleBox label="Received (पाएको)" value={formData.vit_a_received} onToggle={(v) => updateField("vit_a_received", v)} />
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View className="flex flex-col gap-4">
+              <View>
+              <FieldLabel label={t("add_record.meds.iron_180")} />
+              <ToggleBox label={t("add_record.meds.received")} value={formData.iron_preg_received} onToggle={(v) => updateField("iron_preg_received", v)} />
+              </View>
+              <View>
+                <FieldLabel label={t("add_record.meds.iron_45")} />
+                <ToggleBox label={t("add_record.meds.received")} value={formData.iron_pnc_received} onToggle={(v) => updateField("iron_pnc_received", v)} />
+              </View>
+              <View>
+                <FieldLabel label={t("add_record.meds.vit_a")} />
+                <ToggleBox label={t("add_record.meds.received")} value={formData.vit_a_received} onToggle={(v) => updateField("vit_a_received", v)} />
+              </View>
+              </View>
             </ScrollView>
           </View>
 
           {/* Step 5: PNC & Delivery */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6">
-              <FieldLabel label="Delivery Place" />
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View className="pb-10">
+              <FieldLabel label={t("add_record.pnc_delivery.delivery_place")} />
               <SelectInput
-                label="Place"
+              placeholder={t("add_record.pnc_delivery.delivery_place_placeholder")}
+                label={t("add_record.pnc_delivery.place")}
                 value={formData.delivery_place}
                 options={[
-                  { label: "Home (घर)", value: "Home" },
-                  { label: "Health Facility (संस्था)", value: "Facility" },
-                  { label: "Other (अन्य)", value: "Other" },
+                  { label: t("add_record.pnc_delivery.home"), value: "Home" },
+                  { label: t("add_record.pnc_delivery.facility"), value: "Facility" },
+                  { label: t("add_record.pnc_delivery.other"), value: "Other" },
                 ]}
                 onSelect={(v: string) => updateField("delivery_place", v)}
               />
 
-              <FieldLabel label="Condition of Newborn" />
+              <FieldLabel label={t("add_record.pnc_delivery.newborn_condition")} />
               <SelectInput
-                label="Condition"
+                label={t("add_record.pnc_delivery.condition")}
                 value={formData.newborn_condition}
+                placeholder={t("add_record.pnc_delivery.select_condition")}
                 options={[
-                  { label: "Alive (जीवित)", value: "Alive" },
-                  { label: "Dead (मृत)", value: "Dead" },
+                  { label: t("add_record.pnc_delivery.alive"), value: "Alive" },
+                  { label: t("add_record.pnc_delivery.dead"), value: "Dead" },
                 ]}
                 onSelect={(v: string) => updateField("newborn_condition", v)}
               />
 
-              <Text className="text-gray-800 font-bold mb-2 text-xs">PNC Check-ups:</Text>
+              <Text className="text-gray-800 text-[15px] mb-2">{t("add_record.pnc_delivery.pnc_checkups")}</Text>
               <View className="flex-row gap-2">
-                 <ToggleBox label="<24 hr" value={formData.pnc_check_24hr} onToggle={(v) => updateField("pnc_check_24hr", v)} />
-                 <ToggleBox label="3rd Day" value={formData.pnc_check_3day} onToggle={(v) => updateField("pnc_check_3day", v)} />
+                 <ToggleBox label={t("add_record.pnc_delivery.hr24")} value={formData.pnc_check_24hr} onToggle={(v) => updateField("pnc_check_24hr", v)} />
+                 <ToggleBox label={t("add_record.pnc_delivery.day3")} value={formData.pnc_check_3day} onToggle={(v) => updateField("pnc_check_3day", v)} />
               </View>
               <View className="flex-row gap-2">
-                 <ToggleBox label="7-14 Day" value={formData.pnc_check_7_14day} onToggle={(v) => updateField("pnc_check_7_14day", v)} />
-                 <ToggleBox label="42nd Day" value={formData.pnc_check_42day} onToggle={(v) => updateField("pnc_check_42day", v)} />
+                 <ToggleBox label={t("add_record.pnc_delivery.day7_14")} value={formData.pnc_check_7_14day} onToggle={(v) => updateField("pnc_check_7_14day", v)} />
+                 <ToggleBox label={t("add_record.pnc_delivery.day42")} value={formData.pnc_check_42day} onToggle={(v) => updateField("pnc_check_42day", v)} />
               </View>
 
-              <FieldLabel label="Family Planning Method User?" />
-              <ToggleBox label="Used (गरेको)" value={formData.family_planning_used} onToggle={(v) => updateField("family_planning_used", v)} />
+              <FieldLabel label={t("add_record.pnc_delivery.fp_method")} />
+              <ToggleBox label={t("add_record.pnc_delivery.used")} value={formData.family_planning_used} onToggle={(v) => updateField("family_planning_used", v)} />
 
-              <FieldLabel label="Remarks" />
-              <BoxInput placeholder="Notes..." value={formData.remarks} onChangeText={(v) => updateField("remarks", v)} />
+              <FieldLabel label={t("add_record.pnc_delivery.remarks")} />
+              <TextInput
+                placeholder={t("add_record.pnc_delivery.notes")}
+                value={formData.remarks}
+                onChangeText={(v) => updateField("remarks", v)}
+                className="border border-gray-400 rounded-xl p-3 h-24 text-top"
+                textAlignVertical="top"
+              />
+              </View>
             </ScrollView>
           </View>
         </Animated.View>
-      </KeyboardAvoidingView>
 
-      {/* Navigation Buttons */}
-      <View className="px-6 pb-8 pt-4 border-t border-gray-100 bg-white">
-        <View className="flex-row gap-3">
-            {step > 0 && (
-            <TouchableOpacity
-                onPress={prevStep}
-                className="w-12 h-12 rounded-xl bg-gray-100 items-center justify-center border border-gray-200"
-            >
-                <ChevronLeft size={20} color="#64748B" />
-            </TouchableOpacity>
-            )}
-            
-            <TouchableOpacity
-                onPress={nextStep}
-                disabled={isLoading}
-                className={`flex-1 h-12 rounded-xl bg-primary items-center justify-center shadow-md shadow-blue-100`}
-            >
-            <View className="flex-row items-center">
-                <Text className="text-white font-black text-sm mr-2">
-                {step === 4 ? (isLoading ? "Saving..." : "Finish Record") : "Next Step"}
-                </Text>
-                {step === 4 ? <Save size={18} color="white" /> : <ChevronRight size={18} color="white" />}
-            </View>
-            </TouchableOpacity>
+        {/* Navigation Buttons */}
+        <View className="px-6 pb-16 pt-4 bg-white">
+          <View className="flex-row gap-3">
+              {step > 0 && (
+              <TouchableOpacity
+                  onPress={prevStep}
+                  className="w-12 h-12 rounded-xl bg-gray-100 items-center justify-center border border-gray-200"
+              >
+                  <ChevronLeft size={20} color="#64748B" />
+              </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity
+                  onPress={nextStep}
+                  disabled={isLoading}
+                  className={`flex-1 py-4 rounded-xl bg-primary items-center justify-center`}
+              >
+              <View className="flex-row items-center">
+                  <Text className="text-white font-bold text-md mr-2">
+                  {step === 3 ? (isLoading ? t("add_record.actions.saving") : t("add_record.actions.finish")) : t("add_record.actions.next_step")}
+                  </Text>
+                  {step === 3 ? <Save size={18} color="white" /> : <ChevronRight size={18} color="white" />}
+              </View>
+              </TouchableOpacity>
 
-            {showSkip && (
-                <TouchableOpacity
-                    onPress={skipStep}
-                    className="px-4 h-12 rounded-xl bg-orange-50 items-center justify-center border border-orange-100"
-                >
-                    <Text className="text-orange-600 font-bold text-xs">Skip</Text>
-                </TouchableOpacity>
-            )}
+              {showSkip && (
+                  <TouchableOpacity
+                      onPress={skipStep}
+                      className="px-4 h-12 rounded-xl bg-orange-50 items-center justify-center border border-orange-100"
+                  >
+                      <Text className="text-orange-600 font-bold text-xs">{t("add_record.actions.skip")}</Text>
+                  </TouchableOpacity>
+              )}
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

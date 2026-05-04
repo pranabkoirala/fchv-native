@@ -102,16 +102,16 @@ export default function RecordScreen() {
             <ChevronLeft size={24} color="#1E293B" />
           </TouchableOpacity>
           <View>
-            <Text className="text-2xl font-black text-[#1E293B]">HMIS Register</Text>
-            <Text className="text-xs text-gray-400 font-bold">FCHV Maternal Health (4.2)</Text>
+            <Text className="text-2xl font-bold text-[#1E293B]">Maternal Record</Text>
+            <Text className="text-xs text-gray-400 font-medium">FCHV Maternal Health</Text>
           </View>
         </View>
         <TouchableOpacity
           onPress={() => router.push("/dashboard/record/add-record")}
-          className="bg-primary px-4 h-10 rounded-xl items-center justify-center flex-row shadow-sm shadow-blue-200"
+          className="border border-primary px-4 py-3 rounded-xl items-center justify-center flex-row"
         >
-          <Plus size={16} color="white" strokeWidth={3} />
-          <Text className="text-white font-black text-xs ml-2">New Entry</Text>
+          <Plus size={16} color="#5993f0ff" strokeWidth={3} />
+          <Text className="text-primary font-medium text-sm ml-2">New Entry</Text>
         </TouchableOpacity>
       </View>
 

@@ -10,7 +10,7 @@ import {
   Alert
 } from "react-native";
 import { Calendar, Edit, Save, X, Check } from "lucide-react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { CalendarPicker, AdToBs, BsToAd } from "react-native-nepali-picker";
 import * as Crypto from 'expo-crypto';
 import { createChildDeath } from "../../hooks/database/models/ChildDeathModel";
 import { ChildDeathStoreType } from "../../hooks/database/types/childDeathModal";
@@ -31,6 +31,12 @@ export default function ChildDeathModal({ visible, onClose, record, onSuccess, s
   const [birthDay, setBirthDay] = useState(new Date().getDate());
   const [birthMonth, setBirthMonth] = useState(new Date().getMonth() + 1);
   const [birthYear, setBirthYear] = useState(new Date().getFullYear());
+
+  const getAdString = (y: number, m: number, d: number) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const toNepali = (y: number, m: number, d: number) => {
+    try { return AdToBs(getAdString(y, m, d)); } catch { return getAdString(y, m, d); }
+  };
+
   const [causeOfDeath, setCauseOfDeath] = useState('');
   const [causeOfDeathOther, setCauseOfDeathOther] = useState('');
   const [gender, setGender] = useState<'Male' | 'Female' | ''>('');
@@ -42,15 +48,6 @@ export default function ChildDeathModal({ visible, onClose, record, onSuccess, s
   const [errGender, setErrGender] = useState(false);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setBirthDay(selectedDate.getDate());
-      setBirthMonth(selectedDate.getMonth() + 1);
-      setBirthYear(selectedDate.getFullYear());
-    }
-  };
 
   const handleSave = async () => {
     let hasError = false;
@@ -103,11 +100,6 @@ export default function ChildDeathModal({ visible, onClose, record, onSuccess, s
   const FieldLabel = ({ label, hasError, required = true }: { label: string; hasError: boolean; required?: boolean }) => (
     <View className="flex-row items-center justify-between mb-2">
       <Text className="text-[13px] text-slate-700 font-medium">{label} {required && <Text className="text-red-500">*</Text>}</Text>
-      {hasError && (
-        <View className="bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-          <Text className="text-red-500 text-[10px] font-bold uppercase">Required</Text>
-        </View>
-      )}
     </View>
   );
 
@@ -121,15 +113,10 @@ export default function ChildDeathModal({ visible, onClose, record, onSuccess, s
       <SafeAreaView className="flex-1 bg-[#F8FAFC]">
         {/* Header */}
         <View className="flex-row items-center justify-between p-4 bg-white shadow-sm shadow-slate-200">
-          <Text className="text-slate-900 text-[17px] font-bold">२८ दिन देखि ५९ महिना सम्मका बाल मृत्यु विवरण</Text>
+          <Text className="text-slate-900 text-[17px] font-semibold">२८ दिन देखि ५९ महिना सम्मका बाल मृत्यु विवरण</Text>
           <Pressable onPress={onClose} className="bg-slate-100 p-1 rounded-full">
             <X size={18} color="#64748B" />
           </Pressable>
-        </View>
-
-        {/* Progress bar indicator */}
-        <View className="h-[3px] bg-blue-100 w-full">
-           <View className="h-full bg-[#0056D2]" style={{ width: '100%' }} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} className="px-6 flex-1 mt-4">
@@ -182,21 +169,34 @@ export default function ChildDeathModal({ visible, onClose, record, onSuccess, s
                 <View className="flex-row items-center">
                   <Calendar size={18} color="#0056D2" />
                   <Text className="text-slate-800 text-[14px] ml-3">
-                    {birthDay}/{birthMonth}/{birthYear}
+                    {toNepali(birthYear, birthMonth, birthDay)}
                   </Text>
                 </View>
                 <View className="bg-blue-50 p-2 rounded-lg">
                   <Edit size={14} color="#0056D2" />
                 </View>
               </Pressable>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={new Date(birthYear, birthMonth - 1, birthDay)}
-                  mode="date"
-                  display="default"
-                  onChange={onDateChange}
-                />
-              )}
+              <CalendarPicker
+                visible={showDatePicker}
+                onClose={() => setShowDatePicker(false)}
+                onDateSelect={(bsDate) => {
+                  setShowDatePicker(false);
+                  try {
+                    const adDate = BsToAd(bsDate);
+                    const parts = adDate.split('-');
+                    setBirthYear(parseInt(parts[0], 10));
+                    setBirthMonth(parseInt(parts[1], 10));
+                    setBirthDay(parseInt(parts[2], 10));
+                  } catch (e) { console.error(e); }
+                }}
+                language="np"
+                theme="light"
+                brandColor="#0056D2"
+                date={toNepali(birthYear, birthMonth, birthDay)}
+                dayTextStyle={{ fontWeight: 'normal' }}
+                weekTextStyle={{ fontWeight: 'normal' }}
+                titleTextStyle={{ fontWeight: 'normal' }}
+              />
             </View>
 
             {/* Age at Death */}
@@ -229,19 +229,13 @@ export default function ChildDeathModal({ visible, onClose, record, onSuccess, s
                   <Pressable
                     key={c.v}
                     onPress={() => { setCauseOfDeath(c.v); setErrCauseOfDeath(false); }}
-                    className={`w-[48%] p-3.5 rounded-xl border flex-row items-center justify-between min-h-[70px] ${causeOfDeath === c.v
+                    className={`w-[48%] p-3.5 rounded-xl border flex-row items-center ${causeOfDeath === c.v
                       ? 'bg-blue-50/40 border-[#0056D2]'
                       : errCauseOfDeath ? 'bg-white border-red-300' : 'bg-white border-slate-200'
                       }`}
                   >
                     <Text className={`text-[12px] font-medium leading-relaxed ${causeOfDeath === c.v ? 'text-[#0056D2]' : 'text-slate-500'}`}>{c.l}</Text>
-                    {causeOfDeath === c.v ? (
-                      <View className="w-5 h-5 rounded-full bg-[#0056D2] items-center justify-center">
-                        <Check size={12} color="white" strokeWidth={3} />
-                      </View>
-                    ) : (
-                      <View className={`w-5 h-5 rounded-full border-2 ${errCauseOfDeath ? 'border-red-300' : 'border-slate-300'}`} />
-                    )}
+                 
                   </Pressable>
                 ))}
               </View>
@@ -276,10 +270,10 @@ export default function ChildDeathModal({ visible, onClose, record, onSuccess, s
         <View className="p-4 bg-white border-t border-slate-100">
           <Pressable
             onPress={handleSave}
-            className="bg-[#0056D2] w-full py-4 rounded-full flex-row items-center justify-center shadow-lg shadow-blue-200"
+            className="bg-primary w-full py-4 rounded-xl flex-row items-center justify-center"
           >
             <Save size={18} color="white" />
-            <Text className="text-white font-bold text-[15px] ml-2">विवरण सुरक्षित गर्नुहोस् (Save Record)</Text>
+            <Text className="text-white font-bold text-[15px] ml-2">विवरण सुरक्षित गर्नुहोस्</Text>
           </Pressable>
         </View>
       </SafeAreaView>

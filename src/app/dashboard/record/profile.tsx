@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -37,6 +37,7 @@ import { ChildDeathStoreType } from "../../../hooks/database/types/childDeathMod
 import Colors from "../../../constants/Colors";
 import CustomHeader from "../../../components/CustomHeader";
 import { useToast } from "../../../context/ToastContext";
+import { useTranslation } from "react-i18next";
 
 // Helper components moved outside to prevent re-renders on every parent state change
 const SectionTitle = ({ title, icon: Icon, color }: any) => (
@@ -56,6 +57,7 @@ const VisitBadge = ({ label, val }: any) => (
 );
 
 export default function HmisRecordProfileScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { showToast } = useToast();
@@ -107,21 +109,21 @@ export default function HmisRecordProfileScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      "Delete Record",
-      "Are you sure you want to delete this register entry?",
+      t("profile.alerts.delete_title"),
+      t("profile.alerts.delete_msg"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("profile.alerts.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("profile.alerts.delete"),
           style: "destructive",
           onPress: async () => {
             if (record?.id) {
               try {
                 await deleteHmisRecord(record.id);
-                showToast("Record deleted successfully");
+                showToast(t("profile.alerts.delete_success"));
                 router.back();
               } catch (error) {
-                Alert.alert("Error", "Could not delete record.");
+                Alert.alert(t("profile.alerts.error"), t("profile.alerts.delete_error"));
               }
             }
           }
@@ -134,7 +136,7 @@ export default function HmisRecordProfileScreen() {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="small" color={Colors.primary} />
-        <Text className="mt-4 text-slate-400 font-medium">Loading details...</Text>
+        <Text className="mt-4 text-slate-400 font-medium">{t("profile.states.loading")}</Text>
       </SafeAreaView>
     );
   }
@@ -143,9 +145,9 @@ export default function HmisRecordProfileScreen() {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-white">
         <User size={48} color="#CBD5E1" />
-        <Text className="mt-4 text-lg text-slate-500 font-medium">Record not found</Text>
+        <Text className="mt-4 text-lg text-slate-500 font-medium">{t("profile.states.not_found")}</Text>
         <TouchableOpacity onPress={() => router.back()} className="mt-6 px-8 py-3 rounded-2xl bg-primary">
-          <Text className="text-white font-semibold">Go Back</Text>
+          <Text className="text-white font-semibold">{t("profile.states.go_back")}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -156,7 +158,7 @@ export default function HmisRecordProfileScreen() {
       <StatusBar barStyle="dark-content" />
 
       <CustomHeader
-        title="Patient Details"
+        title={t("profile.title")}
         rightNode={
           <View className="flex-row items-center gap-3">
             <TouchableOpacity
@@ -183,24 +185,28 @@ export default function HmisRecordProfileScreen() {
           </View>
           <View className="ml-4 flex-1">
             <View className="flex-row items-center mb-1">
-              <Text className="text-slate-500 font-medium text-xs uppercase tracking-wider">Serial No. {record.serial_no}</Text>
+              <Text className="text-slate-500 font-medium text-xs uppercase tracking-wider">{t("profile.identity.serial_no")} {record.serial_no}</Text>
             </View>
             <Text className="text-slate-900 text-2xl font-semibold leading-tight">
               {record.mother_name}
             </Text>
-            <Text className="text-slate-500 font-medium text-sm mt-1">{record.mother_age} Years • Maternal Health</Text>
+            <Text className="text-slate-500 font-medium text-sm mt-1">{record.mother_age} {t("profile.identity.years")} • {t("profile.identity.maternal_health")}</Text>
           </View>
         </View>
 
         {/* Clean Info Grid */}
         <View className="flex-row mt-6 bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
           <View className="flex-1 p-4 items-center border-r border-slate-100">
-            <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1.5">LMP Date</Text>
-            <Text className="text-slate-700 font-semibold text-base">{record.lmp_day}/{record.lmp_month}/{record.lmp_year}</Text>
+            <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1.5">{t("profile.identity.lmp_date")}</Text>
+            <Text className="text-slate-700 font-semibold text-base">
+              {record.lmp_year ? `${record.lmp_day}/${record.lmp_month}/${record.lmp_year}` : "---"}
+            </Text>
           </View>
           <View className="flex-1 p-4 items-center">
-            <Text className="text-primary text-[10px] font-bold uppercase tracking-widest mb-1.5">EDD Date</Text>
-            <Text className="text-slate-700 font-semibold text-base">{record.edd_day}/{record.edd_month}/{record.edd_year}</Text>
+            <Text className="text-primary text-[10px] font-bold uppercase tracking-widest mb-1.5">{t("profile.identity.edd_date")}</Text>
+            <Text className="text-slate-700 font-semibold text-base">
+              {record.edd_year ? `${record.edd_day}/${record.edd_month}/${record.edd_year}` : "---"}
+            </Text>
           </View>
         </View>
       </View>
@@ -217,14 +223,14 @@ export default function HmisRecordProfileScreen() {
             <View className="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50">
               <View className="flex-row items-center mb-2">
                 <Info size={14} color={Colors.primary} />
-                <Text className="ml-2 text-slate-400 text-[11px] font-bold uppercase">Counseling</Text>
+                <Text className="ml-2 text-slate-400 text-[11px] font-bold uppercase">{t("profile.quick_stats.counseling")}</Text>
               </View>
-              <Text className="text-slate-800 font-semibold text-base">{record.counseling_given ? "Provided" : "Not Provided"}</Text>
+              <Text className="text-slate-800 font-semibold text-base">{record.counseling_given ? t("profile.quick_stats.provided") : t("profile.quick_stats.not_provided")}</Text>
             </View>
             <View className="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50">
               <View className="flex-row items-center mb-2">
                 <Calendar size={14} color="#D97706" />
-                <Text className="ml-2 text-slate-400 text-[11px] font-bold uppercase">Reg. Date</Text>
+                <Text className="ml-2 text-slate-400 text-[11px] font-bold uppercase">{t("profile.quick_stats.reg_date")}</Text>
               </View>
               <Text className="text-slate-800 font-semibold text-base">{record.date_day}/{record.date_month}/{record.date_year}</Text>
             </View>
@@ -232,16 +238,16 @@ export default function HmisRecordProfileScreen() {
 
           {/* ANC Checkups */}
           <View>
-            <SectionTitle title="ANC Visits" icon={Activity} color="bg-blue-500" />
+            <SectionTitle title={t("profile.anc.title")} icon={Activity} color="bg-blue-500" />
             <View className="flex-row flex-wrap">
-              <VisitBadge label="12 Wk" val={record.checkup_12} />
-              <VisitBadge label="16 Wk" val={record.checkup_16} />
-              <VisitBadge label="20-24 Wk" val={record.checkup_20_24} />
-              <VisitBadge label="28 Wk" val={record.checkup_28} />
-              <VisitBadge label="32 Wk" val={record.checkup_32} />
-              <VisitBadge label="34 Wk" val={record.checkup_34} />
-              <VisitBadge label="36 Wk" val={record.checkup_36} />
-              <VisitBadge label="38-40 Wk" val={record.checkup_38_40} />
+              <VisitBadge label={t("profile.anc.wk12")} val={record.checkup_12} />
+              <VisitBadge label={t("profile.anc.wk16")} val={record.checkup_16} />
+              <VisitBadge label={t("profile.anc.wk20_24")} val={record.checkup_20_24} />
+              <VisitBadge label={t("profile.anc.wk28")} val={record.checkup_28} />
+              <VisitBadge label={t("profile.anc.wk32")} val={record.checkup_32} />
+              <VisitBadge label={t("profile.anc.wk34")} val={record.checkup_34} />
+              <VisitBadge label={t("profile.anc.wk36")} val={record.checkup_36} />
+              <VisitBadge label={t("profile.anc.wk38_40")} val={record.checkup_38_40} />
             </View>
             {record.checkup_other && (
               <View className="mt-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -252,17 +258,17 @@ export default function HmisRecordProfileScreen() {
 
           {/* Supplements */}
           <View>
-            <SectionTitle title="Supplements" icon={Pill} color="bg-rose-500" />
+            <SectionTitle title={t("profile.supplements.title")} icon={Pill} color="bg-rose-500" />
             <View className="gap-y-2">
               {[
-                { label: "Iron (Pregnancy)", val: record.iron_preg_received },
-                { label: "Iron (Post-delivery)", val: record.iron_pnc_received },
-                { label: "Vitamin 'A' (Post-delivery)", val: record.vit_a_received }
+                { label: t("profile.supplements.iron_preg"), val: record.iron_preg_received },
+                { label: t("profile.supplements.iron_pnc"), val: record.iron_pnc_received },
+                { label: t("profile.supplements.vit_a"), val: record.vit_a_received }
               ].map((item, idx) => (
                 <View key={idx} className="flex-row items-center justify-between p-4 bg-white rounded-2xl border border-slate-100">
                   <Text className="text-slate-700 font-medium text-sm">{item.label}</Text>
                   <View className={`px-3 py-1 rounded-full ${item.val ? 'bg-emerald-500' : 'bg-slate-200'}`}>
-                    <Text className="text-white text-[10px] font-bold uppercase">{item.val ? "Done" : "Pending"}</Text>
+                    <Text className="text-white text-[10px] font-bold uppercase">{item.val ? t("profile.supplements.done") : t("profile.supplements.pending")}</Text>
                   </View>
                 </View>
               ))}
@@ -271,56 +277,56 @@ export default function HmisRecordProfileScreen() {
 
           {/* Birth & PNC Details */}
           <View>
-            <SectionTitle title="Birth & PNC" icon={Baby} color="bg-indigo-500" />
+            <SectionTitle title={t("profile.birth_pnc.title")} icon={Baby} color="bg-indigo-500" />
             <View className="flex-row gap-3 mb-4">
               <View className="flex-1 p-4 bg-white rounded-2xl border border-slate-100">
-                <Text className="text-slate-400 text-[10px] font-bold uppercase mb-1">Place</Text>
-                <Text className="text-slate-800 font-semibold">{record.delivery_place || "Unrecorded"}</Text>
+                <Text className="text-slate-400 text-[10px] font-bold uppercase mb-1">{t("profile.birth_pnc.place")}</Text>
+                <Text className="text-slate-800 font-semibold">{record.delivery_place || t("profile.birth_pnc.unrecorded")}</Text>
               </View>
               <View className="flex-1 p-4 bg-white rounded-2xl border border-slate-100">
-                <Text className="text-slate-400 text-[10px] font-bold uppercase mb-1">Condition</Text>
-                <Text className="text-slate-800 font-semibold">{record.newborn_condition || "Unrecorded"}</Text>
+                <Text className="text-slate-400 text-[10px] font-bold uppercase mb-1">{t("profile.birth_pnc.condition")}</Text>
+                <Text className="text-slate-800 font-semibold">{record.newborn_condition || t("profile.birth_pnc.unrecorded")}</Text>
               </View>
             </View>
 
             <View className="flex-row flex-wrap">
-              <VisitBadge label="<24 hr" val={record.pnc_check_24hr} />
-              <VisitBadge label="Day 3" val={record.pnc_check_3day} />
-              <VisitBadge label="Day 7-14" val={record.pnc_check_7_14day} />
-              <VisitBadge label="Day 42" val={record.pnc_check_42day} />
+              <VisitBadge label={t("profile.birth_pnc.hr24")} val={record.pnc_check_24hr} />
+              <VisitBadge label={t("profile.birth_pnc.day3")} val={record.pnc_check_3day} />
+              <VisitBadge label={t("profile.birth_pnc.day7_14")} val={record.pnc_check_7_14day} />
+              <VisitBadge label={t("profile.birth_pnc.day42")} val={record.pnc_check_42day} />
             </View>
 
             <View className="mt-4 p-4 rounded-2xl bg-slate-900 flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <Heart size={16} color="white" />
-                <Text className="text-white ml-3 font-medium text-sm">Family Planning Used</Text>
+                <Text className="text-white ml-3 font-medium text-sm">{t("profile.birth_pnc.fp_used")}</Text>
               </View>
               <Text className={`font-semibold text-sm ${record.family_planning_used ? 'text-primary' : 'text-slate-400'}`}>
-                {record.family_planning_used ? "YES" : "NO"}
+                {record.family_planning_used ? t("profile.birth_pnc.yes") : t("profile.birth_pnc.no")}
               </Text>
             </View>
           </View>
 
           {/* Death Reporting Section */}
           <View>
-            <SectionTitle title="Mortality Reports" icon={Activity} color="bg-red-500" />
+            <SectionTitle title={t("profile.mortality.title")} icon={Activity} color="bg-red-500" />
             <View className="gap-y-3">
               {[
                 {
-                  title: "मातृ मृत्यु विवरण",
-                  subtitle: "(गर्भवती अवस्था, प्रसव अवस्था तथा सुत्केरी भएको ४२ दिन भित्र मृत्यु भएका महिलाको लागि मात्र)",
+                  title: t("profile.mortality.maternal_title"),
+                  subtitle: t("profile.mortality.maternal_sub"),
                   key: 'maternal',
                   exists: !!existingDeathRecord
                 },
                 {
-                  title: "नवजात शिशु मृत्यु विवरण",
-                  subtitle: "(जन्मेको २८ दिन भित्र मृत्यु भएका नवजात शिशुको लागि मात्र)",
+                  title: t("profile.mortality.newborn_title"),
+                  subtitle: t("profile.mortality.newborn_sub"),
                   key: 'newborn',
                   exists: !!existingNewbornDeathRecord
                 },
                 {
-                  title: "२८ दिन देखि ५९ महिना सम्मका बच्चाहरूको मृत्यु विवरण",
-                  subtitle: "(बालबालिका मृत्यु विवरण)",
+                  title: t("profile.mortality.child_title"),
+                  subtitle: t("profile.mortality.child_sub"),
                   key: 'child',
                   exists: !!existingChildDeathRecord
                 },
@@ -331,7 +337,7 @@ export default function HmisRecordProfileScreen() {
                   onPress={() => {
                     if (item.key === 'maternal') {
                       if (existingDeathRecord) {
-                        Alert.alert("Already Reported", "Maternal death report exists.");
+                        Alert.alert(t("profile.alerts.already_reported"), t("profile.alerts.maternal_exists"));
                       } else {
                         setMaternalDeathModalVisible(true);
                       }
@@ -354,8 +360,8 @@ export default function HmisRecordProfileScreen() {
                     <View className={`px-3 py-1 rounded-lg ${item.exists ? 'bg-emerald-100' : 'bg-white border border-slate-200'}`}>
                       <Text className={`text-[10px] font-bold uppercase ${item.exists ? 'text-emerald-600' : 'text-slate-400'}`}>
                         {['newborn', 'child'].includes(item.key)
-                          ? (item.exists ? 'Add More +' : 'Report')
-                          : (item.exists ? 'Submitted' : 'Report')}
+                          ? (item.exists ? t("profile.mortality.add_more") : t("profile.mortality.add"))
+                          : (item.exists ? t("profile.mortality.submitted") : t("profile.mortality.add"))}
                       </Text>
                     </View>
                   </View>
@@ -367,7 +373,7 @@ export default function HmisRecordProfileScreen() {
           {/* Remarks */}
           {record.remarks && (
             <View className="mb-6">
-              <SectionTitle title="Remarks" icon={FileText} color="bg-slate-400" />
+              <SectionTitle title={t("profile.remarks")} icon={FileText} color="bg-slate-400" />
               <View className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <Text className="text-slate-600 font-medium leading-relaxed">{record.remarks}</Text>
               </View>

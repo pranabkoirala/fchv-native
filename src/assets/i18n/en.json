@@ -218,5 +218,162 @@
     "tips_label": "Practical Tips",
     "source": "Source: World Health Organization (WHO)",
     "who_badge": "WHO Verified"
+  },
+  "add_record": {
+    "title_new": "New HMIS Entry",
+    "title_edit": "Edit HMIS Entry",
+    "steps": {
+      "mother": "Mother",
+      "anc": "ANC",
+      "meds": "Meds",
+      "pnc": "PNC"
+    },
+    "basic_info": {
+      "mother_name": "Mother's Full Name",
+      "mother_name_placeholder": "Full Name",
+      "age": "Age",
+      "age_placeholder": "Age",
+      "lmp_date": "LMP Date",
+      "select_lmp": "Select LMP Date",
+      "edd_date": "Due Date (EDD)",
+      "select_edd": "Select Due Date",
+      "counseling_given": "Counseling Given?",
+      "yes": "Yes (छ)"
+    },
+    "anc_visits": {
+      "subtitle": "Select the weeks when check-up was done",
+      "wk12": "12 Week",
+      "wk16": "16 Week",
+      "wk20_24": "20-24 Wk",
+      "wk28": "28 Week",
+      "wk32": "32 Week",
+      "wk34": "34 Week",
+      "wk36": "36 Week",
+      "wk38_40": "38-40 Wk",
+      "other_wk": "Other Week (अन्य)",
+      "other_wk_placeholder": "Enter other weeks"
+    },
+    "meds": {
+      "iron_180": "Iron 180 (Pregnancy)",
+      "iron_45": "Iron 45 (Post-delivery)",
+      "vit_a": "Vitamin 'A' (Post-delivery)",
+      "received": "Received (पाएको)"
+    },
+    "pnc_delivery": {
+      "delivery_place": "Delivery Place",
+      "delivery_place_placeholder": "eg. Home (घर)",
+      "place": "Place",
+      "home": "Home (घर)",
+      "facility": "Health Facility (संस्था)",
+      "other": "Other (अन्य)",
+      "newborn_condition": "Condition of Newborn",
+      "condition": "Condition",
+      "select_condition": "Select Condition",
+      "alive": "Alive (जीवित)",
+      "dead": "Dead (मृत)",
+      "pnc_checkups": "PNC Check-ups",
+      "hr24": "<24 hr",
+      "day3": "3rd Day",
+      "day7_14": "7-14 Day",
+      "day42": "42nd Day",
+      "fp_method": "Family Planning Method User?",
+      "used": "Used (गरेको)",
+      "remarks": "Remarks",
+      "notes": "Notes..."
+    },
+    "actions": {
+      "next_step": "Next Step",
+      "finish": "Finish Record",
+      "saving": "Saving...",
+      "skip": "Skip",
+      "save_success": "Record saved successfully",
+      "update_success": "Record updated successfully",
+      "save_failed": "Failed to save record"
+    },
+    "validation": {
+      "name_req": "Name is required",
+      "age_req": "Age is required",
+      "age_min": "Age must be at least 18",
+      "age_max": "Age must be less than 55",
+      "lmp_req": "LMP Date is required",
+      "edd_req": "Due Date is required"
+    }
+  },
+  "profile": {
+    "title": "Patient Details",
+    "alerts": {
+      "delete_title": "Delete Record",
+      "delete_msg": "Are you sure you want to delete this register entry?",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "delete_success": "Record deleted successfully",
+      "error": "Error",
+      "delete_error": "Could not delete record.",
+      "already_reported": "Already Reported",
+      "maternal_exists": "Maternal death report exists."
+    },
+    "states": {
+      "loading": "Loading details...",
+      "not_found": "Record not found",
+      "go_back": "Go Back"
+    },
+    "identity": {
+      "serial_no": "Serial No.",
+      "years": "Years",
+      "maternal_health": "Maternal Health",
+      "lmp_date": "LMP Date",
+      "edd_date": "EDD Date"
+    },
+    "quick_stats": {
+      "counseling": "Counseling",
+      "provided": "Provided",
+      "not_provided": "Not Provided",
+      "reg_date": "Reg. Date"
+    },
+    "anc": {
+      "title": "ANC Visits",
+      "wk12": "12 Wk",
+      "wk16": "16 Wk",
+      "wk20_24": "20-24 Wk",
+      "wk28": "28 Wk",
+      "wk32": "32 Wk",
+      "wk34": "34 Wk",
+      "wk36": "36 Wk",
+      "wk38_40": "38-40 Wk"
+    },
+    "supplements": {
+      "title": "Supplements",
+      "iron_preg": "Iron (Pregnancy)",
+      "iron_pnc": "Iron (Post-delivery)",
+      "vit_a": "Vitamin 'A' (Post-delivery)",
+      "done": "Done",
+      "pending": "Pending"
+    },
+    "birth_pnc": {
+      "title": "Birth & PNC",
+      "place": "Place",
+      "condition": "Condition",
+      "unrecorded": "Unrecorded",
+      "hr24": "<24 hr",
+      "day3": "Day 3",
+      "day7_14": "Day 7-14",
+      "day42": "Day 42",
+      "fp_used": "Family Planning Used",
+      "yes": "YES",
+      "no": "NO"
+    },
+    "mortality": {
+      "title": "Mortality Reports",
+      "maternal_title": "Maternal Death Report",
+      "maternal_sub": "(Only for women who died during pregnancy, delivery or within 42 days postpartum)",
+      "newborn_title": "Newborn Death Report",
+      "newborn_sub": "(Only for newborns who died within 28 days of birth)",
+      "child_title": "Child Death Report (28 days to 59 months)",
+      "child_sub": "(Child Mortality Details)",
+      "add_more": "Add More +",
+      "add": "Add +",
+      "submitted": "Submitted"
+    },
+    "remarks": "Remarks"
   }
 }
