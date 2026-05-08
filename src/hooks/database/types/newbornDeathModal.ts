@@ -6,12 +6,11 @@ export interface NewbornDeathStoreType {
   birth_day: number;
   birth_month: number;
   birth_year: number;
-  delivery_place: string; // 'Home', 'Institution', 'Other'
-  delivery_place_other?: string;
   birth_condition: string; // 'Preterm', 'LowWeight', 'Normal', 'Other'
   birth_condition_other?: string;
   death_age_days: number;
-  cause_of_death: string; // 'Asphyxia', 'Hypothermia', 'Infection', 'Other'
+  death_age_unit: 'days' | 'months'; // 'days' or 'months'
+  cause_of_death: string; // 'Asphyxia', 'Hypothermia', 'Infection', 'Pneumonia', 'Diarrhea', 'Malnutrition', 'Other'
   cause_of_death_other?: string;
   death_place: string; // 'Home', 'Institution', 'Other'
   death_place_other?: string;

@@ -7,6 +7,8 @@ export type PregnancyStoreType = {
   parity: number | null;
   lmp_date: string;
   expected_delivery_date: string | null;
+  caretakers_name: string | null;
+  caretakers_phone: string | null;
   is_current: number;
   selected: number;
   created_at: string;
@@ -19,6 +21,8 @@ export interface PregnancyData {
   parity: number;
   lmp_date: string;
   expected_delivery_date: string;
+  caretakers_name?: string;
+  caretakers_phone?: string;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +34,8 @@ export type CreatePregnancyPayload = {
   parity?: number;
   lmp_date: string;
   expected_delivery_date?: string;
+  caretakers_name?: string;
+  caretakers_phone?: string;
   is_current?: boolean;
   selected: boolean;
   is_synced?: boolean;

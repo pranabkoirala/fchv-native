@@ -6,14 +6,33 @@ CREATE TABLE IF NOT EXISTS mother(
     code TEXT,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
-    name TEXT,
-    age INTEGER,
-    phone TEXT,
-    address TEXT,
     husband_name TEXT,
     ethnicity TEXT,
     education TEXT,
     photo TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    phone_number TEXT,
+    date_of_birth TEXT,
+    address_locality TEXT,
+    address_house_number TEXT,
+    address_province TEXT,
+    address_district TEXT,
+    address_municipality TEXT,
+    address_ward TEXT,
+    income TEXT,
+    occupation TEXT,
+    blood_group TEXT,
+    jati_code TEXT,
+    lmp_date TEXT,
+    parity INTEGER,
+    gravida INTEGER,
+    cover_photo TEXT,
+    emergency_contact_number TEXT,
+    alias TEXT,
+    partner_name TEXT,
+    partner_mobile TEXT,
+    partner_age TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
@@ -27,10 +46,13 @@ CREATE TABLE IF NOT EXISTS mother(
     parity INTEGER,
     lmp_date TEXT NOT NULL,
     expected_delivery_date TEXT,
+    caretakers_name TEXT,
+    caretakers_phone TEXT,
     is_current INTEGER NOT NULL DEFAULT 0,
     selected INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(mother_id) REFERENCES mother(id)
   );
 
   CREATE TABLE IF NOT EXISTS visit (
@@ -113,8 +135,6 @@ CREATE TABLE IF NOT EXISTS hmis_maternal_death (
     death_day INTEGER,
     death_month INTEGER,
     death_year INTEGER,
-    delivery_place TEXT, -- 'Home', 'Institution', 'Other'
-    delivery_place_other TEXT,
     death_place TEXT, -- 'Home', 'Institution', 'Other'
     death_place_other TEXT,
     remarks TEXT,
@@ -133,11 +153,10 @@ CREATE TABLE IF NOT EXISTS hmis_newborn_death (
     birth_day INTEGER,
     birth_month INTEGER,
     birth_year INTEGER,
-    delivery_place TEXT, -- 'Home', 'Institution', 'Other'
-    delivery_place_other TEXT,
     birth_condition TEXT, -- 'Preterm', 'LowWeight', 'Normal', 'Other'
     birth_condition_other TEXT,
     death_age_days INTEGER,
+    death_age_unit TEXT DEFAULT 'days', -- 'days' or 'months'
     cause_of_death TEXT, -- 'Asphyxia', 'Hypothermia', 'Infection', 'Other'
     cause_of_death_other TEXT,
     death_place TEXT, -- 'Home', 'Institution', 'Other'
@@ -151,17 +170,20 @@ CREATE TABLE IF NOT EXISTS hmis_newborn_death (
     FOREIGN KEY(mother_id) REFERENCES mother(id)
 );
 
-CREATE TABLE IF NOT EXISTS hmis_child_death (
+CREATE TABLE IF NOT EXISTS child_monitoring (
     id TEXT PRIMARY KEY,
     mother_id TEXT,
-    mother_name TEXT,
-    child_name TEXT,
-    birth_day INTEGER,
-    birth_month INTEGER,
-    birth_year INTEGER,
-    death_age_months INTEGER,
-    cause_of_death TEXT,
-    gender TEXT, -- 'Male', 'Female'
+    baby_name TEXT,
+    date_of_birth TEXT,
+    birth_place TEXT, -- 'home', 'institution', 'trained_worker'
+    status TEXT, -- 'alive', 'dead'
+    fchv_present INTEGER DEFAULT 0,
+    skilled_birth_attended INTEGER DEFAULT 0,
+    baby_weight TEXT, -- 'normal', 'low', 'very_low'
+    umbilical_ointment INTEGER DEFAULT 0,
+    skin_to_skin INTEGER DEFAULT 0,
+    early_breastfeeding INTEGER DEFAULT 0,
+    asphyxiated_newborn INTEGER DEFAULT 0,
     remarks TEXT,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
@@ -169,28 +191,35 @@ CREATE TABLE IF NOT EXISTS hmis_child_death (
     updated_at TEXT NOT NULL,
     FOREIGN KEY(mother_id) REFERENCES mother(id)
 );
-CREATE TABLE IF NOT EXISTS hmis_infant_monitoring (
+
+CREATE TABLE IF NOT EXISTS supplements (
     id TEXT PRIMARY KEY,
-    mother_id TEXT,
-    mother_name TEXT,
-    baby_name TEXT,
-    baby_birth_day INTEGER,
-    baby_birth_month INTEGER,
-    baby_birth_year INTEGER,
-    tole TEXT,
-    birth_place TEXT, -- 'home', 'institution', 'trained_worker'
-    fchv_present INTEGER DEFAULT 0,
-    asphyxia_management INTEGER DEFAULT 0,
-    serial_no INTEGER,
-    umbilical_care INTEGER DEFAULT 0,
-    chest_to_chest INTEGER DEFAULT 0,
-    breastfeeding_1hr INTEGER DEFAULT 0,
-    baby_weight TEXT, -- 'normal', 'low', 'very_low'
-    pnc_check_24hr INTEGER DEFAULT 0,
-    pnc_check_3day INTEGER DEFAULT 0,
-    pnc_check_7_14day INTEGER DEFAULT 0,
-    pnc_check_42day INTEGER DEFAULT 0,
-    remarks TEXT,
+    mother_id TEXT NOT NULL,
+    iron_pregnancy INTEGER DEFAULT 0,
+    iron_post_delivery INTEGER DEFAULT 0,
+    vitamin_a_post_delivery INTEGER DEFAULT 0,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(mother_id) REFERENCES mother(id)
+);
+
+CREATE TABLE IF NOT EXISTS family_planning (
+    id TEXT PRIMARY KEY,
+    mother_id TEXT NOT NULL,
+    family_planning TEXT,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(mother_id) REFERENCES mother(id)
+);
+
+CREATE TABLE IF NOT EXISTS counseling (
+    id TEXT PRIMARY KEY,
+    mother_id TEXT NOT NULL,
+    is_counseled INTEGER DEFAULT 0,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,

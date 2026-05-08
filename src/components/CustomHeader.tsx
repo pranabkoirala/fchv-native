@@ -18,7 +18,7 @@ export default function CustomHeader({
   subtitle,
   rightNode, 
   containerStyle,
-  className = "pt-4 pb-4 px-5 mt-8",
+  className = "pt-4 pb-4 px-5",
   onBackPress
 }: CustomHeaderProps) {
   const router = useRouter();
@@ -36,13 +36,13 @@ export default function CustomHeader({
 
   return (
     <View 
-      className={`flex-row items-center justify-between bg-white px-5 pt-12 pb-4 ${className}`}
+      className={`flex-row items-center justify-between bg-white px-5 pb-4 ${className}`}
       style={containerStyle}
     >
       <View className="flex-row items-center flex-1">
         <TouchableOpacity 
           onPress={handleBack} 
-          className="mr-3 p-2 rounded-xl border border-slate-100 bg-white shadow-sm"
+          className="mr-3 p-2 rounded-xl"
         >
           <ChevronLeft size={22} color={Colors.textPrimary || "#1E293B"} strokeWidth={2.5} />
         </TouchableOpacity>

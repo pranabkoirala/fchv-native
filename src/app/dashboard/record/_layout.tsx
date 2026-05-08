@@ -6,7 +6,6 @@ export default function RecordLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="add-record" />
-      <Stack.Screen name="profile" />
     </Stack>
   );
 }

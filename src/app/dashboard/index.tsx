@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Image,
   TextInput,
@@ -39,8 +38,7 @@ import { getPregnancyCount } from "../../hooks/database/models/PregnantWomenModa
 import { getAllVisits, VisitListItem } from "../../hooks/database/models/VisitModel";
 import { getAllHmisRecords } from "../../hooks/database/models/HmisRecordModel";
 import { getTotalMaternalDeaths } from "../../hooks/database/models/MaternalDeathModel";
-import { getTotalNewbornDeaths, getAllNewbornDeaths } from "../../hooks/database/models/NewbornDeathModel";
-import { getTotalChildDeaths, getAllChildDeaths } from "../../hooks/database/models/ChildDeathModel";
+import { getAllNewbornDeaths } from "../../hooks/database/models/NewbornDeathModel";
 import { HmisRecordStoreType } from "../../hooks/database/types/hmisRecordModal";
 
 import "../../global.css";
@@ -398,27 +396,32 @@ export default function DashboardScreen() {
     useCallback(() => {
       const fetchData = async () => {
         try {
-          const [mCount, pCount, visits, hRecords, mdCount, ndCount, cdCount, nDeathsList, cDeathsList] = await Promise.all([
+          const [mCount, pCount, visits, hRecords, mdCount, allDeaths] = await Promise.all([
             getMotherCount(),
             getPregnancyCount(),
             getAllVisits(),
             getAllHmisRecords(),
             getTotalMaternalDeaths(),
-            getTotalNewbornDeaths(),
-            getTotalChildDeaths(),
-            getAllNewbornDeaths(),
-            getAllChildDeaths()
+            getAllNewbornDeaths()
           ]);
+
+          // Split deaths into newborn (<28 days) vs child (>=28 days or months)
+          const nDeathsList = allDeaths.filter(d =>
+            d.death_age_unit === 'days' && d.death_age_days < 28
+          );
+          const cDeathsList = allDeaths.filter(d =>
+            d.death_age_unit === 'months' || (d.death_age_unit === 'days' && d.death_age_days >= 28)
+          );
 
           setMotherCount(mCount);
           setPregnancyCount(pCount);
           setRecentVisits(visits);
           setHmisRecords(hRecords);
           setMaternalDeathCount(mdCount);
-          setNewbornDeathCount(ndCount);
-          setChildDeathCount(cdCount);
+          setNewbornDeathCount(nDeathsList.length);
+          setChildDeathCount(cDeathsList.length);
 
-          // Newborn Analysis
+          // Newborn Analysis (<28 days)
           const nCauses = { Asphyxia: 0, Infection: 0, Hypothermia: 0, Other: 0 };
           const nTrendData = Array.from({ length: 12 }, (_, i) => ({
             label: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
@@ -435,10 +438,6 @@ export default function DashboardScreen() {
             if (d.birth_month && d.birth_month >= 1 && d.birth_month <= 12) {
               if (d.gender === 'Male') nTrendData[d.birth_month - 1].male++;
               else if (d.gender === 'Female') nTrendData[d.birth_month - 1].female++;
-              else {
-                // If gender is missing, we could split or default, but let's just count for now
-                // if (Math.random() > 0.5) nTrendData[d.birth_month-1].male++; else nTrendData[d.birth_month-1].female++;
-              }
             }
           });
 
@@ -450,7 +449,7 @@ export default function DashboardScreen() {
           ]);
           setNewbornTrend(nTrendData);
 
-          // Child Analysis (28d - 59m)
+          // Child Analysis (>=28 days or months)
           const cCauses = { Pneumonia: 0, Diarrhea: 0, Malnutrition: 0, Other: 0 };
           const cTrendData = Array.from({ length: 12 }, (_, i) => ({
             label: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i],
@@ -790,50 +789,6 @@ export default function DashboardScreen() {
               colors={{ male: '#0D9488', female: '#7C3AED' }} 
               labels={childTrend.map(t => t.label)} 
             />
-          </View>
-        </View>
-
-        <View className="px-5 mt-10">
-          <Text className="text-[#1E293B] text-lg font-semibold mb-6">Quick Actions</Text>
-          <View className="flex-row gap-4">
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => router.push("/dashboard/mother-list/add-mother" as any)}
-              className="flex-1 bg-white p-5 rounded-3xl border border-gray-50 items-center shadow-sm"
-            >
-              <View className="bg-blue-500 w-12 h-12 rounded-2xl items-center justify-center mb-3">
-                <Plus size={24} color="white" strokeWidth={2} />
-              </View>
-              <Text className="text-[#1E293B] font-medium text-xs">Add Mother</Text>
-              <Text className="text-gray-400 font-medium text-[9px] mt-0.5">आमा थप्नुहोस्</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => router.push("/dashboard/follow-up")}
-              className="flex-1 bg-white p-5 rounded-3xl border border-gray-50 items-center shadow-sm"
-            >
-              <View className="bg-green-500 w-12 h-12 rounded-2xl items-center justify-center mb-3">
-                <Calendar size={24} color="white" strokeWidth={2} />
-              </View>
-              <Text className="text-[#1E293B] font-medium text-xs">Add Visit</Text>
-              <Text className="text-gray-400 font-medium text-[9px] mt-0.5">भ्रमण थप्नुहोस्</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => {
-                scrollRef.current?.scrollTo({ y: 800, animated: true });
-                setTimeout(() => todoInputRef.current?.focus(), 500);
-              }}
-              className="flex-1 bg-white p-5 rounded-3xl border border-gray-50 items-center shadow-sm"
-            >
-              <View className="bg-orange-500 w-12 h-12 rounded-2xl items-center justify-center mb-3">
-                <CheckCircle size={24} color="white" strokeWidth={2} />
-              </View>
-              <Text className="text-[#1E293B] font-medium text-xs">Add Todo</Text>
-              <Text className="text-gray-400 font-medium text-[9px] mt-0.5">कार्य थप्नुहोस्</Text>
-            </TouchableOpacity>
           </View>
         </View>
 

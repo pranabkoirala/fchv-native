@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 19;
 
 type Migration = {
   version: number;
@@ -284,6 +284,167 @@ export const MIGRATIONS: Migration[] = [
         `);
       } catch (e) {
         console.log("Migration 13 (hmis_infant_monitoring table) failed:", e);
+      }
+    }
+  },
+  {
+    version: 14,
+    up: async (db) => {
+      const queries = [
+        "ALTER TABLE mother ADD COLUMN first_name TEXT;",
+        "ALTER TABLE mother ADD COLUMN last_name TEXT;",
+        "ALTER TABLE mother ADD COLUMN phone_number TEXT;",
+        "ALTER TABLE mother ADD COLUMN date_of_birth TEXT;",
+        "ALTER TABLE mother ADD COLUMN address_locality TEXT;",
+        "ALTER TABLE mother ADD COLUMN address_house_number TEXT;",
+        "ALTER TABLE mother ADD COLUMN address_province TEXT;",
+        "ALTER TABLE mother ADD COLUMN address_district TEXT;",
+        "ALTER TABLE mother ADD COLUMN address_municipality TEXT;",
+        "ALTER TABLE mother ADD COLUMN address_ward TEXT;",
+        "ALTER TABLE mother ADD COLUMN income TEXT;",
+        "ALTER TABLE mother ADD COLUMN occupation TEXT;",
+        "ALTER TABLE mother ADD COLUMN blood_group TEXT;",
+        "ALTER TABLE mother ADD COLUMN jati_code TEXT;",
+        "ALTER TABLE mother ADD COLUMN lmp_date TEXT;",
+        "ALTER TABLE mother ADD COLUMN parity INTEGER;",
+        "ALTER TABLE mother ADD COLUMN gravida INTEGER;",
+        "ALTER TABLE mother ADD COLUMN cover_photo TEXT;",
+        "ALTER TABLE mother ADD COLUMN emergency_contact_number TEXT;",
+        "ALTER TABLE mother ADD COLUMN alias TEXT;",
+        "ALTER TABLE mother ADD COLUMN partner_name TEXT;",
+        "ALTER TABLE mother ADD COLUMN partner_mobile TEXT;",
+        "ALTER TABLE mother ADD COLUMN partner_age TEXT;"
+      ];
+      for (const query of queries) {
+        try {
+          await db.execAsync(query);
+        } catch (e) {
+          console.log(`Migration 14 query failed or already applied: ${query}`, e);
+        }
+      }
+    }
+  },
+  {
+    version: 15,
+    up: async (db) => {
+      try {
+        // SQLite doesn't support DROP COLUMN easily. 
+        // We recreate the table without the legacy name, age, phone, address columns.
+        await db.execAsync(`
+          CREATE TABLE mother_new (
+            id TEXT PRIMARY KEY,
+            code TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            husband_name TEXT,
+            ethnicity TEXT,
+            education TEXT,
+            photo TEXT,
+            first_name TEXT,
+            last_name TEXT,
+            phone_number TEXT,
+            date_of_birth TEXT,
+            address_locality TEXT,
+            address_house_number TEXT,
+            address_province TEXT,
+            address_district TEXT,
+            address_municipality TEXT,
+            address_ward TEXT,
+            income TEXT,
+            occupation TEXT,
+            blood_group TEXT,
+            jati_code TEXT,
+            lmp_date TEXT,
+            parity INTEGER,
+            gravida INTEGER,
+            cover_photo TEXT,
+            emergency_contact_number TEXT,
+            alias TEXT,
+            partner_name TEXT,
+            partner_mobile TEXT,
+            partner_age TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+          
+          INSERT INTO mother_new (
+            id, code, is_synced, is_deleted, husband_name, ethnicity, education, photo,
+            first_name, last_name, phone_number, date_of_birth, address_locality, 
+            address_house_number, address_province, address_district, address_municipality, 
+            address_ward, income, occupation, blood_group, jati_code, lmp_date, parity, 
+            gravida, cover_photo, emergency_contact_number, alias, partner_name, 
+            partner_mobile, partner_age, created_at, updated_at
+          )
+          SELECT 
+            id, code, is_synced, is_deleted, husband_name, ethnicity, education, photo,
+            first_name, last_name, phone_number, date_of_birth, address_locality, 
+            address_house_number, address_province, address_district, address_municipality, 
+            address_ward, income, occupation, blood_group, jati_code, lmp_date, parity, 
+            gravida, cover_photo, emergency_contact_number, alias, partner_name, 
+            partner_mobile, partner_age, created_at, updated_at
+          FROM mother;
+          
+          DROP TABLE mother;
+          ALTER TABLE mother_new RENAME TO mother;
+        `);
+      } catch (e) {
+        console.log("Migration 15 (mother table cleanup) failed:", e);
+      }
+    }
+  },
+  {
+    version: 16,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE pregnancy ADD COLUMN caretakers_name TEXT;
+          ALTER TABLE pregnancy ADD COLUMN caretakers_phone TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 16 (pregnancy caretaker columns) failed or already applied:", e);
+      }
+    }
+  },
+  {
+    version: 17,
+    up: async (db) => {
+      const queries = [
+        "ALTER TABLE child_monitoring ADD COLUMN umbilical_ointment INTEGER DEFAULT 0;",
+        "ALTER TABLE child_monitoring ADD COLUMN skin_to_skin INTEGER DEFAULT 0;",
+        "ALTER TABLE child_monitoring ADD COLUMN early_breastfeeding INTEGER DEFAULT 0;"
+      ];
+      for (const query of queries) {
+        try {
+          await db.execAsync(query);
+        } catch (e) {
+          console.log(`Migration 17 query failed or already applied: ${query}`, e);
+        }
+      }
+    }
+  },
+  {
+    version: 18,
+    up: async (db) => {
+      const queries = [
+        "ALTER TABLE child_monitoring ADD COLUMN status TEXT DEFAULT 'alive';",
+        "ALTER TABLE child_monitoring ADD COLUMN asphyxiated_newborn INTEGER DEFAULT 0;"
+      ];
+      for (const query of queries) {
+        try {
+          await db.execAsync(query);
+        } catch (e) {
+          console.log(`Migration 18 query failed or already applied: ${query}`, e);
+        }
+      }
+    }
+  },
+  {
+    version: 19,
+    up: async (db) => {
+      try {
+        await db.execAsync(`ALTER TABLE hmis_newborn_death ADD COLUMN death_age_unit TEXT DEFAULT 'days';`);
+      } catch (e) {
+        console.log("Migration 19 (death_age_unit column) already applied or failed:", e);
       }
     }
   }

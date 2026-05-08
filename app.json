@@ -3,6 +3,7 @@
     "name": "FCHV",
     "slug": "We aware the pregnat women!",
     "version": "1.0.0",
+    "scheme": "fchvnative",
     "orientation": "portrait",
     "icon": "./src/assets/fchv-logo.png",
     "userInterfaceStyle": "light",

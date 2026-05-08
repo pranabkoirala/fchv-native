@@ -28,17 +28,17 @@ export default function InputField({
   return (
     <View className={twMerge("w-full mb-8", containerClassName)}>
       <View className="flex-row items-center justify-between mb-1.5 px-0.5">
-        <Text className="text-gray-500 font-bold text-[13px] uppercase tracking-wider">{label}</Text>
+        <Text className="text-gray-500 font-semibold text-[13px] uppercase tracking-wider">{label}</Text>
         {subLabel && (
-          <Text className="text-gray-400 font-bold text-[11px] uppercase">{subLabel}</Text>
+          <Text className="text-gray-400 font-semibold text-[11px] uppercase">{subLabel}</Text>
         )}
       </View>
 
-      <View className="flex-row items-center border-b border-gray-200 h-14 pb-1">
+      <View className="flex-row items-center border rounded-xl px-3 border-gray-200 h-14 pb-1">
         {leftIcon && <View className="mr-2">{leftIcon}</View>}
 
         <TextInput
-          className="flex-1 text-[#1E293B] text-lg h-full font-bold"
+          className="flex-1 text-[#1E293B] text-md h-full font-semibold"
           placeholderTextColor="#cbd5e1"
           secureTextEntry={isPasswordType && !isPasswordVisible}
           {...props}

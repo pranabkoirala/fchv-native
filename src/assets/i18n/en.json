@@ -2,14 +2,19 @@
   "login": {
     "welcome": "Welcome",
     "subtitle": "Health Data Collection App",
-    "health_id_label": "Health Worker ID",
+    "health_id_label": "Health Volunteer ID",
     "health_id_placeholder": "Enter Email ID",
     "password_label": "Password",
     "password_placeholder": "Enter Password",
     "login_button": "Login",
     "login_sub": "Enter your credentials",
     "forgot_password": "Forgot Password?",
-    "help_text": "Need help? Contact local health post"
+    "help_text": "Need help? Contact local health post",
+    "title": "Female Community\nHealth Volunteer",
+    "terms_text": "By logging in, you agree to our",
+    "terms_link": "Terms of Practice",
+    "error_required": "User ID and Password are required.",
+    "error_invalid": "Invalid User ID or Password"
   },
   "common": {
     "english": "English",
@@ -310,7 +315,9 @@
       "error": "Error",
       "delete_error": "Could not delete record.",
       "already_reported": "Already Reported",
-      "maternal_exists": "Maternal death report exists."
+      "maternal_exists": "Maternal death report exists.",
+      "save_success": "Supplement updated successfully",
+      "save_error": "Failed to update supplement"
     },
     "states": {
       "loading": "Loading details...",
@@ -347,7 +354,11 @@
       "iron_pnc": "Iron (Post-delivery)",
       "vit_a": "Vitamin 'A' (Post-delivery)",
       "done": "Done",
-      "pending": "Pending"
+      "pending": "Pending",
+      "add_title": "Add Supplement",
+      "confirm_q": "Did you give {{name}} to {{mother}}?",
+      "give_btn": "Yes, Given",
+      "add_btn": "Add"
     },
     "birth_pnc": {
       "title": "Birth & PNC",
@@ -375,5 +386,380 @@
       "submitted": "Submitted"
     },
     "remarks": "Remarks"
+  },
+  "reports": {
+    "title": "Reports",
+    "service_recipients": {
+      "title": "Total service recipients count",
+      "subtitle": "Total service recipients count"
+    },
+    "child_monitoring": {
+      "title": "Child monitoring visits",
+      "subtitle": "Child monitoring visits"
+    },
+    "maternal_death": {
+      "title": "Maternal death report",
+      "subtitle": "Maternal death report"
+    },
+    "newborn_death": {
+      "title": "Newborn death report",
+      "subtitle": "Newborn death report"
+    },
+    "child_death": {
+      "title": "Child death report",
+      "subtitle": "Child death report"
+    },
+    "instructions_title": "Recording instructions:",
+    "instructions_content": "The reports available in this section are for recording your monthly performance and service delivery. You can select a report to view and print details.",
+    "common": {
+      "sn": "S.N.",
+      "remarks": "Remarks",
+      "actions": "Actions",
+      "search_placeholder": "Search Register...",
+      "no_data": "No Data",
+      "no_data_msg": "There are no records to export.",
+      "export_error": "Export Error",
+      "export_error_msg": "An error occurred while generating the report.",
+      "delete_confirm_title": "Delete Record",
+      "delete_confirm_msg": "Are you sure you want to delete this record?",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "loading": "Loading report...",
+      "month": "Month",
+      "total": "Total",
+      "service_recipient": "Service Recipient",
+      "mother": "Mother",
+      "pregnant": "Pregnant",
+      "child": "Child",
+      "death": "Death",
+      "nepali_months": [
+        "Baishakh",
+        "Jestha",
+        "Ashadh",
+        "Shrawan",
+        "Bhadra",
+        "Ashwin",
+        "Kartik",
+        "Mangsir",
+        "Poush",
+        "Magh",
+        "Falgun",
+        "Chaitra"
+      ]
+    },
+    "child_death_report": {
+      "title": "Child Death Report (28 days to 59 months)",
+      "child_name": "Child Name",
+      "gender": "Gender",
+      "parent_name": "Parent Name",
+      "birth_date": "Birth Date",
+      "day": "Day",
+      "year": "Year",
+      "death_age": "Death Age (Months)",
+      "cause_of_death": "Cause of Death",
+      "male": "Boy",
+      "female": "Girl"
+    },
+    "maternal_death_report": {
+      "title": "Maternal Death Register Report",
+      "mother_name": "Mother Name",
+      "deceased_name": "Deceased Name",
+      "age": "Age",
+      "pregnancy_status": "Condition during death",
+      "pregnant": "Pregnant",
+      "labor": "Labor",
+      "postpartum": "Postpartum",
+      "death_date": "Death Date",
+      "day": "Day",
+      "month": "Month",
+      "year": "Year",
+      "delivery_place": "Delivery Place",
+      "death_place": "Death Place",
+      "home": "Home",
+      "facility": "Facility",
+      "other": "Other",
+      "remarks": "Remarks"
+    },
+    "newborn_death_report": {
+      "title": "Newborn Death Register Report",
+      "newborn_name": "Newborn Name",
+      "mother_name": "Mother Name",
+      "mother_age": "Age",
+      "gender": "Gender",
+      "male": "Boy",
+      "female": "Girl",
+      "birth_date": "Birth Date",
+      "birth_place": "Birth Place*",
+      "birth_condition": "Condition during birth*",
+      "preterm": "Preterm",
+      "low_weight": "Low Weight",
+      "normal": "Normal",
+      "death_date": "Death Date",
+      "death_age": "Death Age",
+      "death_place": "Death Place*",
+      "cause_of_death": "Probable Cause of Death*",
+      "asphyxia": "Asphyxia",
+      "hypothermia": "Hypothermia",
+      "infection": "Infection",
+      "home": "Home",
+      "facility": "Facility",
+      "other": "Other"
+    },
+    "child_monitoring_report": {
+      "title": "Child Monitoring Report",
+      "infant_dob": "Infant DOB",
+      "mother_name": "Mother Name",
+      "infant_name": "Infant Name",
+      "birth_place": "Infant Birth Place",
+      "home": "Home",
+      "facility": "Facility",
+      "health_worker": "Health Worker",
+      "trained_worker": "Trained Health Worker",
+      "skilled_birth_attendant": "Skilled Birth Attendant",
+      "fchv_present": "FCHV Present",
+      "umbilical_ointment": "Umbilical Ointment",
+      "skin_to_skin": "Skin to Skin",
+      "early_breastfeeding": "Early Breastfeeding",
+      "normal_weight": "Normal Weight",
+      "low_weight": "Low Weight",
+      "very_low_weight": "Very Low Weight",
+      "asphyxiated": "Asphyxiated"
+    },
+    "service_report": {
+      "title": "Total service recipients count",
+      "info_text": "Note: This table is used to record the monthly performance and number of service recipients of the Female Community Health Volunteer. Details are entered automatically."
+    }
+  },
+  "maternal_death_modal": {
+    "title": "Maternal Death Record",
+    "subtitle": "Maternal Death Record",
+    "date_of_death": "Date of Death",
+    "condition_of_death": "Condition of Death",
+    "pregnant": "Pregnant",
+    "labor": "Labor",
+    "postpartum": "Postpartum",
+    "place_of_death": "Place of Death",
+    "home": "Home",
+    "institution": "Institution",
+    "other": "Other",
+    "specify_place": "Specify place...",
+    "specify_place_error": "Please specify.",
+    "remarks": "Remarks",
+    "remarks_placeholder": "Write here...",
+    "save": "Save Record",
+    "success": "Maternal death record updated successfully.",
+    "error": "Failed to save record.",
+    "error_title": "Error"
+  },
+  "newborn_death_modal": {
+    "title": "Newborn / Child Death Record",
+    "subtitle": "Newborn & Child Death (0–59 months)",
+    "baby_name": "Child's Name",
+    "baby_name_placeholder": "Enter child's name...",
+    "gender": "Gender",
+    "male": "Boy",
+    "female": "Girl",
+    "birth_date": "Date of Birth",
+    "birth_condition": "Birth Condition",
+    "preterm": "Preterm",
+    "low_weight": "Low Weight",
+    "normal": "Normal",
+    "other": "Other",
+    "specify_condition": "Specify condition...",
+    "specify_condition_error": "Please specify condition.",
+    "death_age": "Age at Death",
+    "age_unit_days": "Days",
+    "age_unit_months": "Months",
+    "newborn_note": "Newborn (under 28 days) — Birth condition is required.",
+    "child_note": "Child (28 days to 59 months).",
+    "cause_of_death": "Probable Cause",
+    "asphyxia": "Asphyxia",
+    "hypothermia": "Hypothermia",
+    "infection": "Infection",
+    "pneumonia": "Pneumonia",
+    "diarrhea": "Diarrhea",
+    "malnutrition": "Malnutrition",
+    "specify_cause": "Specify cause...",
+    "specify_cause_error": "Please specify cause.",
+    "death_place": "Place of Death",
+    "home": "Home",
+    "institution": "Institution",
+    "specify_place": "Specify place...",
+    "specify_place_error": "Please specify place.",
+    "remarks": "Remarks",
+    "remarks_placeholder": "Write here...",
+    "save": "Save Record",
+    "success": "Death record saved successfully.",
+    "error": "Failed to save record.",
+    "error_title": "Error"
+  },
+  "add_mother": {
+    "title_new": "Registration",
+    "title_edit": "Edit Details",
+    "tabs": {
+      "mother_info": "Mother Info",
+      "pregnancy": "Pregnancy"
+    }
+  },
+  "mother_form": {
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "dob": "Date of Birth",
+    "dob_placeholder": "Select Date of Birth",
+    "phone": "Phone Number",
+    "address": {
+      "province": "Province",
+      "district": "District",
+      "municipality": "Municipality",
+      "ward": "Ward",
+      "select_province": "Select Province",
+      "select_district": "Select District",
+      "select_municipality": "Select Municipality",
+      "select_ward": "Select Ward",
+      "select_province_first": "Select Province first",
+      "select_district_first": "Select District first",
+      "select_municipality_first": "Select Municipality first"
+    },
+    "validation": {
+      "first_name_req": "First name is required",
+      "last_name_req": "Last name is required",
+      "dob_req": "Date of Birth is required",
+      "phone_req": "Phone number is required",
+      "phone_digits": "Must be 10 digits",
+      "province_req": "Province is required",
+      "district_req": "District is required",
+      "municipality_req": "Municipality is required",
+      "ward_req": "Ward is required"
+    },
+    "messages": {
+      "save_success": "Mother details saved successfully",
+      "save_error": "Failed to save mother data"
+    },
+    "buttons": {
+      "save": "Save Mother Info",
+      "update": "Update Mother Info"
+    }
+  },
+  "pregnancy_form": {
+    "title": "Pregnancy Details",
+    "subtitle": "Please enter the correct obstetric history and timeline information below for accurate tracking.",
+    "select_mother": "Select Mother",
+    "choose_mother": "Choose a mother",
+    "loading_mothers": "Loading mothers...",
+    "gravida": "Gravida",
+    "parity": "Parity",
+    "lmp_date": "LMP Date (BS)",
+    "select_lmp": "Select LMP Date",
+    "edd_date": "Expected Delivery Date (EDD)",
+    "caretaker_name": "Caretaker's Name",
+    "caretaker_phone": "Caretaker's Phone",
+    "validation": {
+      "mother_req": "Please select a mother",
+      "gravida_req": "Gravida is required",
+      "parity_req": "Parity is required",
+      "lmp_req": "LMP date is required",
+      "parity_invalid": "Parity cannot be greater than Gravida",
+      "phone_digits": "Must be 10 digits"
+    },
+    "messages": {
+      "save_success": "Pregnancy details saved successfully",
+      "save_error": "Failed to save pregnancy data"
+    },
+    "buttons": {
+      "save": "Save Pregnancy",
+      "update": "Update Pregnancy"
+    }
+  },
+  "complete_form": {
+    "title_new": "New Registration",
+    "title_edit": "Complete Profile",
+    "steps": {
+      "personal": "Personal Information",
+      "address": "Address Details",
+      "socio_economic": "Socio-Economic",
+      "health": "Partner & Pregnancy"
+    },
+    "fields": {
+      "upload_photo": "Upload Photo",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "dob": "Date of Birth (BS)",
+      "dob_placeholder": "Select DOB",
+      "phone": "Phone Number",
+      "alias": "Alias / Nickname",
+      "alias_placeholder": "e.g. Maya",
+      "province": "Province",
+      "district": "District",
+      "municipality": "Municipality",
+      "ward": "Ward",
+      "locality": "Locality (Tole)",
+      "locality_placeholder": "e.g. Shanti Chowk",
+      "house_number": "House Number",
+      "house_number_placeholder": "e.g. 123",
+      "ethnicity": "Ethnicity / Jati",
+      "education": "Education Level",
+      "occupation": "Occupation",
+      "income": "Monthly Family Income",
+      "blood_group": "Blood Group",
+      "partner_name": "Partner's Name",
+      "partner_name_placeholder": "Full Name",
+      "partner_mobile": "Partner's Mobile",
+      "partner_age": "Partner's Age",
+      "years_placeholder": "Years",
+      "lmp": "Last Menstrual Period (LMP) - BS",
+      "lmp_placeholder": "Select LMP",
+      "gravida": "Gravida (Pregnancies)",
+      "parity": "Parity (Live Births)",
+      "emergency_contact": "Emergency Contact Number"
+    },
+    "buttons": {
+      "continue": "Continue",
+      "finish_update": "Finish Update",
+      "complete_reg": "Complete Registration"
+    },
+    "messages": {
+      "update_success": "Mother details updated successfully",
+      "save_error": "Failed to save mother data",
+      "missing_id": "Error: Missing mother ID for update",
+      "gallery_permission": "Gallery permission is required",
+      "photo_removed": "Photo removed",
+      "pick_error": "Failed to pick image from gallery"
+    },
+    "photo_options": {
+      "title": "Upload Photo",
+      "subtitle": "Choose an option",
+      "take": "Take Photo",
+      "gallery": "Choose from Gallery",
+      "remove": "Remove Photo",
+      "cancel": "Cancel"
+    }
+  },
+  "family_planning": {
+    "title": "Family Planning",
+    "question": "Has the mother used any family planning method?",
+    "yes": "Yes",
+    "no": "No",
+    "select_method": "Select Method:",
+    "specify_method": "Specify Method:",
+    "placeholder": "Enter custom method...",
+    "save": "Save Record",
+    "save_success": "Family planning details saved successfully",
+    "save_error": "Failed to save family planning details",
+    "validation": {
+      "select_one": "Please select at least one method",
+      "enter_custom": "Please enter the custom method"
+    },
+    "methods": {
+      "Condoms": "Condoms",
+      "Pills": "Pills",
+      "Implants": "Implants",
+      "Depo (Injectable)": "Depo (Injectable)",
+      "I-Pills (Emergency)": "I-Pills (Emergency)",
+      "IUCD": "IUCD",
+      "Female Sterilization": "Female Sterilization",
+      "Male Sterilization": "Male Sterilization",
+      "Other": "Other"
+    }
   }
 }
+

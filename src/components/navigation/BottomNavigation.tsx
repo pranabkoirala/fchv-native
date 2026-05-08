@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Platform, Keyboard, Dimensions } from "react-native";
-import { Home, Activity, Plus, BarChart3, BookOpen, Calendar, FileText } from "lucide-react-native";
+import { Home, Baby, Plus, BookOpen, FileText } from "lucide-react-native";
 import { useRouter, usePathname } from "expo-router";
 import Colors from "../../constants/Colors";
 
@@ -24,7 +24,7 @@ export default function BottomNavigation() {
     };
   }, []);
 
-  const hiddenRoutes = ["add-record", "add-mother", "follow-up", "mother-profile", "mother-list/add-mother", "newborn-death-report"];
+  const hiddenRoutes = ["follow-up", "mother-profile", "mother-list/add-mother", "newborn-death-report"];
   const isSearchActive = (pathname.includes("record") || pathname.includes("report")) && isKeyboardVisible;
   const shouldHide = hiddenRoutes.some(route => pathname.includes(route)) || isKeyboardVisible || isSearchActive;
 
@@ -32,7 +32,7 @@ export default function BottomNavigation() {
 
   const tabs = [
     { id: "home", label: "Home", icon: Home, path: "/dashboard" },
-    { id: "visit", label: "Visit", icon: Calendar, path: "/dashboard/visit-list" },
+    { id: "child", label: "Child", icon: Baby, path: "/dashboard/child" },
     { id: "record", label: "Register", icon: Plus, path: "/dashboard/record", isAction: true },
     { id: "report", label: "Report", icon: FileText, path: "/dashboard/report" },
     { id: "guide", label: "Guideline", icon: BookOpen, path: "/dashboard/guidelines" },
@@ -45,9 +45,9 @@ export default function BottomNavigation() {
   };
 
   return (
-    <View className="absolute bottom-6 left-0 right-0 items-center">
+    <View className="absolute bottom-0 left-0 right-0 pb-10 bg-white items-center">
       <View
-        className="flex-row items-center bg-white rounded-[35px] px-2 py-2 shadow-2xl shadow-slate-900/10 border border-slate-50"
+        className="flex-row items-center bg-white px-2 py-2"
         style={{ width: width * 0.94, height: 72 }}
       >
         {tabs.map((tab) => {
@@ -71,7 +71,10 @@ export default function BottomNavigation() {
             <TouchableOpacity
               key={tab.id}
               activeOpacity={0.7}
-              onPress={() => tab.path && router.push(tab.path as any)}
+              onPress={() => {
+                if (!tab.path || active) return;
+                router.replace(tab.path as any);
+              }}
               className="items-center justify-center flex-1 h-full"
             >
               <View className={`w-10 h-10 rounded-2xl items-center justify-center ${active ? 'bg-blue-50 rounded-full' : 'bg-transparent'}`}>

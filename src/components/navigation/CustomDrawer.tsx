@@ -44,7 +44,7 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
           <TouchableOpacity
             onPress={() => {
               props.navigation.closeDrawer();
-              router.push("/dashboard/profile");
+              router.push("/dashboard/settings");
             }}
             className="flex-row items-center py-4 border-b border-gray-50"
           >

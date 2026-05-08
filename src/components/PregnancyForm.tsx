@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, Pressable } from "react-native";
-import { Baby, Calendar, Info, Save } from "lucide-react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { View, Text, Pressable } from "react-native";
+import { Calendar } from "lucide-react-native";
 import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
+import { CalendarPicker, BsToAd } from "react-native-nepali-picker";
 import { getAllMothersList, getMotherProfile, MotherListDbItem } from "../hooks/database/models/MotherModel";
-import { createPregnancy } from "../hooks/database/models/PregnantWomenModal";
+import { createPregnancy, getPregnancyByMotherId } from "../hooks/database/models/PregnantWomenModal";
 import { useToast } from "../context/ToastContext";
-import { FieldLabel, BoxInput, SelectInput } from "./FormElements";
+import { FieldLabel, BoxInput } from "./FormElements";
+import { ProfilePicker } from "./ProfilePicker";
 import { Button } from "./button";
-import InputField from "./InputField";
+import { useLanguage } from "../context/LanguageContext";
 
-export default function PregnancyForm({ id, onSwitchToMother }: { id?: string, onSwitchToMother?: () => void }) {
+export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: () => void }) {
   const router = useRouter();
   const { showToast } = useToast();
+  const { t, language } = useLanguage();
 
   const [mothers, setMothers] = useState<MotherListDbItem[]>([]);
   const [selectedMotherId, setSelectedMotherId] = useState<string>(id || "");
@@ -21,11 +23,15 @@ export default function PregnancyForm({ id, onSwitchToMother }: { id?: string, o
   const [parity, setParity] = useState("");
   const [lmp, setLmp] = useState("");
   const [edd, setEdd] = useState("");
+  const [caretakersName, setCaretakersName] = useState("");
+  const [caretakersPhone, setCaretakersPhone] = useState("");
   const [pregnancyId, setPregnancyId] = useState<string | null>(null);
+  const [selectedMotherName, setSelectedMotherName] = useState("");
 
   const [showLmpPicker, setShowLmpPicker] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
     const fetchMothers = async () => {
@@ -40,59 +46,80 @@ export default function PregnancyForm({ id, onSwitchToMother }: { id?: string, o
   }, []);
 
   useEffect(() => {
-    if (id) {
-      setSelectedMotherId(id);
-      const fetchEditData = async () => {
+    if (selectedMotherId) {
+      const fetchData = async () => {
         try {
           setIsLoading(true);
-          const data = await getMotherProfile(id);
-          if (data) {
-            setGravida(data.gravida || "");
-            setParity(data.parity || "");
-            setLmp(data.lmp || "");
-            setEdd(data.edd || "");
-            setPregnancyId(data.pregnancyId || null);
+          // Clear previous data before loading new mother's data
+          setGravida("");
+          setParity("");
+          setLmp("");
+          setEdd("");
+          setCaretakersName("");
+          setCaretakersPhone("");
+          setPregnancyId(null);
+
+          // Try to load existing pregnancy for this mother
+          const pregnancy = await getPregnancyByMotherId(selectedMotherId);
+          
+          // Also get mother name for display
+          const motherData = await getMotherProfile(selectedMotherId);
+
+          if (motherData) {
+            setSelectedMotherName(motherData.name || "");
+            if (!pregnancy) {
+              if (motherData.gravida !== undefined && motherData.gravida !== null) setGravida(String(motherData.gravida));
+              if (motherData.parity !== undefined && motherData.parity !== null) setParity(String(motherData.parity));
+              if (motherData.lmp) setLmp(motherData.lmp);
+              if (motherData.edd && motherData.edd !== "N/A") setEdd(motherData.edd);
+            }
+          }
+
+          if (pregnancy) {
+            setGravida(pregnancy.gravida !== null ? String(pregnancy.gravida) : "");
+            setParity(pregnancy.parity !== null ? String(pregnancy.parity) : "");
+            setLmp(pregnancy.lmp_date || "");
+            setEdd(pregnancy.expected_delivery_date || "");
+            setCaretakersName(pregnancy.caretakers_name || "");
+            setCaretakersPhone(pregnancy.caretakers_phone || "");
+            setPregnancyId(pregnancy.id || null);
           }
         } catch (e) {
-          console.error("error fetching pregnancy profile", e);
+          console.error("error fetching mother/pregnancy data", e);
         } finally {
           setIsLoading(false);
         }
       };
-      fetchEditData();
+      fetchData();
     }
-  }, [id]);
+  }, [selectedMotherId]);
 
-  const formatDate = (d: Date) => d.toISOString().split("T")[0];
-  const calcEDD = (d: Date) => {
-    const e = new Date(d);
-    e.setDate(e.getDate() + 280);
-    return formatDate(e);
-  };
-
-  const onLmpChange = (_: any, selected?: Date) => {
-    setShowLmpPicker(false);
-    if (selected) {
-      setLmp(formatDate(selected));
-      setEdd(calcEDD(selected));
-    }
+  const calcEddFromLmp = (lmpAd: string) => {
+    try {
+      const lmpDate = new Date(lmpAd);
+      if (!isNaN(lmpDate.getTime())) {
+        const eddDate = new Date(lmpDate);
+        eddDate.setDate(eddDate.getDate() + 280);
+        return eddDate.toISOString().split("T")[0];
+      }
+    } catch (e) {}
+    return "";
   };
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!selectedMotherId) e.motherId = "Please select a mother";
-    if (!gravida.trim()) e.gravida = "Gravida is required";
-    if (!parity.trim()) e.parity = "Parity is required";
-    if (!lmp) e.lmp = "LMP date is required";
-    
+    if (!selectedMotherId) e.motherId = t("pregnancy_form.validation.mother_req");
+    if (!gravida.trim()) e.gravida = t("pregnancy_form.validation.gravida_req");
+    if (!parity.trim()) e.parity = t("pregnancy_form.validation.parity_req");
+    if (!lmp) e.lmp = t("pregnancy_form.validation.lmp_req");
     if (gravida.trim() && parity.trim()) {
-      const g = parseInt(gravida, 10);
-      const p = parseInt(parity, 10);
-      if (p > g) {
-        e.parity = "Parity cannot be greater than Gravida";
+      if (parseInt(parity, 10) > parseInt(gravida, 10)) {
+        e.parity = t("pregnancy_form.validation.parity_invalid");
       }
     }
-    
+    if (caretakersPhone && caretakersPhone.length !== 10) {
+      e.caretakersPhone = t("pregnancy_form.validation.phone_digits");
+    }
     return e;
   };
 
@@ -110,15 +137,16 @@ export default function PregnancyForm({ id, onSwitchToMother }: { id?: string, o
         parity: parseInt(parity) || 0,
         lmp_date: lmp,
         expected_delivery_date: edd,
+        caretakers_name: caretakersName || undefined,
+        caretakers_phone: caretakersPhone || undefined,
         is_current: true,
         selected: true,
       });
-      
-      showToast("Pregnancy details saved successfully");
+      showToast(t("pregnancy_form.messages.save_success"));
       router.back();
     } catch (err) {
       console.error("Error saving form:", err);
-      showToast("Failed to save pregnancy data");
+      showToast(t("pregnancy_form.messages.save_error"));
     } finally {
       setIsLoading(false);
     }
@@ -126,98 +154,103 @@ export default function PregnancyForm({ id, onSwitchToMother }: { id?: string, o
 
   return (
     <>
-      <View className="mb-6 mt-2">
-        <Text className="text-[#1E293B] font-black text-2xl mb-1">Pregnancy Details</Text>
-        <Text className="text-gray-500 text-[13px] font-medium leading-5">
-          Please enter the correct obstetric history and timeline information below for accurate tracking.
-        </Text>
-      </View>
-
-      <View className="mb-6">
-        <FieldLabel label="Select Mother" />
-        <SelectInput
-          label="Select Mother"
-          placeholder={isLoading ? "Loading mothers..." : "Choose a mother"}
-          value={selectedMotherId}
+      <View className="pt-3">
+        <ProfilePicker
+          label={t("pregnancy_form.select_mother")}
+          placeholder={isLoading ? t("pregnancy_form.loading_mothers") : t("pregnancy_form.choose_mother")}
+          selectedValue={selectedMotherId}
           disabled={!!id}
-          options={mothers.length > 0 ? mothers.map(m => ({ value: m.id, label: `${m.name} (${m.ward})` })) : (id ? [{value: id, label: "Loading..."}] : [])}
-          onSelect={(val: string) => {
-            setSelectedMotherId(val);
-            setErrors({ ...errors, motherId: "" });
-          }}
+          isSearchable={true}
+          options={mothers.length > 0 ? mothers.map(m => ({ value: m.id, label: `${m.name}` })) : (id ? [{ value: id, label: selectedMotherName || "Loading..." }] : [])}
+          onValueChange={(val) => { setSelectedMotherId(val); setErrors({ ...errors, motherId: "" }); }}
           error={errors.motherId}
         />
       </View>
 
-      <View className="bg-white rounded-3xl p-5 mb-6 border border-gray-100 shadow-sm shadow-gray-200/40">
-        <View className="flex-row items-center mb-6">
-          <View className="bg-orange-50 w-11 h-11 rounded-2xl items-center justify-center mr-3 border border-orange-100">
-            <Baby size={22} color="#F97316" strokeWidth={2.5} />
-          </View>
-          <View>
-            <Text className="text-[#1E293B] font-bold text-lg">Obstetric History</Text>
-            <Text className="text-gray-400 text-xs font-medium mt-0.5">Gravida & Parity counts</Text>
-          </View>
+      <View className="flex-row gap-4 mb-4">
+        <View className="flex-1">
+          <FieldLabel label={t("pregnancy_form.gravida")} />
+          <BoxInput
+            placeholder="e.g. 1"
+            value={gravida}
+            onChangeText={(t) => { setGravida(t.replace(/\D/g, "")); setErrors({ ...errors, gravida: "" }); }}
+            keyboardType="numeric"
+            error={errors.gravida}
+          />
         </View>
-
-        <View className="flex-row gap-4">
-          <View className="flex-1">
-            <FieldLabel label="Gravida" />
-            <BoxInput
-              placeholder="e.g. 1"
-              value={gravida}
-              onChangeText={(t) => { setGravida(t.replace(/\D/g, "")); setErrors({ ...errors, gravida: "" }); }}
-              keyboardType="numeric"
-              error={errors.gravida}
-            />
-          </View>
-          <View className="flex-1">
-            <FieldLabel label="Parity" />
-            <BoxInput
-              placeholder="e.g. 0"
-              value={parity}
-              onChangeText={(t) => { setParity(t.replace(/\D/g, "")); setErrors({ ...errors, parity: "" }); }}
-              keyboardType="numeric"
-              error={errors.parity}
-            />
-          </View>
+        <View className="flex-1">
+          <FieldLabel label={t("pregnancy_form.parity")} />
+          <BoxInput
+            placeholder="e.g. 0"
+            value={parity}
+            onChangeText={(t) => { setParity(t.replace(/\D/g, "")); setErrors({ ...errors, parity: "" }); }}
+            keyboardType="numeric"
+            error={errors.parity}
+          />
         </View>
       </View>
-      
-       <Pressable onPress={() => setShowLmpPicker(true)}>
-                  <View pointerEvents="none">
-                    <InputField
-                      label="LMP Date"
-                      subLabel="अन्तिम महिनावारी मिति"
-                      placeholder="YYYY-MM-DD"
-                      value={lmp}
-                      leftIcon={<Calendar size={18} color="#64748B" />}
-                      editable={false}
-                      error={errors.lmp}
-                    />
-                  </View>
-                </Pressable>
-                {showLmpPicker && (() => {
-                  const maxDate = new Date();
-                  maxDate.setMonth(maxDate.getMonth() + 9);
-      
-                  return (
-                    <DateTimePicker
-                      value={lmp ? new Date(lmp) : new Date()}
-                      mode="date"
-                      display="spinner"
-                      maximumDate={maxDate}
-                      onChange={onLmpChange}
-                    />
-                  );
-                })()}
+
+      <FieldLabel label={t("pregnancy_form.lmp_date")} />
+      <Pressable onPress={() => setShowLmpPicker(true)} className="mb-6">
+        <View className={`rounded-md px-4 h-14 border flex-row items-center justify-between bg-white ${errors.lmp ? "border-red-300" : "border-gray-300"}`}>
+          <Text className={`text-base ${lmp ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}>
+            {lmp || t("pregnancy_form.select_lmp")}
+          </Text>
+          <Calendar size={18} color="#0056D2" />
+        </View>
+      </Pressable>
+      {errors.lmp ? <Text className="text-red-500 text-xs -mt-5 mb-4 ml-1 font-medium">{errors.lmp}</Text> : null}
+
+      {edd ? (
+        <View className="mb-6">
+          <FieldLabel label={t("pregnancy_form.edd_date")} />
+          <View className="rounded-xl px-4 h-14 border border-gray-200 bg-gray-50 justify-center">
+            <Text className="text-[#1E293B] text-base font-semibold">{edd}</Text>
+          </View>
+        </View>
+      ) : null}
+
+      <FieldLabel label={t("pregnancy_form.caretaker_name")} />
+      <BoxInput placeholder={t("add_record.basic_info.mother_name_placeholder")} value={caretakersName} onChangeText={setCaretakersName} />
+
+      <FieldLabel label={t("pregnancy_form.caretaker_phone")} />
+      <BoxInput
+        placeholder="98*******"
+        value={caretakersPhone}
+        onChangeText={setCaretakersPhone}
+        keyboardType="phone-pad"
+        maxLength={10}
+        error={errors.caretakersPhone}
+      />
 
       <Button
         onPress={save}
         isLoading={isLoading}
-        title="Save Pregnancy Info"
+        title={pregnancyId ? t("pregnancy_form.buttons.update") : t("pregnancy_form.buttons.save")}
       />
-     
+
+       <CalendarPicker
+                visible={showLmpPicker}
+                onClose={() => setShowLmpPicker(false)}
+                onDateSelect={(bsDate) => {
+                  setShowLmpPicker(false);
+                  setLmp(bsDate);
+                  setErrors({ ...errors, lmp: "" });
+                  try {
+                    const adDate = BsToAd(bsDate);
+                    setEdd(calcEddFromLmp(adDate));
+                  } catch (e) {
+                    console.error("BS to AD conversion error:", e);
+                  }
+                }}
+                language={language === "np" ? "np" : "en"}
+                theme="light"
+                brandColor="#0056D2"
+                date={lmp || undefined}
+                dayTextStyle={{ fontWeight: 'normal' }}
+                weekTextStyle={{ fontWeight: 'normal' }}
+                titleTextStyle={{ fontWeight: 'normal' }}
+              />
     </>
   );
 }

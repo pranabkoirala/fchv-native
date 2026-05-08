@@ -375,7 +375,7 @@ export default function AddRecordScreen() {
         >
           {/* Step 1: Basic Info & Dates */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 100 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <FieldLabel label={t("add_record.basic_info.mother_name")} />
               <BoxInput
                 placeholder={t("add_record.basic_info.mother_name_placeholder")}
@@ -482,7 +482,7 @@ export default function AddRecordScreen() {
 
           {/* Step 3: ANC Visits */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 100 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <Text className="text-gray-700 mb-4 text-md">{t("add_record.anc_visits.subtitle")}</Text>
               <View className="flex-row gap-4">
                  <ToggleBox label={t("add_record.anc_visits.wk12")} value={formData.checkup_12} onToggle={(v) => updateField("checkup_12", v)} />
@@ -507,7 +507,7 @@ export default function AddRecordScreen() {
 
           {/* Step 4: Meds */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 100 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View className="flex flex-col gap-4">
               <View>
               <FieldLabel label={t("add_record.meds.iron_180")} />
@@ -527,7 +527,7 @@ export default function AddRecordScreen() {
 
           {/* Step 5: PNC & Delivery */}
           <View style={{ width: SCREEN_WIDTH }}>
-            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <ScrollView className="p-6" contentContainerStyle={{ paddingBottom: 100 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View className="pb-10">
               <FieldLabel label={t("add_record.pnc_delivery.delivery_place")} />
               <SelectInput
@@ -581,7 +581,7 @@ export default function AddRecordScreen() {
         </Animated.View>
 
         {/* Navigation Buttons */}
-        <View className="px-6 pb-16 pt-4 bg-white">
+        <View className="px-6 pb-28 pt-4 bg-white">
           <View className="flex-row gap-3">
               {step > 0 && (
               <TouchableOpacity

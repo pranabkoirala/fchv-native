@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
+  TextInput,
+  Image,
 } from "react-native";
-import  { useState } from "react";
+import { useState } from "react";
 import { StatusBar } from "expo-status-bar";
-import { Lock, Mail } from "lucide-react-native";
-import Svg, { Path } from "react-native-svg";
-import InputField from "../components/InputField";
+import { Lock, User, Eye, EyeOff } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useLanguage } from "../context/LanguageContext";
 import "../global.css";
@@ -26,10 +26,11 @@ export default function LoginScreen() {
   const [pin, setPin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
     if (!phone.trim() || !pin) {
-      setErrorMessage("Phone number and PIN are required.");
+      setErrorMessage(t("login.error_required"));
       return;
     }
 
@@ -41,103 +42,140 @@ export default function LoginScreen() {
         setErrorMessage("");
         router.replace("/dashboard");
       } else {
-        setErrorMessage("Invalid Email or Password");
+        setErrorMessage(t("login.error_invalid"));
       }
     }, 1500);
   };
 
   return (
     <View className="flex-1 bg-white">
-      <StatusBar style="light" />
-
-      {/* Top Section with Wave - Using App Colors (Green) */}
-      <View style={{ height: 280 }}>
-        <View className="absolute top-0 left-0 right-0 bottom-0 bg-primary" />
-        <View className="absolute bottom-0 w-full">
-          <Svg
-            height="120"
-            width={width}
-            viewBox={`0 0 ${width} 120`}
-            fill="none"
-          >
-            <Path
-              d={`M0 40 C ${width / 3} 0, ${width / 1.5} 80, ${width} 40 V 120 H 0 Z`}
-              fill="white"
-            />
-          </Svg>
-        </View>
-      </View>
+      <StatusBar style="dark" />
 
       <KeyboardAvoidingView
-        behavior="padding"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
-        style={{ zIndex: 10 }}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
-          className="px-8"
           bounces={false}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-
-          <View className="flex-1 mt-8">
-            <InputField
-              placeholder={"Enter Valid Phone Number."}
-              value={phone}
-              onChangeText={(text) => {
-                setPhone(text);
-                setErrorMessage("");
-              }}
-              leftIcon={<Mail size={22} color="#94a3b8" />}
-            />
-
-            <InputField
-              placeholder={"Enter Valid Password."}
-              secureTextEntry
-              value={pin}
-              onChangeText={(text) => {
-                setPin(text);
-                setErrorMessage("");
-              }}
-              leftIcon={<Lock size={22} color="#94a3b8" />}
-            />
-
-            <View className="flex-row items-center justify-between mb-6 ">
-              <View className="flex-row items-center">
-                <Text className="text-gray-400 font-bold text-[11px] uppercase tracking-wider">Secure Access</Text>
-              </View>
-              <TouchableOpacity>
-                <View className="flex-row">
-                  <Text className="text-primary font-bold text-[13px]">{t("login.forgot_password")} </Text>
-                </View>
-              </TouchableOpacity>
+          {/* Top Section: Logo & Title */}
+          <View className="items-center pt-16 pb-10 px-8">
+            {/* Logo Circle */}
+            <View
+              className=" items-center justify-center mb-6"
+            >
+              <Image
+                source={require("../assets/fchv-logo.png")}
+                style={{ width: 80, height: 80 }}
+                resizeMode="contain"
+              />
             </View>
 
+            {/* Title */}
+            <Text
+              className="text-center font-semibold text-3xl leading-10 mb-2"
+              style={{ color: "#0B2545" }}
+            >
+              {t("login.title")}
+            </Text>
+
+          </View>
+
+          {/* Login Card */}
+          <View className="mx-5 pt-7">
+            {/* USER ID Field */}
+            <View className="mb-5">
+              <Text className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: "#0B2545" }}>
+                {t("login.health_id_label")}
+              </Text>
+              <View
+                className="flex-row items-center h-14 rounded-md border border-gray-300 px-4 bg-white"
+              >
+                <User size={20} color="#94A3B8" strokeWidth={2} />
+                <TextInput
+                  className="flex-1 ml-3 text-base"
+                  style={{ color: "#1E293B" }}
+                  placeholder={t("login.health_id_placeholder")}
+                  placeholderTextColor="#B0B8C4"
+                  value={phone}
+                  onChangeText={(text) => {
+                    setPhone(text);
+                    setErrorMessage("");
+                  }}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            {/* PASSWORD Field */}
+            <View className="mb-6">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-sm uppercase tracking-widest" style={{ color: "#0B2545" }}>
+                  {t("login.password_label")}
+                </Text>
+              </View>
+              <View
+                className="flex-row items-center h-14 rounded-md border border-gray-300 px-4 bg-white"
+              >
+                <Lock size={20} color="#94A3B8" strokeWidth={2} />
+                <TextInput
+                  className="flex-1 ml-3 text-base"
+                  style={{ color: "#1E293B" }}
+                  placeholder={t("login.password_placeholder")}
+                  placeholderTextColor="#B0B8C4"
+                  secureTextEntry={!showPassword}
+                  value={pin}
+                  onChangeText={(text) => {
+                    setPin(text);
+                    setErrorMessage("");
+                  }}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  {showPassword ? (
+                    <EyeOff size={20} color="#94A3B8" />
+                  ) : (
+                    <Eye size={20} color="#94A3B8" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Error Message */}
             {errorMessage ? (
-              <Text className="text-red-500 font-bold text-sm mb-6 text-center">
+              <Text className="text-red-500 font-bold text-sm mb-4 text-center">
                 {errorMessage}
               </Text>
             ) : null}
 
+            {/* Login Button */}
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={handleLogin}
               disabled={isLoading}
-              className="w-full bg-primary rounded-2xl h-16 items-center justify-center shadow-xl shadow-emerald-100 flex-row"
+              className="w-full h-14 mt-3 bg-primary/80 items-center justify-center flex-row"
             >
               {isLoading ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
-                <Text className="text-white font-black text-xl">{t("login.login_button")} </Text>
+                <Text className="text-white font-semibold text-lg tracking-wide">
+                  {t("login.login_button")}
+                </Text>
               )}
             </TouchableOpacity>
-
-            <Text className="text-[10px] text-center mt-6 text-gray-400">
-              Department of Health Services Government of Nepal
-            </Text>
           </View>
+
+        {/* Footer moved outside ScrollView to stay at bottom */}
+        <View className="items-center w-full pt-10 px-10">
+          <Text className="text-center text-gray-400 text-sm leading-5">
+            {t("login.terms_text")}{" "}
+            <Text className="text-primary font-semibold">{t("login.terms_link")}</Text>.
+          </Text>
+        </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

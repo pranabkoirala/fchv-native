@@ -29,7 +29,7 @@ const TopHeader = () => {
       </View>
       
       <TouchableOpacity 
-        onPress={() => router.push("/dashboard/profile")} 
+        onPress={() => router.push("/dashboard/settings")} 
         className="bg-gray-50 p-2 rounded-2xl"
       >
         <CircleUserRound size={22} color="#64748B" strokeWidth={2.5} />

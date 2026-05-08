@@ -4,17 +4,18 @@ import {
   Text,
   ScrollView,
   Pressable,
-  SafeAreaView,
   Modal,
   TextInput,
-  Alert
+  Alert,
+  ActivityIndicator
 } from "react-native";
-import { Calendar, Edit, X, Save, ArrowLeft, Check } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Calendar, Edit, X, Save, Check } from "lucide-react-native";
 import { CalendarPicker, AdToBs, BsToAd } from "react-native-nepali-picker";
-import * as Crypto from 'expo-crypto';
 import { createMaternalDeath } from "../../hooks/database/models/MaternalDeathModel";
 import { MaternalDeathStoreType } from "../../hooks/database/types/maternalDeathModal";
 import { HmisRecordStoreType } from "../../hooks/database/types/hmisRecordModal";
+import { useTranslation } from "react-i18next";
 
 interface MaternalDeathModalProps {
   visible: boolean;
@@ -25,13 +26,15 @@ interface MaternalDeathModalProps {
 }
 
 export default function MaternalDeathModal({ visible, onClose, record, onSuccess, showToast }: MaternalDeathModalProps) {
+  const { t } = useTranslation();
+
   // Form values
   const [deathCondition, setDeathCondition] = useState('');
   const [deathConditionOther, setDeathConditionOther] = useState('');
-  const [deliveryPlace, setDeliveryPlace] = useState('');
-  const [deliveryPlaceOther, setDeliveryPlaceOther] = useState('');
   const [deathPlace, setDeathPlace] = useState('');
   const [deathPlaceOther, setDeathPlaceOther] = useState('');
+  const [remarks, setRemarks] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const [deathDay, setDeathDay] = useState(new Date().getDate());
   const [deathMonth, setDeathMonth] = useState(new Date().getMonth() + 1);
@@ -41,13 +44,10 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
   const toNepali = (y: number, m: number, d: number) => {
     try { return AdToBs(getAdString(y, m, d)); } catch { return getAdString(y, m, d); }
   };
-  const [remarks, setRemarks] = useState('');
 
   // Inline errors
   const [errDeathCondition, setErrDeathCondition] = useState(false);
   const [errDeathConditionOther, setErrDeathConditionOther] = useState(false);
-  const [errDeliveryPlace, setErrDeliveryPlace] = useState(false);
-  const [errDeliveryPlaceOther, setErrDeliveryPlaceOther] = useState(false);
   const [errDeathPlace, setErrDeathPlace] = useState(false);
   const [errDeathPlaceOther, setErrDeathPlaceOther] = useState(false);
 
@@ -58,23 +58,19 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
 
     if (!deathCondition) { setErrDeathCondition(true); hasError = true; } else { setErrDeathCondition(false); }
     if (deathCondition === 'Other' && !deathConditionOther.trim()) { setErrDeathConditionOther(true); hasError = true; } else { setErrDeathConditionOther(false); }
-    if (!deliveryPlace) { setErrDeliveryPlace(true); hasError = true; } else { setErrDeliveryPlace(false); }
-    if (deliveryPlace === 'Other' && !deliveryPlaceOther.trim()) { setErrDeliveryPlaceOther(true); hasError = true; } else { setErrDeliveryPlaceOther(false); }
     if (!deathPlace) { setErrDeathPlace(true); hasError = true; } else { setErrDeathPlace(false); }
     if (deathPlace === 'Other' && !deathPlaceOther.trim()) { setErrDeathPlaceOther(true); hasError = true; } else { setErrDeathPlaceOther(false); }
 
     if (hasError) return;
 
     try {
+      setSubmitting(true);
       const payload = {
-        id: Crypto.randomUUID(),
         mother_id: record.id,
         mother_name: record.mother_name,
         mother_age: record.mother_age,
         death_condition: deathCondition,
         death_condition_other: deathConditionOther,
-        delivery_place: deliveryPlace,
-        delivery_place_other: deliveryPlaceOther,
         death_place: deathPlace,
         death_place_other: deathPlaceOther,
         death_day: deathDay,
@@ -84,13 +80,11 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       } as any;
 
       await createMaternalDeath(payload);
-      showToast("Maternal death record updated successfully.");
+      showToast(t("maternal_death_modal.success"));
 
       // Reset form fields
       setDeathCondition('');
       setDeathConditionOther('');
-      setDeliveryPlace('');
-      setDeliveryPlaceOther('');
       setDeathPlace('');
       setDeathPlaceOther('');
       setDeathDay(new Date().getDate());
@@ -101,22 +95,23 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       // Reset errors
       setErrDeathCondition(false);
       setErrDeathConditionOther(false);
-      setErrDeliveryPlace(false);
-      setErrDeliveryPlaceOther(false);
       setErrDeathPlace(false);
       setErrDeathPlaceOther(false);
 
       onSuccess(payload as MaternalDeathStoreType);
       onClose();
     } catch (error) {
-      Alert.alert("Error", "Failed to save record.");
+      Alert.alert(t("maternal_death_modal.error_title"), t("maternal_death_modal.error"));
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Helper: renders a field label row with optional REQUIRED badge
-  const FieldLabel = ({ label, hasError }: { label: string; hasError: boolean }) => (
-    <View className="flex-row items-center justify-between mb-2">
-      <Text className="text-[13px] text-slate-700 font-medium">{label} <Text className="text-red-500">*</Text></Text>
+  // Helper: renders a field label row
+  const FieldLabel = ({ label, hasError, required = true }: { label: string; hasError: boolean; required?: boolean }) => (
+    <View className="flex-row items-center mb-2.5">
+      <Text className="text-[14px] text-slate-700 font-semibold">{label}</Text>
+      {required && <Text className="text-red-500 ml-1">*</Text>}
     </View>
   );
 
@@ -128,32 +123,35 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       onRequestClose={onClose}
     >
       <SafeAreaView className="flex-1 bg-[#F8FAFC]">
-        <View className="flex-row items-center justify-between p-5 bg-white">
-          <Text className="text-slate-900 text-[17px] font-semibold">मातृ मृत्यु विवरण</Text>
-          <Pressable onPress={onClose} className="bg-slate-100 p-1 rounded-full">
-            <X size={18} color="#64748B" />
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100 shadow-sm">
+          <View>
+            <Text className="text-slate-900 text-[18px] font-bold">{t("maternal_death_modal.title")}</Text>
+            <Text className="text-slate-500 text-[13px] mt-0.5">{t("maternal_death_modal.subtitle")}</Text>
+          </View>
+          <Pressable onPress={onClose} className="bg-slate-50 p-2 rounded-full border border-slate-100">
+            <X size={20} color="#64748B" />
           </Pressable>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} className="px-6 flex-1 mt-6">
-          <View className="gap-y-6 pb-6">
+        <ScrollView showsVerticalScrollIndicator={false} className="px-5 flex-1 mt-5">
+          <View className="gap-y-6 pb-8">
 
             {/* Death Date */}
             <View>
-              <Text className="text-[13px] text-slate-700 mb-2 font-medium">मृत्यु भएको मिति (Date of Death)</Text>
+              <FieldLabel label={t("maternal_death_modal.date_of_death")} hasError={false} />
               <Pressable
                 onPress={() => setShowDatePicker(true)}
-                className="bg-white border border-slate-200 p-3.5 rounded-xl flex-row items-center justify-between"
+                className="bg-white border border-slate-200 px-4 py-2.5 rounded-md flex-row items-center justify-between shadow-sm shadow-slate-100"
               >
                 <View className="flex-row items-center">
-                  <Calendar size={18} color="#0056D2" />
-                  <Text className="text-slate-800 text-[14px] ml-3">
+                  <Text className="text-slate-800 text-[15px] font-medium">
                     {toNepali(deathYear, deathMonth, deathDay)}
                   </Text>
                 </View>
-                <View className="bg-blue-50 p-2 rounded-lg">
-                  <Edit size={14} color="#0056D2" />
-                </View>
+                <View className="bg-blue-50 p-2 rounded-full">
+                    <Calendar size={18} color="#0056D2" />
+                  </View>
               </Pressable>
               <CalendarPicker
                 visible={showDatePicker}
@@ -180,108 +178,87 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
 
             {/* Condition of Death */}
             <View>
-              <FieldLabel label="मृत्यु हुँदाको अवस्था (Condition of Death)" hasError={errDeathCondition} />
-              <View className="flex-row flex-wrap justify-between gap-y-3">
+              <FieldLabel label={t("maternal_death_modal.condition_of_death")} hasError={errDeathCondition} />
+              <View className="mt-1 gap-y-2.5">
                 {[
-                  { value: 'Pregnant', label: 'गर्भवती (Pregnant)' },
-                  { value: 'Labor', label: 'सुत्केरी व्यथा (Labor)' },
-                  { value: 'Post_delivery', label: 'सुत्केरी (Postpartum)' }
+                  { value: 'Pregnant', label: t("maternal_death_modal.pregnant") },
+                  { value: 'Labor', label: t("maternal_death_modal.labor") },
+                  { value: 'Post_delivery', label: t("maternal_death_modal.postpartum") }
                 ].map((c) => (
                   <Pressable
                     key={c.value}
                     onPress={() => { setDeathCondition(c.value); setErrDeathCondition(false); }}
-                    className={`w-[48%] p-3.5 rounded-xl border flex-row items-center justify-between ${deathCondition === c.value
-                      ? 'bg-blue-50/40 border-[#0056D2]'
-                      : errDeathCondition ? 'bg-white border-red-300' : 'bg-white border-slate-200'
-                      }`}
+                    className={`w-full p-4 rounded-md border flex-row items-center ${
+                      deathCondition === c.value
+                        ? 'bg-blue-50 border-[#0056D2] shadow-blue-100'
+                        : errDeathCondition ? 'bg-red-50 border-red-300 shadow-red-100' : 'bg-white border-slate-200 shadow-slate-100'
+                    }`}
                   >
-                    <Text className={`text-[12px] font-medium leading-relaxed ${deathCondition === c.value ? 'text-[#0056D2]' : 'text-slate-500'}`}>{c.label}</Text>
-                    {deathCondition === c.value ? (
-                      <View className="w-5 h-5 rounded-full bg-[#0056D2] items-center justify-center">
-                        <Check size={12} color="white" strokeWidth={3} />
-                      </View>
-                    ) : (
-                      <View className={`w-5 h-5 rounded-full border-2 ${errDeathCondition ? 'border-red-300' : 'border-slate-300'}`} />
-                    )}
+                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
+                      deathCondition === c.value ? 'border-[#0056D2]' : errDeathCondition ? 'border-red-300' : 'border-slate-300'
+                    }`}>
+                      {deathCondition === c.value && <View className="w-2.5 h-2.5 rounded-full bg-[#0056D2]" />}
+                    </View>
+                    <Text className={`text-[14px] font-medium ${
+                      deathCondition === c.value ? 'text-[#0056D2]' : 'text-slate-700'
+                    }`}>{c.label}</Text>
                   </Pressable>
                 ))}
               </View>
-            </View>
-
-            {/* Delivery Place */}
-            <View>
-              <FieldLabel label="प्रसूति भएको स्थान (Delivery Place)" hasError={errDeliveryPlace} />
-              <View className="flex-row flex-wrap justify-between gap-y-3">
-                {[
-                  { value: 'Home', label: 'घर' },
-                  { value: 'Institution', label: 'संस्था' },
-                  { value: 'Other', label: 'अन्य' }
-                ].map((c) => (
-                  <Pressable
-                    key={c.value}
-                    onPress={() => { setDeliveryPlace(c.value); setErrDeliveryPlace(false); }}
-                    className={`w-[31%] p-3 rounded-xl border items-center justify-center ${deliveryPlace === c.value
-                      ? 'bg-blue-50/40 border-primary'
-                      : errDeliveryPlace ? 'bg-white border-red-300' : 'bg-white border-slate-200'
-                      }`}
-                  >
-                    <Text className={`text-[13px] font-medium text-center ${deliveryPlace === c.value ? 'text-primary' : 'text-slate-500'}`}>{c.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              {deliveryPlace === 'Other' && (
-                <TextInput
-                  placeholder="स्थान खुलाउनुहोस् (Specify)..."
-                  className={`mt-3 bg-white border p-3.5 rounded-xl text-slate-900 text-[13px] ${errDeliveryPlaceOther ? 'border-red-400' : 'border-slate-200'}`}
-                  onChangeText={(v) => { setDeliveryPlaceOther(v); if (v.trim()) setErrDeliveryPlaceOther(false); }}
-                  value={deliveryPlaceOther}
-                />
-              )}
-              {errDeliveryPlaceOther && (
-                <Text className="text-red-500 text-[11px] mt-1">स्थान खुलाउनुहोस् (Please specify).</Text>
-              )}
             </View>
 
             {/* Death Place */}
             <View>
-              <FieldLabel label="मृत्यु भएको स्थान (Death Place)" hasError={errDeathPlace} />
-              <View className="flex-row flex-wrap justify-between gap-y-3">
+              <FieldLabel label={t("maternal_death_modal.place_of_death")} hasError={errDeathPlace} />
+              <View className="mt-1 gap-y-2.5">
                 {[
-                  { value: 'Home', label: 'घर' },
-                  { value: 'Institution', label: 'संस्था' },
-                  { value: 'Other', label: 'अन्य' }
+                  { value: 'Home', label: t("maternal_death_modal.home") },
+                  { value: 'Institution', label: t("maternal_death_modal.institution") },
+                  { value: 'Other', label: t("maternal_death_modal.other") }
                 ].map((c) => (
                   <Pressable
                     key={c.value}
                     onPress={() => { setDeathPlace(c.value); setErrDeathPlace(false); }}
-                    className={`w-[31%] p-3.5 rounded-xl border items-center justify-center ${deathPlace === c.value
-                      ? 'bg-blue-50/40 border-primary'
-                      : errDeathPlace ? 'bg-white border-red-300' : 'bg-white border-slate-200'
-                      }`}
+                    className={`w-full p-4 rounded-md border flex-row items-center shadow-sm ${
+                      deathPlace === c.value
+                        ? 'bg-blue-50 border-[#0056D2] shadow-blue-100'
+                        : errDeathPlace ? 'bg-red-50 border-red-300 shadow-red-100' : 'bg-white border-slate-200 shadow-slate-100'
+                    }`}
                   >
-                    <Text className={`text-[13px] font-medium text-center ${deathPlace === c.value ? 'text-primary' : 'text-slate-500'}`}>{c.label}</Text>
+                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
+                      deathPlace === c.value ? 'border-[#0056D2]' : errDeathPlace ? 'border-red-300' : 'border-slate-300'
+                    }`}>
+                      {deathPlace === c.value && <View className="w-2.5 h-2.5 rounded-full bg-[#0056D2]" />}
+                    </View>
+                    <Text className={`text-[14px] font-medium ${
+                      deathPlace === c.value ? 'text-[#0056D2]' : 'text-slate-700'
+                    }`}>{c.label}</Text>
                   </Pressable>
                 ))}
               </View>
               {deathPlace === 'Other' && (
-                <TextInput
-                  placeholder="स्थान खुलाउनुहोस् (Specify)..."
-                  className={`mt-3 bg-white border p-3.5 rounded-xl text-slate-900 text-[13px] ${errDeathPlaceOther ? 'border-red-400' : 'border-slate-200'}`}
-                  onChangeText={(v) => { setDeathPlaceOther(v); if (v.trim()) setErrDeathPlaceOther(false); }}
-                  value={deathPlaceOther}
-                />
-              )}
-              {errDeathPlaceOther && (
-                <Text className="text-red-500 text-[11px] mt-1">स्थान खुलाउनुहोस् (Please specify).</Text>
+                <View className="mt-3">
+                  <TextInput
+                    placeholder={t("maternal_death_modal.specify_place")}
+                    className={`bg-white border p-4 rounded-md text-slate-900 text-[15px] shadow-sm shadow-slate-100 ${
+                      errDeathPlaceOther ? 'border-red-400' : 'border-slate-200'
+                    }`}
+                    onChangeText={(v) => { setDeathPlaceOther(v); if (v.trim()) setErrDeathPlaceOther(false); }}
+                    value={deathPlaceOther}
+                  />
+                  {errDeathPlaceOther && (
+                    <Text className="text-red-500 text-[12px] mt-1.5 ml-1">{t("maternal_death_modal.specify_place_error")}</Text>
+                  )}
+                </View>
               )}
             </View>
 
             {/* Remarks */}
             <View>
-              <Text className="text-[13px] text-slate-700 mb-2 font-medium">कैफियत (Remarks)</Text>
+              <FieldLabel label={t("maternal_death_modal.remarks")} hasError={false} required={false} />
               <TextInput
-                placeholder="Remarks..."
-                className="bg-white border border-slate-200 p-4 rounded-xl text-slate-900 min-h-[80px]"
+                placeholder={t("maternal_death_modal.remarks_placeholder")}
+                className="bg-white border border-slate-200 p-4 rounded-md text-slate-900 min-h-[100px] shadow-sm shadow-slate-100 text-[15px]"
                 multiline
                 placeholderTextColor="#94A3B8"
                 textAlignVertical="top"
@@ -293,13 +270,21 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
           </View>
         </ScrollView>
 
-        <View className="p-4 bg-white border-t border-slate-100">
+        {/* Footer / Submit */}
+        <View className="p-5 bg-white border-t border-slate-100">
           <Pressable
             onPress={handleSaveMaternalDeath}
-            className="bg-primary w-full py-4 rounded-xl flex-row items-center justify-center mt-1 mb-1"
+            disabled={submitting}
+            className={`w-full py-4 flex-row items-center justify-center shadow-sm shadow-blue-200 active:opacity-80 ${submitting ? 'bg-slate-400' : 'bg-primary/80'}`}
           >
-            <Save size={18} color="white" />
-            <Text className="text-white font-bold text-[15px] ml-2">विवरण सुरक्षित गर्नुहोस्</Text>
+            {submitting ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <>
+                <Save size={20} color="white" />
+                <Text className="text-white font-bold text-[16px] ml-2 tracking-wide">{t("maternal_death_modal.save")}</Text>
+              </>
+            )}
           </Pressable>
         </View>
       </SafeAreaView>

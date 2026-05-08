@@ -1,5 +1,6 @@
 import { getDb } from '../db';
 import { CreateMaternalDeathPayload, MaternalDeathStoreType } from '../types/maternalDeathModal';
+import * as Crypto from 'expo-crypto';
 
 export async function createMaternalDeath(
   payload: CreateMaternalDeathPayload
@@ -7,12 +8,13 @@ export async function createMaternalDeath(
   const db = await getDb();
   const now = new Date().toISOString();
 
+  const id = Crypto.randomUUID();
+
   await db.runAsync(
     `INSERT INTO hmis_maternal_death 
       (id, mother_id, serial_no, mother_name, mother_age, death_condition, death_condition_other,
-       death_day, death_month, death_year, delivery_place, delivery_place_other, 
-       death_place, death_place_other, remarks, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       death_day, death_month, death_year, death_place, death_place_other, remarks, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       mother_id = excluded.mother_id,
       serial_no = excluded.serial_no,
@@ -23,14 +25,12 @@ export async function createMaternalDeath(
       death_day = excluded.death_day,
       death_month = excluded.death_month,
       death_year = excluded.death_year,
-      delivery_place = excluded.delivery_place,
-      delivery_place_other = excluded.delivery_place_other,
       death_place = excluded.death_place,
       death_place_other = excluded.death_place_other,
       remarks = excluded.remarks,
       updated_at = excluded.updated_at;`,
     [
-      payload.id, 
+      id, 
       payload.mother_id ?? null, 
       payload.serial_no ?? null, 
       payload.mother_name ?? null, 
@@ -40,8 +40,6 @@ export async function createMaternalDeath(
       payload.death_day ?? null, 
       payload.death_month ?? null, 
       payload.death_year ?? null, 
-      payload.delivery_place ?? null, 
-      payload.delivery_place_other ?? '',
       payload.death_place ?? null, 
       payload.death_place_other ?? '',
       payload.remarks ?? null, 

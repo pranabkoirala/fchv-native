@@ -2,14 +2,19 @@
   "login": {
     "welcome": "स्वागत छ",
     "subtitle": "स्वास्थ्य डेटा सङ्कलन एप",
-    "health_id_label": "स्वास्थ्य कार्यकर्ता आईडी",
+    "health_id_label": "स्वास्थ्य स्वयंसेविका आईडी",
     "health_id_placeholder": "आईडी राख्नुहोस्",
     "password_label": "पासवर्ड",
     "password_placeholder": "पासवर्ड राख्नुहोस्",
     "login_button": "लगइन गर्नुहोस्",
     "login_sub": "तपाईंको विवरणहरू प्रविष्ट गर्नुहोस्",
     "forgot_password": "पासवर्ड बिर्सनुभयो?",
-    "help_text": "मद्दत चाहिन्छ? स्थानीय स्वास्थ्य चौकीमा सम्पर्क गर्नुहोस्"
+    "help_text": "मद्दत चाहिन्छ? स्थानीय स्वास्थ्य चौकीमा सम्पर्क गर्नुहोस्",
+    "title": "महिला सामुदायिक\nस्वास्थ्य स्वयंसेविका",
+    "terms_text": "लगइन गरेर, तपाईं हाम्रा",
+    "terms_link": "अभ्यासका सर्तहरूसँग सहमत हुनुहुन्छ",
+    "error_required": "प्रयोगकर्ता आईडी र पासवर्ड आवश्यक छ।",
+    "error_invalid": "अवैध प्रयोगकर्ता आईडी वा पासवर्ड"
   },
   "common": {
     "english": "English",
@@ -308,7 +313,9 @@
       "error": "त्रुटि",
       "delete_error": "रेकर्ड मेटाउन सकिएन।",
       "already_reported": "पहिले नै दर्ता गरिएको",
-      "maternal_exists": "मातृ मृत्यु विवरण पहिले नै दर्ता छ।"
+      "maternal_exists": "मातृ मृत्यु विवरण पहिले नै दर्ता छ।",
+      "save_success": "सप्लिमेन्ट विवरण सफलतापूर्वक अपडेट भयो",
+      "save_error": "सप्लिमेन्ट विवरण अपडेट गर्न असफल भयो"
     },
     "states": {
       "loading": "विवरण लोड हुँदैछ...",
@@ -345,7 +352,11 @@
       "iron_pnc": "आइरन (सुत्केरी पछि)",
       "vit_a": "भिटामिन 'ए' (सुत्केरी पछि)",
       "done": "पूरा भयो",
-      "pending": "बाँकी"
+      "pending": "बाँकी",
+      "add_title": "पूरक थप्नुहोस्",
+      "confirm_q": "के तपाईंले {{mother}} लाई {{name}} दिनुभयो?",
+      "give_btn": "हो, दिएँ",
+      "add_btn": "थप्नुहोस्"
     },
     "birth_pnc": {
       "title": "जन्म र PNC",
@@ -373,5 +384,380 @@
       "submitted": "बुझाइयो"
     },
     "remarks": "कैफियत"
+  },
+  "reports": {
+    "title": "रिपोर्टहरू",
+    "service_recipients": {
+      "title": "जम्मा सेवाग्राहीको संख्या",
+      "subtitle": "जम्मा सेवाग्राहीको संख्या"
+    },
+    "child_monitoring": {
+      "title": "शिशुको अनुगमन भेट",
+      "subtitle": "शिशुको अनुगमन भेट"
+    },
+    "maternal_death": {
+      "title": "मातृ मृत्यु रिपोर्ट",
+      "subtitle": "मातृ मृत्यु रिपोर्ट"
+    },
+    "newborn_death": {
+      "title": "नवजात शिशु मृत्यु रिपोर्ट",
+      "subtitle": "नवजात शिशु मृत्यु रिपोर्ट"
+    },
+    "child_death": {
+      "title": "बाल मृत्यु रिपोर्ट",
+      "subtitle": "बाल मृत्यु रिपोर्ट"
+    },
+    "instructions_title": "अभिलेख राख्ने तरिका:",
+    "instructions_content": "यस खण्डमा उपलब्ध रिपोर्टहरू तपाईंको मासिक कार्यसम्पादन र सेवा प्रवाहको अभिलेख राख्नका लागि हुन् । रिपोर्ट चयन गरी विवरणहरू हेर्न र प्रिन्ट गर्न सक्नुहुन्छ ।",
+    "common": {
+      "sn": "क्र.सं.",
+      "remarks": "कैफियत",
+      "actions": "Action",
+      "search_placeholder": "खोज्नुहोस्...",
+      "no_data": "डाटा छैन",
+      "no_data_msg": "निर्यात गर्नका लागि कुनै रेकर्डहरू छैनन्।",
+      "export_error": "निर्यात त्रुटि",
+      "export_error_msg": "रिपोर्ट उत्पन्न गर्दा एउटा त्रुटि भयो।",
+      "delete_confirm_title": "रेकर्ड मेटाउनुहोस्",
+      "delete_confirm_msg": "के तपाईं यो रेकर्ड मेटाउन चाहनुहुन्छ?",
+      "cancel": "रद्द गर्नुहोस्",
+      "delete": "मेटाउनुहोस्",
+      "loading": "रिपोर्ट लोड हुँदैछ...",
+      "month": "महिना",
+      "total": "जम्मा",
+      "service_recipient": "सेवाग्राही",
+      "mother": "आमा",
+      "pregnant": "गर्भवती",
+      "child": "शिशु",
+      "death": "मृत्यु",
+      "nepali_months": [
+        "बैशाख",
+        "जेष्ठ",
+        "आषाढ",
+        "श्रावण",
+        "भाद्र",
+        "आश्विन",
+        "कार्तिक",
+        "मंसिर",
+        "पौष",
+        "माघ",
+        "फाल्गुन",
+        "चैत्र"
+      ]
+    },
+    "child_death_report": {
+      "title": "२८ दिन देखि ५९ महिना सम्मका बच्चाहरूको मृत्यु विवरण",
+      "child_name": "मृतक बच्चाको नाम",
+      "gender": "लिङ्ग",
+      "parent_name": "आमा वा बाबुको नाम, थर",
+      "birth_date": "बच्चा जन्मेको मिति",
+      "day": "गते",
+      "year": "साल",
+      "death_age": "मृत्यु उमेर (महिना)",
+      "cause_of_death": "मृत्युको सम्भाव्य कारण*",
+      "male": "छोरा",
+      "female": "छोरी"
+    },
+    "maternal_death_report": {
+      "title": "मातृ मृत्यु विवरण दर्ता",
+      "mother_name": "आमाको नाम",
+      "deceased_name": "मृतक महिलाको नाम",
+      "age": "उमेर",
+      "pregnancy_status": "मृत्यु हुँदाको अवस्था*",
+      "pregnant": "गर्भवती",
+      "labor": "प्रसव",
+      "postpartum": "सुत्केरी",
+      "death_date": "मृत्यु भएको मिति",
+      "day": "गते",
+      "month": "महिना",
+      "year": "साल",
+      "delivery_place": "प्रसूति स्थान*",
+      "death_place": "मृत्यु स्थान*",
+      "home": "घर",
+      "facility": "संस्था",
+      "other": "अन्य",
+      "remarks": "कैफियत"
+    },
+    "newborn_death_report": {
+      "title": "नवजात शिशु मृत्यु विवरण",
+      "newborn_name": "मृतक नवजात शिशुको नाम",
+      "mother_name": "आमाको नाम, थर",
+      "mother_age": "उमेर",
+      "gender": "लिङ्ग",
+      "male": "छोरा",
+      "female": "छोरी",
+      "birth_date": "जन्मेको मिति",
+      "birth_place": "जन्मस्थान*",
+      "birth_condition": "जन्मदाको अवस्था*",
+      "preterm": "समय",
+      "low_weight": "कम तौल",
+      "normal": "सामान्य",
+      "death_date": "मृत्यु मिति",
+      "death_age": "मृत्यु उमेर",
+      "death_place": "मृत्युस्थान*",
+      "cause_of_death": "मृत्युको सम्भाव्य कारण*",
+      "asphyxia": "निसासिएको",
+      "hypothermia": "शितलहर",
+      "infection": "संक्रमण",
+      "home": "घर",
+      "facility": "संस्था",
+      "other": "अन्य"
+    },
+    "child_monitoring_report": {
+      "title": "शिशुको अनुगमन रिपोर्ट",
+      "infant_dob": "शिशु जन्म मिति",
+      "mother_name": "आमाको नाम र थर",
+      "infant_name": "शिशुको नाम",
+      "birth_place": "शिशु जन्म स्थान",
+      "home": "घर",
+      "facility": "संस्था",
+      "health_worker": "स्वा.कर्मी",
+      "trained_worker": "दक्ष प्रसूतिकर्मी",
+      "skilled_birth_attendant": "दक्ष प्रसूतिकर्मी",
+      "fchv_present": "म.स्वा.स्व.से. उपस्थित",
+      "umbilical_ointment": "नाभी मलम",
+      "skin_to_skin": "छातीमा टाँसेर",
+      "early_breastfeeding": "१ घण्टा भित्र स्तनपान",
+      "normal_weight": "सामान्य तौल",
+      "low_weight": "कम तौल",
+      "very_low_weight": "धेरै कम तौल",
+      "asphyxiated": "निसासिएको"
+    },
+    "service_report": {
+      "title": "महिला स्वास्थ्य स्वयंसेविकाले सेवा पुर्याएका जम्मा सेवाग्राहीको संख्या",
+      "info_text": "सूचना: यो तालिका महिला स्वास्थ्य स्वयंसेविकाको मासिक कार्यसम्पादन र सेवाग्राहीहरूको संख्या अभिलेख राख्न प्रयोग गरिन्छ । विवरणहरू स्वतः प्रविष्टि गरिएका छन् ।"
+    }
+  },
+  "maternal_death_modal": {
+    "title": "मातृ मृत्यु विवरण",
+    "subtitle": "मातृ मृत्यु रेकर्ड",
+    "date_of_death": "मृत्यु भएको मिति",
+    "condition_of_death": "मृत्यु हुँदाको अवस्था",
+    "pregnant": "गर्भवती",
+    "labor": "सुत्केरी व्यथा",
+    "postpartum": "सुत्केरी",
+    "place_of_death": "मृत्यु भएको स्थान",
+    "home": "घर",
+    "institution": "संस्था",
+    "other": "अन्य",
+    "specify_place": "स्थान खुलाउनुहोस्...",
+    "specify_place_error": "स्थान खुलाउनुहोस्।",
+    "remarks": "कैफियत",
+    "remarks_placeholder": "यहाँ लेख्नुहोस्...",
+    "save": "विवरण सुरक्षित गर्नुहोस्",
+    "success": "मातृ मृत्यु विवरण सफलतापूर्वक सुरक्षित भयो।",
+    "error": "विवरण सुरक्षित गर्न असफल भयो।",
+    "error_title": "त्रुटि"
+  },
+  "newborn_death_modal": {
+    "title": "नवजात / बाल मृत्यु विवरण",
+    "subtitle": "नवजात तथा बाल मृत्यु (०–५९ महिना)",
+    "baby_name": "बच्चाको नाम",
+    "baby_name_placeholder": "बच्चाको नाम लेख्नुहोस्...",
+    "gender": "बच्चाको लिङ्ग",
+    "male": "छोरा",
+    "female": "छोरी",
+    "birth_date": "जन्म मिति",
+    "birth_condition": "जन्मको अवस्था",
+    "preterm": "समय नपुगेको",
+    "low_weight": "कम तौल",
+    "normal": "सामान्य",
+    "other": "अन्य",
+    "specify_condition": "अवस्था खुलाउनुहोस्...",
+    "specify_condition_error": "कृपया अवस्था खुलाउनुहोस्।",
+    "death_age": "मृत्यु भएको उमेर",
+    "age_unit_days": "दिन",
+    "age_unit_months": "महिना",
+    "newborn_note": "नवजात शिशु (२८ दिनभन्दा कम) — जन्मको अवस्था आवश्यक छ।",
+    "child_note": "बालबालिका (२८ दिन देखि ५९ महिना)।",
+    "cause_of_death": "सम्भावित कारण",
+    "asphyxia": "निसासिएको",
+    "hypothermia": "शितलहर",
+    "infection": "संक्रमण",
+    "pneumonia": "न्युमोनिया",
+    "diarrhea": "पखाला",
+    "malnutrition": "कुपोषण",
+    "specify_cause": "कारण खुलाउनुहोस्...",
+    "specify_cause_error": "कृपया कारण खुलाउनुहोस्।",
+    "death_place": "मृत्यु भएको स्थान",
+    "home": "घर",
+    "institution": "संस्था",
+    "specify_place": "स्थान खुलाउनुहोस्...",
+    "specify_place_error": "कृपया स्थान खुलाउनुहोस्।",
+    "remarks": "कैफियत",
+    "remarks_placeholder": "यहाँ लेख्नुहोस्...",
+    "save": "विवरण सुरक्षित गर्नुहोस्",
+    "success": "मृत्यु विवरण सफलतापूर्वक सुरक्षित भयो।",
+    "error": "विवरण सुरक्षित गर्न असफल भयो।",
+    "error_title": "त्रुटि"
+  },
+  "add_mother": {
+    "title_new": "दर्ता",
+    "title_edit": "विवरण सम्पादन",
+    "tabs": {
+      "mother_info": "आमाको विवरण",
+      "pregnancy": "गर्भावस्था"
+    }
+  },
+  "mother_form": {
+    "first_name": "पहिलो नाम",
+    "last_name": "थर",
+    "dob": "जन्म मिति",
+    "dob_placeholder": "जन्म मिति छान्नुहोस्",
+    "phone": "फोन नम्बर",
+    "address": {
+      "province": "प्रदेश",
+      "district": "जिल्ला",
+      "municipality": "गाउँपालिका/नगरपालिका",
+      "ward": "वडा",
+      "select_province": "प्रदेश छान्नुहोस्",
+      "select_district": "जिल्ला छान्नुहोस्",
+      "select_municipality": "पालिका छान्नुहोस्",
+      "select_ward": "वडा छान्नुहोस्",
+      "select_province_first": "पहिले प्रदेश छान्नुहोस्",
+      "select_district_first": "पहिले जिल्ला छान्नुहोस्",
+      "select_municipality_first": "पहिले पालिका छान्नुहोस्"
+    },
+    "validation": {
+      "first_name_req": "पहिलो नाम आवश्यक छ",
+      "last_name_req": "थर आवश्यक छ",
+      "dob_req": "जन्म मिति आवश्यक छ",
+      "phone_req": "फोन नम्बर आवश्यक छ",
+      "phone_digits": "१० अंकको हुनुपर्छ",
+      "province_req": "प्रदेश आवश्यक छ",
+      "district_req": "जिल्ला आवश्यक छ",
+      "municipality_req": "पालिका आवश्यक छ",
+      "ward_req": "वडा आवश्यक छ"
+    },
+    "messages": {
+      "save_success": "आमाको विवरण सफलतापूर्वक सुरक्षित गरियो",
+      "save_error": "आमाको विवरण सुरक्षित गर्न असफल भयो"
+    },
+    "buttons": {
+      "save": "विवरण सुरक्षित गर्नुहोस्",
+      "update": "विवरण अपडेट गर्नुहोस्"
+    }
+  },
+  "pregnancy_form": {
+    "title": "गर्भावस्था विवरण",
+    "subtitle": "सटीक ट्र्याकिङको लागि कृपया तल सही प्रसूति इतिहास र समयरेखा जानकारी प्रविष्ट गर्नुहोस्।",
+    "select_mother": "आमा चयन गर्नुहोस्",
+    "choose_mother": "एक आमा छान्नुहोस्",
+    "loading_mothers": "आमाहरूको विवरण लोड हुँदैछ...",
+    "gravida": "गर्भावस्था संख्या (Gravida)",
+    "parity": "जन्म संख्या (Parity)",
+    "lmp_date": "अन्तिम महिनावारी मिति (LMP)",
+    "select_lmp": "LMP मिति चयन गर्नुहोस्",
+    "edd_date": "अपेक्षित सुत्केरी मिति (EDD)",
+    "caretaker_name": "कुरुवा/हेरचाहकर्ताको नाम",
+    "caretaker_phone": "कुरुवा/हेरचाहकर्ताको फोन",
+    "validation": {
+      "mother_req": "कृपया आमा चयन गर्नुहोस्",
+      "gravida_req": "गर्भावस्था संख्या आवश्यक छ",
+      "parity_req": "जन्म संख्या आवश्यक छ",
+      "lmp_req": "LMP मिति आवश्यक छ",
+      "parity_invalid": "Parity, Gravida भन्दा बढी हुन सक्दैन",
+      "phone_digits": "१० अंकको हुनुपर्छ"
+    },
+    "messages": {
+      "save_success": "गर्भावस्था विवरण सफलतापूर्वक सुरक्षित गरियो",
+      "save_error": "गर्भावस्था विवरण सुरक्षित गर्न असफल भयो"
+    },
+    "buttons": {
+      "save": "विवरण सुरक्षित गर्नुहोस्",
+      "update": "विवरण अपडेट गर्नुहोस्"
+     }
+   },
+   "complete_form": {
+    "title_new": "नयाँ दर्ता",
+    "title_edit": "प्रोफाइल पूर्ण गर्नुहोस्",
+    "steps": {
+      "personal": "व्यक्तिगत विवरण",
+      "address": "ठेगाना विवरण",
+      "socio_economic": "सामाजिक-आर्थिक",
+      "health": "प्रसूति र स्वास्थ्य"
+    },
+    "fields": {
+      "upload_photo": "फोटो अपलोड गर्नुहोस्",
+      "first_name": "पहिलो नाम",
+      "last_name": "थर",
+      "dob": "जन्म मिति (BS)",
+      "dob_placeholder": "जन्म मिति छान्नुहोस्",
+      "phone": "फोन नम्बर",
+      "alias": "उपनाम",
+      "alias_placeholder": "जस्तै: माया",
+      "province": "प्रदेश",
+      "district": "जिल्ला",
+      "municipality": "पालिका",
+      "ward": "वडा",
+      "locality": "टोल",
+      "locality_placeholder": "जस्तै: शान्ति चोक",
+      "house_number": "घर नम्बर",
+      "house_number_placeholder": "जस्तै: १२३",
+      "ethnicity": "जाति",
+      "education": "शिक्षाको स्तर",
+      "occupation": "पेशा",
+      "income": "मासिक पारिवारिक आम्दानी",
+      "blood_group": "रगत समूह",
+      "partner_name": "श्रीमानको नाम",
+      "partner_name_placeholder": "पूरा नाम",
+      "partner_mobile": "श्रीमानको मोबाइल",
+      "partner_age": "श्रीमानको उमेर",
+      "years_placeholder": "वर्ष",
+      "lmp": "अन्तिम महिनावारी मिति (LMP) - BS",
+      "lmp_placeholder": "LMP छान्नुहोस्",
+      "gravida": "गर्भावस्था संख्या (Gravida)",
+      "parity": "जन्म संख्या (Parity)",
+      "emergency_contact": "आपतकालीन सम्पर्क नम्बर"
+    },
+    "buttons": {
+      "continue": "जारी राख्नुहोस्",
+      "finish_update": "अपडेट समाप्त गर्नुहोस्",
+      "complete_reg": "दर्ता पूर्ण गर्नुहोस्"
+    },
+    "messages": {
+      "update_success": "आमाको विवरण सफलतापूर्वक अपडेट गरियो",
+      "save_error": "आमाको विवरण सुरक्षित गर्न असफल भयो",
+      "missing_id": "त्रुटि: अपडेटको लागि आमाको आईडी फेला परेन",
+      "gallery_permission": "ग्यालेरी अनुमति आवश्यक छ",
+      "photo_removed": "फोटो हटाइयो",
+      "pick_error": "ग्यालेरीबाट फोटो छान्दा असफल भयो"
+    },
+    "photo_options": {
+      "title": "फोटो अपलोड गर्नुहोस्",
+      "subtitle": "एउटा विकल्प रोज्नुहोस्",
+      "take": "फोटो खिच्नुहोस्",
+      "gallery": "ग्यालेरीबाट छान्नुहोस्",
+      "remove": "फोटो हटाउनुहोस्",
+      "cancel": "रद्द गर्नुहोस्"
+    }
+  },
+  "family_planning": {
+    "title": "परिवार नियोजन",
+    "question": "के आमाले परिवार नियोजनको कुनै साधन प्रयोग गर्नुभएको छ?",
+    "yes": "छ",
+    "no": "छैन",
+    "select_method": "साधन छान्नुहोस्:",
+    "specify_method": "साधन खुलाउनुहोस्:",
+    "placeholder": "साधनको नाम लेख्नुहोस्...",
+    "save": "विवरण सुरक्षित गर्नुहोस्",
+    "save_success": "परिवार नियोजनको विवरण सफलतापूर्वक सुरक्षित गरियो",
+    "save_error": "परिवार नियोजनको विवरण सुरक्षित गर्न असफल भयो",
+    "validation": {
+      "select_one": "कृपया कम्तिमा एउटा साधन छान्नुहोस्",
+      "enter_custom": "कृपया साधनको नाम लेख्नुहोस्"
+    },
+    "methods": {
+      "Condoms": "कण्डोम",
+      "Pills": "पिल्स",
+      "Implants": "इम्प्लान्ट",
+      "Depo (Injectable)": "डिपो (सुई)",
+      "I-Pills (Emergency)": "ई-पिल्स (आकस्मिक)",
+      "IUCD": "आयुसीडी",
+      "Female Sterilization": "महिला बन्ध्याकरण (मिनिल्याप)",
+      "Male Sterilization": "पुरुष बन्ध्याकरण (भ्यासेक्टोमी)",
+      "Other": "अन्य"
+    }
   }
 }
+

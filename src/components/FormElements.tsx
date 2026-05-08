@@ -126,6 +126,7 @@ export const SelectInput = ({ label, placeholder, value, options, onSelect, erro
 export const BoxInput = ({
   placeholder,
   value,
+  label,
   onChangeText,
   keyboardType = "default",
   maxLength,
@@ -137,15 +138,21 @@ export const BoxInput = ({
   keyboardType?: any;
   maxLength?: number;
   error?: string;
+  label?: string;
 }) => (
-  <View className="mb-6">
+  <View className="mb-4">
+    {label && (
+      <Text className="text-slate-700 font-medium mb-1.5 ml-1">{label}</Text>
+    )}
     <View
-      className={`rounded-xl px-4 h-14 justify-center border ${error ? "border-red-300" : "border-gray-300"}`}
+      className={`h-14 flex-row items-center rounded-md px-4 border ${
+        error ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"
+      }`}
     >
       <TextInput
-        className="text-[#1E293B] text-base"
+        className="flex-1 text-slate-800 text-base h-full"
         placeholder={placeholder}
-        placeholderTextColor="#b8bbbeff"
+        placeholderTextColor="#94a3b8"
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
@@ -154,7 +161,9 @@ export const BoxInput = ({
       />
     </View>
     {error ? (
-      <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{error}</Text>
+      <Text className="text-rose-500 text-xs mt-1.5 ml-1 font-semibold">
+        {error}
+      </Text>
     ) : null}
   </View>
 );

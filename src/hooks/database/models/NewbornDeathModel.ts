@@ -1,30 +1,33 @@
 import { getDb } from "../db";
 import { NewbornDeathStoreType } from "../types/newbornDeathModal";
 
+import * as Crypto from "expo-crypto";
+
 export async function createNewbornDeath(data: Partial<NewbornDeathStoreType>): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
+
+  const id = Crypto.randomUUID();
   
   await db.runAsync(
     `INSERT INTO hmis_newborn_death (
       id, mother_id, mother_name, baby_name, birth_day, birth_month, birth_year,
-      delivery_place, delivery_place_other, birth_condition, birth_condition_other,
-      death_age_days, cause_of_death, cause_of_death_other, death_place, death_place_other,
+      birth_condition, birth_condition_other,
+      death_age_days, death_age_unit, cause_of_death, cause_of_death_other, death_place, death_place_other,
       gender, remarks, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      data.id!,
+      id,
       data.mother_id!,
       data.mother_name!,
       data.baby_name || '',
       data.birth_day || 0,
       data.birth_month || 0,
       data.birth_year || 0,
-      data.delivery_place || '',
-      data.delivery_place_other || '',
       data.birth_condition || '',
       data.birth_condition_other || '',
       data.death_age_days || 0,
+      data.death_age_unit || 'days',
       data.cause_of_death || '',
       data.cause_of_death_other || '',
       data.death_place || '',

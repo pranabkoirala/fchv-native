@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   TextInput,
   ImageBackground,
@@ -12,6 +11,7 @@ import {
   InteractionManager,
   ActivityIndicator
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Search,
   Mic,

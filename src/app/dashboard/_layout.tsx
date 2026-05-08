@@ -1,6 +1,5 @@
 import { View } from "react-native";
 import { Drawer } from "expo-router/drawer";
-import React from "react";
 import "../../global.css";
 import CustomDrawer from "@/components/navigation/CustomDrawer";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
@@ -71,7 +70,7 @@ export default function DashboardLayout() {
         />
 
         <Drawer.Screen
-          name="profile"
+          name="settings"
           options={{
             title: "My Profile",
             drawerItemStyle: { display: "none" },
@@ -96,41 +95,6 @@ export default function DashboardLayout() {
           name="report"
           options={{
             title: "Reports",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="maternal-death-report"
-          options={{
-            title: "Maternal Death Report",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="newborn-death-report/index"
-          options={{
-            title: "Newborn Death Report",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="child-death-report"
-          options={{
-            title: "Child Death Report",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="service-report"
-          options={{
-            title: "Service Beneficiary Report",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="child-monitoring-report"
-          options={{
-            title: "Child Monitoring Report",
             drawerItemStyle: { display: "none" },
           }}
         />
