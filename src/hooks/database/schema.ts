@@ -84,46 +84,6 @@ CREATE TABLE IF NOT EXISTS todo (
     updated_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS hmis_record (
-    id TEXT PRIMARY KEY,
-    serial_no INTEGER,
-    date_day INTEGER,
-    date_month INTEGER,
-    date_year INTEGER,
-    mother_name TEXT,
-    mother_age INTEGER,
-    lmp_day INTEGER,
-    lmp_month INTEGER,
-    lmp_year INTEGER,
-    edd_day INTEGER,
-    edd_month INTEGER,
-    edd_year INTEGER,
-    counseling_given INTEGER,
-    checkup_12 INTEGER,
-    checkup_16 INTEGER,
-    checkup_20_24 INTEGER,
-    checkup_28 INTEGER,
-    checkup_32 INTEGER,
-    checkup_34 INTEGER,
-    checkup_36 INTEGER,
-    checkup_38_40 INTEGER,
-    checkup_other TEXT,
-    iron_preg_received INTEGER,
-    iron_pnc_received INTEGER,
-    vit_a_received INTEGER,
-    delivery_place TEXT,
-    newborn_condition TEXT,
-    pnc_check_24hr INTEGER,
-    pnc_check_3day INTEGER,
-    pnc_check_7_14day INTEGER,
-    pnc_check_42day INTEGER,
-    pnc_check_other TEXT,
-    family_planning_used INTEGER,
-    remarks TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS hmis_maternal_death (
     id TEXT PRIMARY KEY,
     mother_id TEXT,

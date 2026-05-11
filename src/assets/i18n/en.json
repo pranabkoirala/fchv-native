@@ -22,7 +22,9 @@
     "version": "v2.5.0",
     "namaste": "Namaste",
     "welcome-back": "Welcome back",
-    "welcome": "Welcome"
+    "welcome": "Welcome",
+    "update": "Update",
+    "add": "Add"
   },
   "dashboard": {
     "title": "FCHV Dashboard",
@@ -124,19 +126,6 @@
       "title": "Save Registration",
       "subtitle": "Register successfully",
       "success": "Pregnant woman registered successfully!"
-    }
-  },
-  "household_form": {
-    "title": "Add New Household",
-    "ward_label": "Ward No.",
-    "ward_placeholder": "1",
-    "tole_label": "Tole",
-    "tole_placeholder": "Tole Name",
-    "phone_label": "Phone Number",
-    "phone_placeholder": "98XXXXXXXX",
-    "submit": {
-      "title": "Save Details",
-      "success": "Household added successfully!"
     }
   },
   "learn_page": {
@@ -748,18 +737,6 @@
     "validation": {
       "select_one": "Please select at least one method",
       "enter_custom": "Please enter the custom method"
-    },
-    "methods": {
-      "Condoms": "Condoms",
-      "Pills": "Pills",
-      "Implants": "Implants",
-      "Depo (Injectable)": "Depo (Injectable)",
-      "I-Pills (Emergency)": "I-Pills (Emergency)",
-      "IUCD": "IUCD",
-      "Female Sterilization": "Female Sterilization",
-      "Male Sterilization": "Male Sterilization",
-      "Other": "Other"
     }
   }
 }
-

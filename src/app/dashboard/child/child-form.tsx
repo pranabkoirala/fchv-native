@@ -163,7 +163,7 @@ export default function ChildRegistrationForm() {
   const motherOptions = mothers.map(m => ({ label: m.name, value: m.id }));
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 py-7">
       <StatusBar barStyle="dark-content" />
       <CustomHeader title={id ? t("edit_child_monitoring", "Edit Child Monitoring") : t("new_child_monitoring", "New Child Monitoring")} onBackPress={() => router.back()} />
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
@@ -354,7 +354,7 @@ export default function ChildRegistrationForm() {
             <TouchableOpacity
               onPress={handleSave}
               disabled={isLoading}
-              className={`h-14 mt-6 rounded-xl  mb-5 items-center justify-center flex-row ${isLoading ? 'bg-primary/50' : 'bg-primary'}`}
+              className={`h-14 mt-6  mb-5 items-center justify-center flex-row ${isLoading ? 'bg-primary' : 'bg-primary/80'}`}
             >
               <Save size={22} color="white" />
               <Text className="text-white font-medium text-lg ml-2">{isLoading ? t("saving", "Saving...") : t("save_record", "रेकर्ड सेभ गर्नुहोस्")}</Text>

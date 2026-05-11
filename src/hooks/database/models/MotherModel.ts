@@ -434,8 +434,9 @@ export async function getMotherProfile(id: string): Promise<MotherProfileDbItem 
 
 export async function getMotherCount(): Promise<number> {
   const db = await getDb();
-  const result = await db.getFirstAsync<{ count: number }>(
+  const result = await db.getFirstAsync<any>(
     "SELECT COUNT(*) as count FROM mother WHERE is_deleted = 0"
   );
-  return result?.count ?? 0;
+  const count = result?.count ?? 0;
+  return Number(count);
 }

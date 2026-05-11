@@ -75,3 +75,30 @@ export async function deleteInfantMonitoring(id: string): Promise<void> {
   const db = await getDb();
   await db.runAsync(`UPDATE child_monitoring SET is_deleted = 1, updated_at = ? WHERE id = ?`, [new Date().toISOString(), id]);
 }
+
+export async function getInfantMonitoringByMother(motherId: string): Promise<InfantMonitoringStoreType | null> {
+  const db = await getDb();
+  return await db.getFirstAsync<InfantMonitoringStoreType>(
+    `SELECT * FROM child_monitoring WHERE mother_id = ? AND is_deleted = 0 ORDER BY created_at DESC`,
+  );
+}
+
+export async function getChildTrend(): Promise<{ month: number; year: number; count: number }[]> {
+  const db = await getDb();
+  // Using substr for extraction and removed the 1-year filter to show all registrations
+  const query = `
+    SELECT 
+      CAST(substr(COALESCE(created_at, date_of_birth), 6, 2) AS INTEGER) - 1 as month,
+      CAST(substr(COALESCE(created_at, date_of_birth), 1, 4) AS INTEGER) as year,
+      COUNT(*) as count
+    FROM child_monitoring 
+    WHERE is_deleted = 0 
+      AND COALESCE(created_at, date_of_birth) IS NOT NULL
+      AND month >= 0 AND month <= 11
+      AND year > 2000
+    GROUP BY year, month
+    ORDER BY year DESC, month DESC
+  `;
+  const rows = await db.getAllAsync<any>(query);
+  return rows;
+}

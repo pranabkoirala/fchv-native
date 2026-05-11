@@ -45,7 +45,7 @@ export default function BottomNavigation() {
   };
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 pb-10 bg-white items-center">
+    <View className="absolute bottom-0 left-0 right-0 bg-white items-center">
       <View
         className="flex-row items-center bg-white px-2 py-2"
         style={{ width: width * 0.94, height: 72 }}

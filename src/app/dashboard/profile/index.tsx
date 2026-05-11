@@ -27,7 +27,6 @@ import {
   Droplet
 } from "lucide-react-native";
 import "../../../global.css";
-import { getHmisRecord, deleteHmisRecord } from "../../../hooks/database/models/HmisRecordModel";
 import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
 import { getMaternalDeathByMother } from "../../../hooks/database/models/MaternalDeathModel";
 import { getNewbornDeathByMother } from "../../../hooks/database/models/NewbornDeathModel";
@@ -45,6 +44,9 @@ import SupplementModal from "../../../components/forms/SupplementModal";
 import SupplementsScreen from "./supplements";
 import FamilyPlanningSection from "../../../components/profile/FamilyPlanningSection";
 import CounselingSection from "../../../components/profile/CounselingSection";
+import { getVisitsByMotherId } from "../../../hooks/database/models/VisitModel";
+import { getInfantMonitoringByMother } from "../../../hooks/database/models/InfantMonitoringModel";
+import { getPregnancyByMotherId } from "../../../hooks/database/models/PregnantWomenModal";
 
 
 const SectionTitle = ({ title, icon: Icon, colorClass }: any) => (
@@ -100,65 +102,70 @@ export default function HmisRecordProfileScreen() {
           return;
         }
         try {
-          let data = await getHmisRecord(id);
-          
-          if (!data) {
-            const mother = await getMotherProfile(id);
-            if (mother) {
-              const lmpParts = mother.lmp && mother.lmp !== "N/A" ? mother.lmp.split(/[-/]/) : [];
-              const eddParts = mother.edd && mother.edd !== "N/A" ? mother.edd.split(/[-/]/) : [];
-              const regParts = mother.regDate && mother.regDate !== "N/A" ? mother.regDate.split(/[-/T]/) : [];
+          const [mother, pregnancy, visits, childMonitoring] = await Promise.all([
+            getMotherProfile(id),
+            getPregnancyByMotherId(id),
+            getVisitsByMotherId(id),
+            getInfantMonitoringByMother(id)
+          ]);
 
-              data = {
-                id: mother.id,
-                serial_no: null,
-                date_year: regParts.length >= 3 ? parseInt(regParts[0], 10) : null,
-                date_month: regParts.length >= 3 ? parseInt(regParts[1], 10) : null,
-                date_day: regParts.length >= 3 ? parseInt(regParts[2], 10) : null,
-                mother_name: mother.name,
-                mother_age: mother.age,
-                lmp_year: lmpParts.length === 3 ? parseInt(lmpParts[0], 10) : null,
-                lmp_month: lmpParts.length === 3 ? parseInt(lmpParts[1], 10) : null,
-                lmp_day: lmpParts.length === 3 ? parseInt(lmpParts[2], 10) : null,
-                edd_year: eddParts.length === 3 ? parseInt(eddParts[0], 10) : null,
-                edd_month: eddParts.length === 3 ? parseInt(eddParts[1], 10) : null,
-                edd_day: eddParts.length === 3 ? parseInt(eddParts[2], 10) : null,
-                counseling_given: null,
-                checkup_12: null,
-                checkup_16: null,
-                checkup_20_24: null,
-                checkup_28: null,
-                checkup_32: null,
-                checkup_34: null,
-                checkup_36: null,
-                checkup_38_40: null,
-                checkup_other: null,
-                iron_preg_received: null,
-                iron_pnc_received: null,
-                vit_a_received: null,
-                delivery_place: null,
-                newborn_condition: null,
-                pnc_check_24hr: null,
-                pnc_check_3day: null,
-                pnc_check_7_14day: null,
-                pnc_check_42day: null,
-                pnc_check_other: null,
-                family_planning_used: null,
-                remarks: null,
-                created_at: mother.regDate || "",
-                updated_at: mother.regDate || "",
-              };
-            }
-          }
+          if (mother) {
+            const lmpParts = pregnancy?.lmp_date ? pregnancy.lmp_date.split(/[-/T]/) : (mother.lmp && mother.lmp !== "N/A" ? mother.lmp.split(/[-/]/) : []);
+            const eddParts = pregnancy?.expected_delivery_date ? pregnancy.expected_delivery_date.split(/[-/T]/) : (mother.edd && mother.edd !== "N/A" ? mother.edd.split(/[-/]/) : []);
+            const regParts = mother.regDate && mother.regDate !== "N/A" ? mother.regDate.split(/[-/T]/) : [];
 
-          if (isActive) {
-            setRecord(data);
-            if (data?.id) {
-              const deathData = await getMaternalDeathByMother(data.id);
+            // Map visits to ANC/PNC slots
+            const ancVisits = visits.filter(v => v.visit_type === 'ANC');
+            const pncVisits = visits.filter(v => v.visit_type === 'PNC');
+
+            const data: HmisRecordStoreType = {
+              id: mother.id,
+              serial_no: null,
+              date_year: regParts.length >= 3 ? parseInt(regParts[0], 10) : null,
+              date_month: regParts.length >= 3 ? parseInt(regParts[1], 10) : null,
+              date_day: regParts.length >= 3 ? parseInt(regParts[2], 10) : null,
+              mother_name: mother.name,
+              mother_age: mother.age,
+              lmp_year: lmpParts.length >= 3 ? parseInt(lmpParts[0], 10) : null,
+              lmp_month: lmpParts.length >= 3 ? parseInt(lmpParts[1], 10) : null,
+              lmp_day: lmpParts.length >= 3 ? parseInt(lmpParts[2], 10) : null,
+              edd_year: eddParts.length >= 3 ? parseInt(eddParts[0], 10) : null,
+              edd_month: eddParts.length >= 3 ? parseInt(eddParts[1], 10) : null,
+              edd_day: eddParts.length >= 3 ? parseInt(eddParts[2], 10) : null,
+              counseling_given: null,
+              // Sequential mapping for demo/simplicity since specific milestones aren't in visit table
+              checkup_12: ancVisits.length >= 1 ? 1 : null,
+              checkup_16: ancVisits.length >= 2 ? 1 : null,
+              checkup_20_24: ancVisits.length >= 3 ? 1 : null,
+              checkup_28: ancVisits.length >= 4 ? 1 : null,
+              checkup_32: ancVisits.length >= 5 ? 1 : null,
+              checkup_34: ancVisits.length >= 6 ? 1 : null,
+              checkup_36: ancVisits.length >= 7 ? 1 : null,
+              checkup_38_40: ancVisits.length >= 8 ? 1 : null,
+              checkup_other: null,
+              iron_preg_received: null,
+              iron_pnc_received: null,
+              vit_a_received: null,
+              delivery_place: childMonitoring?.birth_place || null,
+              newborn_condition: childMonitoring?.baby_weight || null,
+              pnc_check_24hr: pncVisits.length >= 1 ? 1 : null,
+              pnc_check_3day: pncVisits.length >= 2 ? 1 : null,
+              pnc_check_7_14day: pncVisits.length >= 3 ? 1 : null,
+              pnc_check_42day: pncVisits.length >= 4 ? 1 : null,
+              pnc_check_other: null,
+              family_planning_used: null,
+              remarks: childMonitoring?.remarks || null,
+              created_at: mother.regDate || "",
+              updated_at: mother.regDate || "",
+            };
+
+            if (isActive) {
+              setRecord(data);
+              const deathData = await getMaternalDeathByMother(mother.id);
               setExistingDeathRecord(deathData);
-              const newbornDeathData = await getNewbornDeathByMother(data.id);
+              const newbornDeathData = await getNewbornDeathByMother(mother.id);
               setExistingNewbornDeathRecord(newbornDeathData);
-              await loadSupplements(data.id);
+              await loadSupplements(mother.id);
             }
           }
         } catch (error) {
@@ -198,7 +205,7 @@ export default function HmisRecordProfileScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-8">
+    <SafeAreaView className="flex-1 bg-[#F8FAFC] py-8">
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title={t("profile.title")}

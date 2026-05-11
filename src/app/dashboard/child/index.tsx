@@ -6,7 +6,7 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import { Search, Plus, Edit2 } from "lucide-react-native";
+import { Search, Plus, Baby, Calendar, ChevronRight } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useState, useCallback, useEffect } from "react";
 import CustomHeader from "@/components/CustomHeader";
@@ -51,75 +51,93 @@ export default function ChildManagementScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white pt-12">
+    <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-8">
       <CustomHeader
         title="Child Registration"
-        subtitle=""
+        subtitle="Manage children's health records"
         onBackPress={() => router.replace('/dashboard')}
+        rightNode={
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push("/dashboard/child/child-form")}
+            className="bg-primary/80 px-2 py-1 items-center justify-center"
+          >
+            <Text className="text-white text-base font-medium">Add New</Text>
+          </TouchableOpacity>
+        }
       />
 
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 80 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <View className="flex-row items-center px-5 mt-6 gap-3">
-          <View className="flex-1 flex-row items-center bg-white px-4 h-14 rounded-2xl border border-gray-200">
+        {/* Search Section */}
+        <View className="px-5 mt-3 flex-row items-center gap-3">
+          <View className="flex-1 flex-row items-center bg-white px-4 h-14 rounded-md border border-gray-100">
             <Search size={20} color="#94A3B8" />
             <TextInput
-              className="flex-1 ml-3 text-base text-[#1E293B] font-medium"
-              placeholder="Search By Name..."
+              className="flex-1 ml-3 text-base text-[#1E293B]"
+              placeholder="Search by name..."
               placeholderTextColor="#94A3B8"
               value={search}
               onChangeText={setSearch}
             />
           </View>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => router.push("/dashboard/child/child-form")}
-            className="bg-primary w-14 h-14 rounded-2xl items-center justify-center shadow-lg shadow-blue-900/20"
-          >
-            <Plus size={28} color="white" strokeWidth={3} />
-          </TouchableOpacity>
         </View>
 
-        <View className="flex-row justify-between items-center px-6 mt-10 mb-4">
-          <Text className="text-[#1E293B] text-xl font-bold">Child Health Logs</Text>
-        </View>
-
-        <View className="px-5">
+        {/* List Content */}
+        <View className="px-3 gap-y-4 pt-3">
           {filteredInfants.length > 0 ? (
             filteredInfants.map((item) => (
-              <View
+              <TouchableOpacity
                 key={item.id}
-                className="bg-white p-4 rounded-[28px] mb-4 flex-row items-center border border-gray-100 shadow-sm"
+                activeOpacity={0.7}
+                onPress={() => handleEdit(item.id)}
+                className="bg-white p-4 rounded-md flex-row items-center border border-gray-100 shadow-sm"
               >
-                  <View className="flex-1 ml-4 justify-center">
-                  <Text className="text-[#1E293B] text-lg font-black leading-tight" numberOfLines={1}>
-                    {item.baby_name || 'Unnamed Baby'}
-                  </Text>
-                  <Text className="text-gray-400 font-bold text-[13px] mt-0.5" numberOfLines={1}>
-                    Mother: {item.mother_name || 'Unknown'}
-                  </Text>
-                  <Text className="text-gray-400 text-[11px] mt-1" numberOfLines={1}>
-                    Born: {item.date_of_birth ? AdToBs(item.date_of_birth) : 'N/A'} (B.S.)
-                  </Text>
+                {/* Avatar */}
+                <View className="w-14 h-14 bg-indigo-50 rounded-[18px] items-center justify-center border border-indigo-100">
+                  <Baby size={24} color="#6366F1" strokeWidth={2} />
                 </View>
 
-                <View className="flex-row items-center pr-1 gap-1">
-                  <TouchableOpacity
-                    onPress={() => handleEdit(item.id)}
-                    className="p-2.5 rounded-full bg-blue-50"
-                  >
-                    <Edit2 size={18} color="#3B82F6" strokeWidth={2.5} />
-                  </TouchableOpacity>
+                {/* Info */}
+                <View className="flex-1 ml-4 justify-center">
+                  <Text className="text-slate-800 text-base font-bold mb-1" numberOfLines={1}>
+                    {item.baby_name || 'Unnamed Baby'}
+                  </Text>
+                  
+                  <View className="flex-row items-center mb-1">
+                    <Text className="text-slate-500 font-medium text-[13px]" numberOfLines={1}>
+                      Mother: <Text className="text-slate-700">{item.mother_name || 'Unknown'}</Text>
+                    </Text>
+                  </View>
+
+                  <View className="flex-row items-center">
+                    <Calendar size={12} color="#94A3B8" />
+                    <Text className="text-slate-400 text-[11px] font-medium ml-1" numberOfLines={1}>
+                      {item.date_of_birth ? AdToBs(item.date_of_birth) : 'N/A'} (B.S.)
+                    </Text>
+                  </View>
                 </View>
-              </View>
+
+                {/* Action */}
+                <View className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center">
+                  <ChevronRight size={20} color="#94A3B8" />
+                </View>
+              </TouchableOpacity>
             ))
           ) : (
-            <View className="py-10 items-center justify-center opacity-50">
-              <Text className="text-gray-400 font-black text-base italic">No child records found</Text>
+            <View className="py-16 items-center justify-center px-4">
+              <View className="w-24 h-24 bg-slate-50 rounded-full items-center justify-center mb-4">
+                <Baby size={40} color="#CBD5E1" strokeWidth={1.5} />
+              </View>
+              <Text className="text-slate-600 font-bold text-lg text-center mb-2">No Records Found</Text>
+              <Text className="text-slate-400 text-sm text-center leading-5 px-6">
+                {search 
+                  ? "We couldn't find any children matching your search. Try a different name."
+                  : "Start by registering a new child using the + button above."}
+              </Text>
             </View>
           )}
         </View>

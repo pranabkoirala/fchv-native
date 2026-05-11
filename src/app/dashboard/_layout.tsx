@@ -25,32 +25,10 @@ export default function DashboardLayout() {
             title: "Dashboard",
           }}
         />
-        <Drawer.Screen name="household" />
         <Drawer.Screen
-          name="pregnant-women"
-          options={{
-            title: "Pregnant Women",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="children"
+          name="child"
           options={{
             title: "Children (0-5)",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="family-planning"
-          options={{
-            title: "Family Planning",
-            drawerItemStyle: { display: "none" },
-          }}
-        />
-        <Drawer.Screen
-          name="follow-up"
-          options={{
-            title: "Follow Up",
             drawerItemStyle: { display: "none" },
           }}
         />

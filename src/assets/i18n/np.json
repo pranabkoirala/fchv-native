@@ -22,7 +22,9 @@
     "version": "v2.5.0",
     "namaste": "नमस्ते",
     "welcome-back": "स्वागत छ",
-    "welcome": "स्वागत छ"
+    "welcome": "स्वागत छ",
+    "update": "अपडेट",
+    "add": "थप्नुहोस्"
   },
   "dashboard": {
     "title": "FCHV डैशबोर्ड",
@@ -124,19 +126,6 @@
       "title": "दर्ता सुरक्षित गर्नुहोस्",
       "subtitle": "सफलतापूर्वक दर्ता गर्नुहोस्",
       "success": "गर्भवती महिला सफलतापूर्वक दर्ता भयो!"
-    }
-  },
-  "household_form": {
-    "title": "नयाँ घरधुरी थप्नुहोस्",
-    "ward_label": "वडा नं.",
-    "ward_placeholder": "१",
-    "tole_label": "टोल",
-    "tole_placeholder": "टोलको नाम",
-    "phone_label": "फोन नम्बर",
-    "phone_placeholder": "९८XXXXXXXX",
-    "submit": {
-      "title": "सुरक्षित गर्नुहोस्",
-      "success": "घरधुरी सफलतापूर्वक थपियो!"
     }
   },
   "learn_page": {
@@ -666,9 +655,9 @@
     "buttons": {
       "save": "विवरण सुरक्षित गर्नुहोस्",
       "update": "विवरण अपडेट गर्नुहोस्"
-     }
-   },
-   "complete_form": {
+    }
+  },
+  "complete_form": {
     "title_new": "नयाँ दर्ता",
     "title_edit": "प्रोफाइल पूर्ण गर्नुहोस्",
     "steps": {
@@ -746,18 +735,6 @@
     "validation": {
       "select_one": "कृपया कम्तिमा एउटा साधन छान्नुहोस्",
       "enter_custom": "कृपया साधनको नाम लेख्नुहोस्"
-    },
-    "methods": {
-      "Condoms": "कण्डोम",
-      "Pills": "पिल्स",
-      "Implants": "इम्प्लान्ट",
-      "Depo (Injectable)": "डिपो (सुई)",
-      "I-Pills (Emergency)": "ई-पिल्स (आकस्मिक)",
-      "IUCD": "आयुसीडी",
-      "Female Sterilization": "महिला बन्ध्याकरण (मिनिल्याप)",
-      "Male Sterilization": "पुरुष बन्ध्याकरण (भ्यासेक्टोमी)",
-      "Other": "अन्य"
     }
   }
 }
-

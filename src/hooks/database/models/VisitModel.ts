@@ -162,3 +162,11 @@ export async function unSyncedVisits(): Promise<CreateVisitPayload[]> {
     is_synced: false,
   }));
 }
+
+export async function getVisitsByMotherId(motherId: string): Promise<VisitStoreType[]> {
+  const db = await getDb();
+  return await db.getAllAsync<VisitStoreType>(
+    `SELECT * FROM visit WHERE mother_id = ? AND is_deleted = 0 ORDER BY visit_date ASC`,
+    [motherId]
+  );
+}

@@ -235,15 +235,14 @@ export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
     SELECT 
       p.id,
       p.mother_id,
-      m.name,
+      (m.first_name || ' ' || m.last_name) as name,
       m.husband_name,
-      m.age,
-      m.address as ward,
-      m.phone,
+      m.phone_number as phone,
       p.lmp_date,
       p.expected_delivery_date as edd,
       p.gravida,
-      p.parity
+      p.parity,
+      p.created_at
     FROM pregnancy p
     INNER JOIN mother m ON p.mother_id = m.id
     WHERE p.is_deleted = 0 AND p.is_current = 1 AND m.is_deleted = 0
@@ -262,8 +261,8 @@ export async function getPregnancyById(id: string): Promise<any> {
   const query = `
     SELECT 
       p.*,
-      m.name as mother_name,
-      m.phone as mother_phone
+      (m.first_name || ' ' || m.last_name) as mother_name,
+      m.phone_number as mother_phone
     FROM pregnancy p
     INNER JOIN mother m ON p.mother_id = m.id
     WHERE p.id = ? AND p.is_deleted = 0
@@ -321,5 +320,24 @@ export async function updatePregnancy(
   values.push(id);
   const sql = `UPDATE pregnancy SET ${sets.join(", ")} WHERE id = ?`;
   await db.runAsync(sql, values);
+}
+
+export async function getPregnancyTrend(): Promise<{ month: number; year: number; count: number }[]> {
+  const db = await getDb();
+  // Using substr for more robust date extraction since strftime can be picky about formats
+  const query = `
+    SELECT 
+      CAST(substr(COALESCE(created_at, lmp_date), 6, 2) AS INTEGER) - 1 as month,
+      CAST(substr(COALESCE(created_at, lmp_date), 1, 4) AS INTEGER) as year,
+      COUNT(*) as count
+    FROM pregnancy 
+    WHERE is_deleted = 0
+      AND COALESCE(created_at, lmp_date) IS NOT NULL
+      AND month >= 0 AND month <= 11
+      AND year > 2000
+    GROUP BY year, month
+  `;
+  const rows = await db.getAllAsync<any>(query);
+  return rows;
 }
 
