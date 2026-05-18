@@ -6,23 +6,31 @@ const generateId = () =>
 export interface TodoItem {
   id: string;
   task: string;
+  description?: string;
+  task_date?: string;
+  task_time?: string;
   is_completed: number;
   created_at: string;
   updated_at: string;
 }
 
-export async function createTodo(task: string): Promise<TodoItem> {
+export async function createTodo(
+  task: string,
+  description?: string,
+  task_date?: string,
+  task_time?: string
+): Promise<TodoItem> {
   const db = await getDb();
   const id = generateId();
   const now = new Date().toISOString();
   
   await db.runAsync(
-    `INSERT INTO todo (id, task, is_completed, created_at, updated_at) 
-     VALUES (?, ?, 0, ?, ?)`,
-    [id, task, now, now]
+    `INSERT INTO todo (id, task, description, task_date, task_time, is_completed, created_at, updated_at) 
+     VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
+    [id, task, description || null, task_date || null, task_time || null, now, now]
   );
 
-  return { id, task, is_completed: 0, created_at: now, updated_at: now };
+  return { id, task, description, task_date, task_time, is_completed: 0, created_at: now, updated_at: now };
 }
 
 export async function getAllTodos(): Promise<TodoItem[]> {

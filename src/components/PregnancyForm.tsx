@@ -7,10 +7,16 @@ import { CalendarPicker, BsToAd } from "react-native-nepali-picker";
 import { getAllMothersList, getMotherProfile, MotherListDbItem } from "../hooks/database/models/MotherModel";
 import { createPregnancy, getPregnancyByMotherId } from "../hooks/database/models/PregnantWomenModal";
 import { useToast } from "../context/ToastContext";
-import { FieldLabel, BoxInput } from "./FormElements";
+import { FieldLabel, BoxInput, SelectInput } from "./FormElements";
 import { ProfilePicker } from "./ProfilePicker";
 import { Button } from "./button";
 import { useLanguage } from "../context/LanguageContext";
+
+const RISK_OPTIONS = [
+  { value: "normal", en: "Normal", np: "सामान्य" },
+  { value: "moderate", en: "Moderate", np: "मध्यम" },
+  { value: "high", en: "High", np: "उच्च जोखिम" },
+];
 
 export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: () => void }) {
   const router = useRouter();
@@ -25,6 +31,7 @@ export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: 
   const [edd, setEdd] = useState("");
   const [caretakersName, setCaretakersName] = useState("");
   const [caretakersPhone, setCaretakersPhone] = useState("");
+  const [riskLevel, setRiskLevel] = useState<"normal" | "moderate" | "high">("normal");
   const [pregnancyId, setPregnancyId] = useState<string | null>(null);
   const [selectedMotherName, setSelectedMotherName] = useState("");
 
@@ -57,6 +64,7 @@ export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: 
           setEdd("");
           setCaretakersName("");
           setCaretakersPhone("");
+          setRiskLevel("normal");
           setPregnancyId(null);
 
           // Try to load existing pregnancy for this mother
@@ -82,6 +90,7 @@ export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: 
             setEdd(pregnancy.expected_delivery_date || "");
             setCaretakersName(pregnancy.caretakers_name || "");
             setCaretakersPhone(pregnancy.caretakers_phone || "");
+            setRiskLevel((pregnancy.risk_level as "normal" | "moderate" | "high") || "normal");
             setPregnancyId(pregnancy.id || null);
           }
         } catch (e) {
@@ -141,6 +150,7 @@ export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: 
         caretakers_phone: caretakersPhone || undefined,
         is_current: true,
         selected: true,
+        risk_level: riskLevel,
       });
       showToast(t("pregnancy_form.messages.save_success"));
       router.back();
@@ -152,16 +162,19 @@ export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: 
     }
   };
 
+  const motherOptions = mothers.map(m => ({ label: m.name, value: m.id }));
+
   return (
     <>
       <View className="pt-3">
         <ProfilePicker
+          key={`picker-${mothers.length}-${id || "new"}`}
           label={t("pregnancy_form.select_mother")}
           placeholder={isLoading ? t("pregnancy_form.loading_mothers") : t("pregnancy_form.choose_mother")}
           selectedValue={selectedMotherId}
-          disabled={!!id}
+          disabled={Boolean(id && id !== "undefined" && id !== "")}
           isSearchable={true}
-          options={mothers.length > 0 ? mothers.map(m => ({ value: m.id, label: `${m.name}` })) : (id ? [{ value: id, label: selectedMotherName || "Loading..." }] : [])}
+          options={motherOptions}
           onValueChange={(val) => { setSelectedMotherId(val); setErrors({ ...errors, motherId: "" }); }}
           error={errors.motherId}
         />
@@ -209,6 +222,19 @@ export default function PregnancyForm({ id }: { id?: string, onSwitchToMother?: 
           </View>
         </View>
       ) : null}
+
+      <View className="mb-4">
+        <ProfilePicker
+          label={language === "np" ? "जोखिम स्तर" : "Risk Level"}
+          placeholder={language === "np" ? "जोखिम स्तर छान्नुहोस्" : "Select Risk Level"}
+          selectedValue={riskLevel}
+          onValueChange={(val) => setRiskLevel(val as "normal" | "moderate" | "high")}
+          options={RISK_OPTIONS.map((opt) => ({
+            label: language === "np" ? opt.np : opt.en,
+            value: opt.value,
+          }))}
+        />
+      </View>
 
       <FieldLabel label={t("pregnancy_form.caretaker_name")} />
       <BoxInput placeholder={t("add_record.basic_info.mother_name_placeholder")} value={caretakersName} onChangeText={setCaretakersName} />

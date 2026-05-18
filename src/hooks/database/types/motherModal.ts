@@ -65,4 +65,34 @@ export type CreateMotherPayload = {
   partner_mobile?: string;
   partner_age?: string;
   is_synced?: boolean;
+  updated_at?: string;
+};
+export type MotherSyncPayload = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  alias?: string | null;
+  phone_number: string;
+  date_of_birth: string;
+  gravida?: number | null;
+  parity?: number | null;
+  address: {
+    locality?: string | null;
+    house_number?: string | null;
+    province: string;
+    district: string;
+    municipality: string;
+    ward: string;
+  };
+  income?: string | null;
+  education?: string | null;
+  occupation?: string | null;
+  jati_code?: string | null;
+  blood_group?: string | null;
+  emergency_contact_number?: string | null;
+  partner_name?: string | null;
+  partner_mobile?: string | null;
+  partner_age?: string | null;
+  updated_at: string;
+  deleted: boolean;
 };

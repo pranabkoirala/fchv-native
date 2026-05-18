@@ -1,14 +1,69 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Platform, Keyboard, Dimensions } from "react-native";
-import { Home, Baby, Plus, BookOpen, FileText } from "lucide-react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity, Platform, Keyboard, Dimensions, Animated } from "react-native";
+import { Home, ClipboardList, CheckSquare, BookOpen } from "lucide-react-native";
 import { useRouter, usePathname } from "expo-router";
-import Colors from "../../constants/Colors";
+import { useLanguage } from "../../context/LanguageContext";
 
 const { width } = Dimensions.get('window');
+
+const TabItem = ({ tab, isActive, onPress }: any) => {
+  const scaleAnim = useRef(new Animated.Value(isActive ? 1.1 : 1)).current;
+  const bgOpacityAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: isActive ? 1.1 : 1,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bgOpacityAnim, {
+        toValue: isActive ? 1 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, [isActive]);
+
+  const Icon = tab.icon;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{ flex: 1, alignItems: "center", justifyContent: "center", height: "100%"}}
+    >
+      <Animated.View
+        style={{
+          padding: 6,
+          borderRadius: 22,
+          alignItems: "center",
+          justifyContent: "center",
+          transform: [{ scale: scaleAnim }],
+        }}
+      >
+        <Icon
+          size={20}
+          color={isActive ? "#3B82F6" : "#64748B"}
+          strokeWidth={isActive ? 2.5 : 2}
+        />
+      </Animated.View>
+      <Text
+        style={{
+          fontSize: 10,
+          fontWeight: isActive ? "700" : "600",
+          color: isActive ? "#3B82F6" : "#64748B",
+        }}
+      >
+        {tab.label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 export default function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
+  const { language } = useLanguage();
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -31,65 +86,41 @@ export default function BottomNavigation() {
   if (shouldHide) return null;
 
   const tabs = [
-    { id: "home", label: "Home", icon: Home, path: "/dashboard" },
-    { id: "child", label: "Child", icon: Baby, path: "/dashboard/child" },
-    { id: "record", label: "Register", icon: Plus, path: "/dashboard/record", isAction: true },
-    { id: "report", label: "Report", icon: FileText, path: "/dashboard/report" },
-    { id: "guide", label: "Guideline", icon: BookOpen, path: "/dashboard/guidelines" },
+    { id: "home", en_label: "Home", np_label: "गृहपृष्ठ", icon: Home, path: "/dashboard" },
+    { id: "report", en_label: "Report", np_label: "रिपोर्ट", icon: ClipboardList, path: "/dashboard/report" },
+    { id: "tasks", en_label: "Tasks", np_label: "कार्यहरू", icon: CheckSquare, path: "/dashboard/todo" },
+    { id: "guide", en_label: "Guidelines", np_label: "मार्गदर्शन", icon: BookOpen, path: "/dashboard/guidelines" },
   ];
 
-  const isActive = (path: string | null) => {
+  const checkIsActive = (path: string | null) => {
     if (!path) return false;
     if (path === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(path);
   };
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 pb-10 bg-white items-center">
+    <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "white" }}>
       <View
-        className="flex-row items-center bg-white px-2 py-2"
-        style={{ width: width * 0.94, height: 72 }}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: "white",
+          paddingBottom: 15,
+          paddingTop: 10
+        }}
       >
         {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const active = isActive(tab.path);
-
-        if (tab?.isAction) {
+          const active = checkIsActive(tab.path);
           return (
-            <TouchableOpacity
+            <TabItem
               key={tab.id}
-              activeOpacity={0.8}
-              onPress={() => tab.path && pathname !== tab.path && router.replace(tab.path as any)}
-              className="bg-primary -mt-12 w-16 h-16 rounded-full items-center justify-center shadow-xl shadow-blue-200 border-4 border-white"
-            >
-              <Plus size={32} color="white" strokeWidth={3} />
-            </TouchableOpacity>
-          );
-        }
-
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              activeOpacity={0.7}
+              tab={{ ...tab, label: language === "np" ? tab.np_label : tab.en_label }}
+              isActive={active}
               onPress={() => {
                 if (!tab.path || active) return;
                 router.replace(tab.path as any);
               }}
-              className="items-center justify-center flex-1 h-full"
-            >
-              <View className={`w-10 h-10 rounded-2xl items-center justify-center ${active ? 'bg-blue-50 rounded-full' : 'bg-transparent'}`}>
-                <Icon
-                  size={active ? 22 : 20}
-                  color={active ? Colors.primary : "#94A3B8"}
-                  strokeWidth={active ? 2.5 : 2}
-                />
-              </View>
-              <Text
-                className={`text-[8.5px] mt-0.5 font-bold uppercase tracking-tighter ${active ? "text-primary" : "text-slate-400"}`}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
+            />
           );
         })}
       </View>

@@ -1,6 +1,6 @@
 
 import { markAsSynced } from "./helper";
-import { fetchPregnancyFromServer } from "../pregnantWomen/queries";
+// import { fetchPregnancyFromServer } from "../pregnantWomen/queries";
 import { unSyncedPregnancies } from "@/hooks/database/models/PregnantWomenModal";
 import { postPregnancy } from "../pregnantWomen/mutation";
 
@@ -23,13 +23,11 @@ export async function sendUnsyncedPregnancyToServer() {
 export async function getUnsyncedPregnancyFromServer(
   last_synced_at: string | null
 ) {
-  await fetchPregnancyFromServer({
-    sync_timestamp: last_synced_at
-  });
+  // await fetchPregnancyFromServer({
+  //   sync_timestamp: last_synced_at
+  // });
 }
 
 export async function syncKickCounter() {
-  // const isLoggedIn = await TokenService.checkAuth();
-  // if (!isLoggedIn) return;
   await sendUnsyncedPregnancyToServer();
 }

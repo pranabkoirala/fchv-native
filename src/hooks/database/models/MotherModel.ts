@@ -160,10 +160,25 @@ export async function unSyncedMothers(): Promise<CreateMotherPayload[]> {
     address_district: row.address_district ?? undefined,
     address_municipality: row.address_municipality ?? undefined,
     address_ward: row.address_ward ?? undefined,
+    address_locality: row.address_locality ?? undefined,
+    address_house_number: row.address_house_number ?? undefined,
     husband_name: row.husband_name ?? undefined,
     ethnicity: row.ethnicity ?? undefined,
     education: row.education ?? undefined,
     photo: row.photo ?? undefined,
+    income: row.income ?? undefined,
+    occupation: row.occupation ?? undefined,
+    blood_group: row.blood_group ?? undefined,
+    jati_code: row.jati_code ?? undefined,
+    lmp_date: row.lmp_date ?? undefined,
+    parity: row.parity ?? undefined,
+    gravida: row.gravida ?? undefined,
+    emergency_contact_number: row.emergency_contact_number ?? undefined,
+    alias: row.alias ?? undefined,
+    partner_name: row.partner_name ?? undefined,
+    partner_mobile: row.partner_mobile ?? undefined,
+    partner_age: row.partner_age ?? undefined,
+    updated_at: row.updated_at,
     is_synced: false
   }));
 }
@@ -193,6 +208,7 @@ export interface MotherListDbItem {
   status: string;
   risk: string;
   ward: string;
+  municipality: string;
   image: string;
   pregnancy_count: number;
   date_of_birth: string;
@@ -274,6 +290,7 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       phone: row.phone_number || "",
       phone_number: row.phone_number || "",
       ward: row.address_ward || "",
+      municipality: row.address_municipality || "",
       image: row.photo || "https://vectorified.com/images/no-profile-picture-icon-13.png",
       lmp: lmpRaw,
       edd: eddCalculated,
@@ -417,6 +434,7 @@ export async function getMotherProfile(id: string): Promise<MotherProfileDbItem 
     gravida: (row.gravida !== null && row.gravida !== undefined) ? String(row.gravida) : "",
     parity: (row.parity !== null && row.parity !== undefined) ? String(row.parity) : "",
     ward: row.address_ward || "",
+    municipality: row.address_municipality || "",
     image: row.photo || "https://vectorified.com/images/no-profile-picture-icon-13.png",
     lmp: lmpRaw,
     edd: eddCalculated || "N/A",

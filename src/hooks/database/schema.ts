@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS mother(
     caretakers_phone TEXT,
     is_current INTEGER NOT NULL DEFAULT 0,
     selected INTEGER NOT NULL DEFAULT 0,
+    ended INTEGER NOT NULL DEFAULT 0,
+    delivered INTEGER NOT NULL DEFAULT 0,
+    risk_level TEXT NOT NULL DEFAULT 'normal', -- 'high', 'moderate', 'normal'
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     FOREIGN KEY(mother_id) REFERENCES mother(id)
@@ -78,6 +81,9 @@ CREATE TABLE IF NOT EXISTS sync (
 CREATE TABLE IF NOT EXISTS todo (
     id TEXT PRIMARY KEY,
     task TEXT NOT NULL,
+    description TEXT,
+    task_date TEXT,
+    task_time TEXT,
     is_completed INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,

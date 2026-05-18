@@ -5,7 +5,10 @@ import { httpClient } from "../../client/httpClient";
 import { SyncTableType, TableType } from "@/hooks/database/types/table";
 import { getTablesWithTimestamp } from "@/hooks/database/models/SyncModel";
 import { getUnsyncedPregnancyFromServer, sendUnsyncedPregnancyToServer } from "./syncPregnancy";
+import { sendUnsyncedMothersToServer } from "./syncMother";
 import { getSelectedPregnancy } from "@/hooks/database/models/PregnantWomenModal";
+import storage from "@/utils/storage";
+import { ACCESS_TOKEN_KEY } from "@/constants/token";
 
 const SYNCERS: Partial<
   Record<SyncTableType, (last_synced_at: string | null) => Promise<void>>
@@ -17,35 +20,42 @@ const SYNCERS: Partial<
 export let isGlobalSyncRunning = false;
 
 const doSync = async (sendOnly?: boolean) => {
-//   const isLoggedIn = await TokenService.checkAuth();
-//   if (!isLoggedIn) return;
+  // Skip sync if user is not logged in
+  const token = await storage.get(ACCESS_TOKEN_KEY);
+  if (!token) return;
 
   isGlobalSyncRunning = true;
   DeviceEventEmitter.emit("sync.started");
 
-  await sendUnsyncedPregnancyToServer();
+  try {
+    // Push local unsynced data to server
+    await sendUnsyncedMothersToServer();
+    await sendUnsyncedPregnancyToServer();
 
-  if (sendOnly) return;
+    if (sendOnly) return;
 
-  const timestamps = await getTablesWithTimestamp();
-  const rawTables = (await fetchUnsyncedTablesFromServer(timestamps)) || [];
+    const timestamps = await getTablesWithTimestamp();
+    // const rawTables = (await fetchUnsyncedTablesFromServer(timestamps)) || [];
 
-  for (const table of rawTables) {
-    const fn = SYNCERS[table];
-    if (!fn) continue;
+    // for (const table of rawTables) {
+    //   const fn = SYNCERS[table];
+    //   if (!fn) continue;
 
-    try {
-      const last_synced_at = timestamps[table as TableType] ?? null;
-      console.log(`[SYNC] start ${table}`);
-      await fn(last_synced_at);
-      console.log(`[SYNC] done  ${table}`);
-    } catch (e) {
-      console.error(`[SYNC] fail  ${table}`, e);
-    }
+    //   try {
+    //     const last_synced_at = timestamps[table as TableType] ?? null;
+    //     console.log(`[SYNC] start ${table}`);
+    //     await fn(last_synced_at);
+    //     console.log(`[SYNC] done  ${table}`);
+    //   } catch (e) {
+    //     console.error(`[SYNC] fail  ${table}`, e);
+    //   }
+    // }
+  } catch (e) {
+    console.error("[SYNC] error:", e);
+  } finally {
+    isGlobalSyncRunning = false;
+    DeviceEventEmitter.emit("sync.completed");
   }
-
-  isGlobalSyncRunning = false;
-  DeviceEventEmitter.emit("sync.completed");
 };
 
 const fetchUnsyncedTablesFromServer = async (

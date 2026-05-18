@@ -13,8 +13,8 @@ export async function createPregnancy(
 
   await db.runAsync(
     `INSERT INTO pregnancy 
-      (id, mother_id, lmp_date, expected_delivery_date, caretakers_name, caretakers_phone, is_current, gravida, parity, selected, is_synced, is_deleted, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, mother_id, lmp_date, expected_delivery_date, caretakers_name, caretakers_phone, is_current, gravida, parity, selected, ended, delivered, risk_level, is_synced, is_deleted, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       mother_id = excluded.mother_id,
       lmp_date = excluded.lmp_date,
@@ -25,6 +25,9 @@ export async function createPregnancy(
       gravida = excluded.gravida,
       parity = excluded.parity,
       selected = excluded.selected,
+      ended = excluded.ended,
+      delivered = excluded.delivered,
+      risk_level = excluded.risk_level,
       is_synced = excluded.is_synced,
       is_deleted = excluded.is_deleted,
       updated_at = excluded.updated_at;`,
@@ -39,6 +42,9 @@ export async function createPregnancy(
       payload.gravida ?? null,
       payload.parity ?? null,
       payload.selected ? 1 : 0,
+      payload.ended ? 1 : 0,
+      payload.delivered ? 1 : 0,
+      payload.risk_level || 'normal',
       0,
       0,
       now,
@@ -57,6 +63,9 @@ export async function createPregnancy(
     gravida: payload.gravida ?? null,
     parity: payload.parity ?? null,
     selected: payload.selected ? 1 : 0,
+    ended: payload.ended ? 1 : 0,
+    delivered: payload.delivered ? 1 : 0,
+    risk_level: payload.risk_level || 'normal',
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
     created_at: now,
@@ -66,19 +75,30 @@ export async function createPregnancy(
 
 export async function unSyncedPregnancies(): Promise<CreatePregnancyPayload[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<PregnancyStoreType>(
-    `SELECT * FROM pregnancy WHERE is_synced = 0 AND is_deleted = 0`
+  const rows = await db.getAllAsync<any>(
+    `SELECT 
+      p.*,
+      (m.first_name || ' ' || m.last_name) as mother_name
+     FROM pregnancy p
+     LEFT JOIN mother m ON p.mother_id = m.id
+     WHERE p.is_synced = 0 AND p.is_deleted = 0`
   );
 
   return rows.map((row) => ({
     id: row.id,
     mother_id: row.mother_id || "",
+    name: row.mother_name || "Unknown",
     gravida: row.gravida ?? undefined,
     parity: row.parity ?? undefined,
     lmp_date: row.lmp_date,
     expected_delivery_date: row.expected_delivery_date ?? undefined,
+    caretakers_name: row.caretakers_name || undefined,
+    caretakers_phone: row.caretakers_phone || undefined,
     is_current: row.is_current === 1,
     selected: row.selected === 1,
+    ended: row.ended === 1,
+    delivered: row.delivered === 1,
+    risk_level: (row.risk_level as any) || 'normal',
     is_synced: false
   }));
 }
@@ -227,6 +247,8 @@ export interface PregnantWomenListItem {
   edd: string;
   gravida: number;
   parity: number;
+  risk_level: string;
+  created_at?: string;
 }
 
 export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
@@ -242,6 +264,7 @@ export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
       p.expected_delivery_date as edd,
       p.gravida,
       p.parity,
+      p.risk_level,
       p.created_at
     FROM pregnancy p
     INNER JOIN mother m ON p.mother_id = m.id
@@ -315,6 +338,18 @@ export async function updatePregnancy(
   if (payload.is_synced !== undefined) {
     sets.push("is_synced = ?");
     values.push(payload.is_synced ? 1 : 0);
+  }
+  if (payload.ended !== undefined) {
+    sets.push("ended = ?");
+    values.push(payload.ended ? 1 : 0);
+  }
+  if (payload.delivered !== undefined) {
+    sets.push("delivered = ?");
+    values.push(payload.delivered ? 1 : 0);
+  }
+  if (payload.risk_level !== undefined) {
+    sets.push("risk_level = ?");
+    values.push(payload.risk_level);
   }
 
   values.push(id);

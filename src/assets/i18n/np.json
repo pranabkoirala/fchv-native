@@ -46,19 +46,45 @@
     },
     "greeting_title": "नमस्ते, लक्ष्मी",
     "greeting_sub": "यहाँ तपाईंको स्वास्थ्य ट्र्याकिङ प्रवृत्ति छ",
+    "quick_actions": {
+      "register_mother": "आमा दर्ता गर्नुहोस्",
+      "register_child": "शिशु दर्ता गर्नुहोस्"
+    },
+    "sections": {
+      "community_pulse": "सामुदायिक तथ्याङ्क",
+      "recent_activity": "भर्खरका गतिविधिहरू",
+      "tasks_today": "आजका कार्यहरू",
+      "view_all": "सबै हेर्नुहोस्"
+    },
     "stats_labels": {
       "mothers": "आमाहरू",
       "pregnant": "गर्भवती",
       "children": "बालबालिका",
+      "high_risk": "उच्च जोखिम",
       "mat_death": "मातृ मृत्यु",
       "child_death": "बाल मृत्यु",
+      "mother_deaths": "मातृ मृत्यु",
+      "child_deaths": "बाल मृत्यु",
       "pending_tasks": "बाँकी कार्यहरू"
     },
     "charts": {
+      "monthly_trend": "मासिक प्रवृत्ति",
+      "last_3_months": "अन्तिम ३ महिना",
       "pregnancy_title": "गर्भावस्था प्रवृत्ति",
       "pregnancy_sub": "मासिक दर्ताहरू",
       "child_title": "शिशु जन्म प्रवृत्ति",
       "child_sub": "मासिक जन्महरू"
+    },
+    "health_summary": {
+      "under_29_days": "२९ दिनभन्दा कम",
+      "29_to_59_months": "५९ महिनासम्म"
+    },
+    "activity": {
+      "new_mother": "नयाँ आमा",
+      "new_pregnancy": "नयाँ गर्भावस्था",
+      "child_added": "शिशु थपियो",
+      "today": "आज",
+      "no_activity": "कुनै भर्खरको गतिविधि फेला परेन।"
     },
     "tasks": {
       "title": "मेरो कार्यहरू",
@@ -120,7 +146,11 @@
       "lmp_label": "अन्तिम महिनावारी मिति",
       "lmp_sub": "LMP",
       "edd_label": "अपेक्षित सुत्केरी मिति",
-      "edd_sub": "EDD"
+      "edd_sub": "EDD",
+      "risk_label": "जोखिम स्तर",
+      "risk_high": "उच्च जोखिम",
+      "risk_moderate": "मध्यम",
+      "risk_normal": "सामान्य"
     },
     "healthcare": {
       "title": "स्वास्थ्य जाँच",
@@ -398,6 +428,10 @@
   },
   "reports": {
     "title": "रिपोर्टहरू",
+    "pregnancy": {
+      "title": "गर्भावस्था दर्ता रिपोर्ट",
+      "subtitle": "गर्भावस्था दर्ता रिपोर्ट"
+    },
     "service_recipients": {
       "title": "जम्मा सेवाग्राहीको संख्या",
       "subtitle": "जम्मा सेवाग्राहीको संख्या"
@@ -420,6 +454,27 @@
     },
     "instructions_title": "अभिलेख राख्ने तरिका:",
     "instructions_content": "यस खण्डमा उपलब्ध रिपोर्टहरू तपाईंको मासिक कार्यसम्पादन र सेवा प्रवाहको अभिलेख राख्नका लागि हुन् । रिपोर्ट चयन गरी विवरणहरू हेर्न र प्रिन्ट गर्न सक्नुहुन्छ ।",
+    "subtitle": "सामुदायिक स्वास्थ्य प्रतिवेदन व्यवस्थापन",
+    "tabs": {
+      "all": "सबै",
+      "child": "बालबालिका",
+      "mother": "आमा",
+      "dead_mother": "मृत आमा",
+      "dead_child": "मृत बालबालिका",
+      "pregnancy": "गर्भवती"
+    },
+    "search_by_name_ward": "नाम वा वडाले खोज्नुहोस्...",
+    "status": {
+      "normal": "सामान्य",
+      "high_risk": "उच्च जोखिम",
+      "moderate": "मध्यम",
+      "pending": "पेन्डिङ",
+      "deceased": "मृत"
+    },
+    "no_results": "कुनै नतिजा भेटिएन",
+    "try_different": "अर्को खोज प्रयास गर्नुहोस्",
+    "no_records_category": "यो श्रेणीमा कुनै रेकर्ड छैन",
+    "loading_reports": "रिपोर्ट लोड हुँदैछ...",
     "common": {
       "sn": "क्र.सं.",
       "remarks": "कैफियत",
@@ -758,5 +813,56 @@
       "select_one": "कृपया कम्तिमा एउटा साधन छान्नुहोस्",
       "enter_custom": "कृपया साधनको नाम लेख्नुहोस्"
     }
+  },
+  "todo_tasks": {
+    "title": "कार्यहरू",
+    "pending_tasks_today": "आज {{count}} बाँकी कार्यहरू",
+    "pending": "बाँकी",
+    "done": "सम्पन्न",
+    "urgent": "जरुरी",
+    "patient": "बिरामी: {{name}}",
+    "anytime": "कुनै समय",
+    "completed": "सम्पन्न",
+    "general": "सामान्य",
+    "no_tasks": "कुनै कार्य भेटिएन",
+    "add_task": "नयाँ कार्य थप्नुहोस्",
+    "task_title": "कार्यको शीर्षक",
+    "task_title_ph": "जस्तै: सुनिताको भेट - सुत्केरी जाँच",
+    "description": "विवरण",
+    "description_ph": "यस कार्यको बारेमा विवरण थप्नुहोस्...",
+    "date": "मिति",
+    "select_date": "मिति छान्नुहोस्",
+    "time": "समय",
+    "select_time": "समय छान्नुहोस्",
+    "patient_label": "बिरामी (ऐच्छिक)",
+    "patient_ph": "जस्तै: सुनिता",
+    "location": "स्थान",
+    "location_ph": "जस्तै: हेटौंडा",
+    "priority": "प्राथमिकता",
+    "create_task": "कार्य सिर्जना गर्नुहोस्",
+    "priority_levels": {
+      "NORMAL": "सामान्य",
+      "MEDIUM": "मध्यम",
+      "URGENT": "जरुरी"
+    }
+  },
+  "record_page": {
+    "title": "मातृ रेकर्ड",
+    "subtitle": "FCHV मातृ स्वास्थ्य",
+    "new_entry": "नयाँ दर्ता",
+    "loading": "रेकर्डहरू लोड हुँदैछ...",
+    "search_placeholder": "आमाको नामबाट खोज्नुहोस्...",
+    "no_records": "कुनै रेकर्ड फेला परेन",
+    "age": "उमेर:",
+    "reg": "दर्ता:",
+    "lmp_date": "महिनावारी रोकिएको मिति",
+    "edd_date": "सुत्केरी हुने मिति",
+    "na": "लागु नहुने"
+  },
+  "bottom_nav": {
+    "home": "गृहपृष्ठ",
+    "report": "रिपोर्ट",
+    "tasks": "कार्यहरू",
+    "guidelines": "मार्गदर्शन"
   }
 }

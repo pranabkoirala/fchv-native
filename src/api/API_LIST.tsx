@@ -1,6 +1,6 @@
 export const API_LIST = {
-    pregnant_mother: {
-        post: "/api/pregnancies/sync/"
+    pregnancies: {
+        post: "/api/pregnancies/fchv-sync/"
     },
     mother: {
     request_otp: "/api/mothers/request-otp",
@@ -11,9 +11,13 @@ export const API_LIST = {
     update: "/api/mothers/{id}/",
     delete: "/api/mothers/{id}/",
     details: "/api/mothers/{id}",
-    phone_verify: "/api/mothers/phone-verify"
+    phone_verify: "/api/mothers/phone-verify",
+    mother_sync: "/api/mothers/fchv-sync/"
   },
    sync: {
     unsynced_table_list: "/api/mothers/sync-tables-list"
   },
+  token: {
+    post: "/api/token/"
+  }
 }

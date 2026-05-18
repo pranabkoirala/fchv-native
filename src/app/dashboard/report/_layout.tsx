@@ -10,8 +10,10 @@ export default function ReportLayout() {
       <Stack.Screen name="maternal-death-report" />
       <Stack.Screen name="newborn-death-report" />
       <Stack.Screen name="child-death-report" />
+      <Stack.Screen name="pregnancy-report" />
       <Stack.Screen name="maternal-death-details" />
       <Stack.Screen name="newborn-death-details" />
+      <Stack.Screen name="pregnancy-details" />
     </Stack>
   );
 }

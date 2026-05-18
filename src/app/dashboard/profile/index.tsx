@@ -12,19 +12,12 @@ import {
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import {
   User,
-  Activity,
   Calendar,
-  Edit,
-  Trash2,
   Baby,
-  Pill,
-  Heart,
   FileText,
   Info,
-  ChevronRight,
   AlertTriangle,
   Stethoscope,
-  Droplet
 } from "lucide-react-native";
 import "../../../global.css";
 import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
@@ -40,7 +33,6 @@ import CustomHeader from "../../../components/CustomHeader";
 import { useToast } from "../../../context/ToastContext";
 import { useTranslation } from "react-i18next";
 import { getSupplementByMother, SupplementStoreType } from "../../../hooks/database/models/SupplementModel";
-import SupplementModal from "../../../components/forms/SupplementModal";
 import SupplementsScreen from "./supplements";
 import FamilyPlanningSection from "../../../components/profile/FamilyPlanningSection";
 import CounselingSection from "../../../components/profile/CounselingSection";
@@ -68,7 +60,7 @@ const VisitBadge = ({ label, val }: any) => (
 export default function HmisRecordProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string, from?: string }>();
   const { showToast } = useToast();
   
   const [record, setRecord] = useState<HmisRecordStoreType | null>(null);
@@ -79,10 +71,6 @@ export default function HmisRecordProfileScreen() {
 
   const [maternalDeathModalVisible, setMaternalDeathModalVisible] = useState(false);
   const [newbornDeathModalVisible, setNewbornDeathModalVisible] = useState(false);
-  
-  const [supplementModalVisible, setSupplementModalVisible] = useState(false);
-  const [selectedSupplementKey, setSelectedSupplementKey] = useState<'iron_pregnancy' | 'iron_post_delivery' | 'vitamin_a_post_delivery'>('iron_pregnancy');
-  const [selectedSupplementName, setSelectedSupplementName] = useState("");
 
   const loadSupplements = async (motherId: string) => {
     try {
@@ -209,7 +197,15 @@ export default function HmisRecordProfileScreen() {
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title={t("profile.title")}
-        onBackPress={() => router.replace("/dashboard/record")}
+        onBackPress={() => {
+          if (from) {
+            router.replace(from as any);
+          } else if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace("/dashboard/record");
+          }
+        }}
       />
 
       <ScrollView 

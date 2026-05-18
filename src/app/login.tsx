@@ -16,8 +16,17 @@ import { Lock, User, Eye, EyeOff } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useLanguage } from "../context/LanguageContext";
 import "../global.css";
+import { API_LIST } from "@/api/API_LIST";
+import { httpClient } from "@/api/client/httpClient";
+import storage from "@/utils/storage";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "@/constants/token";
 
 const { width } = Dimensions.get("window");
+
+type LoginResponse = {
+  access: string;
+  refresh: string;
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -28,23 +37,46 @@ export default function LoginScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
-    if (!phone.trim() || !pin) {
-      setErrorMessage(t("login.error_required"));
+  const handleLogin = async () => {
+    // Validation
+    if (!phone.trim() || !pin.trim()) {
+      setErrorMessage(t("login.error_required") || "Username and password are required.");
       return;
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      // Hardcoded login for demonstration
-      if (phone === "1" && pin === "1") {
-        setErrorMessage("");
-        router.replace("/dashboard");
+    setErrorMessage("");
+
+    try {
+      const response = await httpClient.post<LoginResponse>(
+        API_LIST.token.post,
+        { username: phone.trim(), password: pin }
+      );
+
+      const { access, refresh } = response.data;
+
+      // Store both tokens in AsyncStorage
+      await storage.set(ACCESS_TOKEN_KEY, access);
+      await storage.set(REFRESH_TOKEN_KEY, refresh);
+
+      // Navigate to dashboard
+      router.replace("/dashboard");
+    } catch (error: any) {
+      if (error?.response) {
+        const status = error.response.status;
+        if (status === 401 || status === 400) {
+          setErrorMessage(t("login.error_invalid") || "Invalid username or password.");
+        } else {
+          setErrorMessage(`Server error (${status}). Please try again later.`);
+        }
+      } else if (error?.code === "ERR_NETWORK" || error?.message?.includes("Network")) {
+        setErrorMessage("Cannot reach the server. Check your internet connection.");
       } else {
-        setErrorMessage(t("login.error_invalid"));
+        setErrorMessage("Something went wrong. Please try again.");
       }
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

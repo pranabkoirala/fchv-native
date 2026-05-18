@@ -27,8 +27,9 @@ import {
   Users,
   Award,
   Lock,
-  HelpCircle,
   MessageSquare,
+  Database,
+  HelpCircle,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import "../../global.css";
@@ -36,6 +37,7 @@ import ModalWithSafeArea from "@/components/common/ModalWithSafeArea";
 import DatabaseViewer from "@/components/DatabaseViewer";
 import CustomHeader from "../../components/CustomHeader";
 import { useLanguage } from "../../context/LanguageContext";
+import { Button } from "@/components/button";
 
 interface SettingItem {
   icon: any;
@@ -84,6 +86,18 @@ const SETTINGS: SettingSection[] = [
         bg: "#ECFEFF", 
         value: "नेपाली",
         onPress: (router: any) => router.push("/dashboard/change-language")
+      },
+    ],
+  },
+  {
+    section: "Developer Tools",
+    items: [
+      { 
+        icon: Database, 
+        label: "Database Inspector", 
+        color: "#3B82F6", 
+        bg: "#EFF6FF",
+        onPress: (router: any) => {} // Handled by state
       },
     ],
   },
@@ -146,17 +160,8 @@ export default function UserProfileScreen() {
               onPress={() => setIsDbOpen(true)}
               className="mt-2"
             >
-              <Text className="text-xs text-gray-400 font-medium py-1 px-3 bg-gray-100 rounded-full">Dev Tools</Text>
+              <Text className="text-xs text-slate-400 font-bold py-1 px-3 bg-slate-100 rounded-full">Developer Mode</Text>
             </TouchableOpacity>
-
-            <ModalWithSafeArea
-              visible={isDbOpen}
-              animationType="slide"
-              presentationStyle="fullScreen"
-              onRequestClose={() => setIsDbOpen(false)}
-            >
-              <DatabaseViewer onClose={() => setIsDbOpen(false)} />
-            </ModalWithSafeArea>
           </View>
 
           {/* Minimal Stats Row */}
@@ -171,6 +176,15 @@ export default function UserProfileScreen() {
             ))}
           </View>
         </View>
+        <Button onPress={() => setIsDbOpen(true)} title="Open DB" />
+        <ModalWithSafeArea
+          visible={isDbOpen}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setIsDbOpen(false)}
+        >
+          <DatabaseViewer onClose={() => setIsDbOpen(false)} />
+        </ModalWithSafeArea>
 
         {/* Registry & Reporting Section */}
         <View className="px-5 mt-8">
@@ -230,7 +244,13 @@ export default function UserProfileScreen() {
                   <TouchableOpacity
                     key={ii}
                     activeOpacity={0.7}
-                    onPress={() => item.onPress && item.onPress(router)}
+                    onPress={() => {
+                      if (item.label === "Database Inspector") {
+                        setIsDbOpen(true);
+                      } else if (item.onPress) {
+                        item.onPress(router);
+                      }
+                    }}
                     className={`flex-row items-center px-5 py-4 ${!isLast ? "border-b border-gray-50" : ""}`}
                   >
                     <View

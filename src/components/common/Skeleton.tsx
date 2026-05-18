@@ -32,8 +32,8 @@ export const Skeleton = ({ width = '100%', height = 20, borderRadius = 4, style 
     <Animated.View
       style={[
         {
-          width,
-          height,
+          width: width as any,
+          height: height as any,
           borderRadius,
           backgroundColor: '#E2E8F0',
           opacity,

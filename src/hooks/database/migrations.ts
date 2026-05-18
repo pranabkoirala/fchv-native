@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 19;
+export const SCHEMA_VERSION = 22;
 
 type Migration = {
   version: number;
@@ -445,6 +445,46 @@ export const MIGRATIONS: Migration[] = [
         await db.execAsync(`ALTER TABLE hmis_newborn_death ADD COLUMN death_age_unit TEXT DEFAULT 'days';`);
       } catch (e) {
         console.log("Migration 19 (death_age_unit column) already applied or failed:", e);
+      }
+    }
+  },
+  {
+    version: 20,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE pregnancy ADD COLUMN ended INTEGER NOT NULL DEFAULT 0;
+          ALTER TABLE pregnancy ADD COLUMN delivered INTEGER NOT NULL DEFAULT 0;
+        `);
+      } catch (e) {
+        console.log("Migration 20 (pregnancy ended/delivered) failed or already applied:", e);
+      }
+    }
+  },
+  {
+    version: 21,
+    up: async (db) => {
+      try {
+        await db.execAsync(`ALTER TABLE pregnancy ADD COLUMN risk_level TEXT NOT NULL DEFAULT 'normal';`);
+      } catch (e) {
+        console.log("Migration 21 (risk_level) already applied or failed:", e);
+      }
+    }
+  },
+  {
+    version: 22,
+    up: async (db) => {
+      const queries = [
+        "ALTER TABLE todo ADD COLUMN description TEXT;",
+        "ALTER TABLE todo ADD COLUMN task_date TEXT;",
+        "ALTER TABLE todo ADD COLUMN task_time TEXT;"
+      ];
+      for (const query of queries) {
+        try {
+          await db.execAsync(query);
+        } catch (e) {
+          console.log(`Migration 22 query failed or already applied: ${query}`, e);
+        }
       }
     }
   }
