@@ -12,7 +12,6 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Plus, ChevronLeft, Search, User, CalendarDays, ChevronRight } from 'lucide-react-native';
 import { getAllMothersList, MotherListDbItem } from '../../../hooks/database/models/MotherModel';
-import Colors from '../../../constants/Colors';
 import { useTranslation } from "react-i18next";
 import "../../../global.css";
 
@@ -49,104 +48,104 @@ export default function RecordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 pt-10 bg-white">
+    <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-10">
       <StatusBar barStyle="dark-content" />
 
       {/* App Header */}
-      <View className="px-4 pt-4 pb-4 flex-row items-center justify-between bg-white">
+      <View className="px-4 pt-6 pb-4 flex-row items-center justify-between bg-[#F8FAFC]">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => router.back()} className="mr-2 p-2 -ml-2">
-            <ChevronLeft size={24} color="#1E293B" />
+          <TouchableOpacity onPress={() => router.back()} className="mr-2 p-2 rounded-2xl">
+            <ChevronLeft size={20} color="#1E293B" strokeWidth={2.5} />
           </TouchableOpacity>
           <View>
-            <Text className="text-xl font-extrabold text-slate-900">{t("record_page.title")}</Text>
-            <Text className="text-xs text-slate-500 font-medium mt-0.5">{t("record_page.subtitle")}</Text>
+            <Text className="text-xl font-black text-slate-800 tracking-tight">{t("record_page.title")}</Text>
+            <Text className="text-xs text-slate-400 font-bold mt-0.5 uppercase tracking-wider">{t("record_page.subtitle")}</Text>
           </View>
         </View>
         <TouchableOpacity
           onPress={() => router.push("/dashboard/record/add-mother")}
-          className="bg-primary/80 px-4 py-2.5 items-center justify-center flex-row"
+          activeOpacity={0.8}
+          className="bg-primary/80 px-3 py-3 rounded-md items-center justify-center flex-row"
         >
-          <Plus size={18} color="#ffffff" strokeWidth={3} />
-          <Text className="text-white font-bold text-sm ml-1.5">{t("record_page.new_entry")}</Text>
+          <Plus size={16} color="#ffffff" strokeWidth={3} />
+          <Text className="text-white font-bold text-xs ml-1.5 uppercase tracking-wider">{t("record_page.new_entry")}</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text className="text-slate-500 mt-4 font-medium">{t("record_page.loading")}</Text>
+          <ActivityIndicator size="large" color="#10B981" />
+          <Text className="text-slate-400 mt-4 font-bold text-sm tracking-wide">{t("record_page.loading")}</Text>
         </View>
       ) : (
         <ScrollView 
           className="flex-1" 
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 7, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
         >
-        <View className="flex-row items-center rounded-md bg-white mb-3 px-4 h-12 border border-slate-200">
-          <Search size={20} color="#64748b" />
-          <TextInput
-            className="flex-1 text-slate-800 font-medium text-base h-full"
-            placeholder={t("record_page.search_placeholder")}
-            placeholderTextColor="#94a3b8"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+          {/* Search Bar */}
+          <View className="flex-row items-center rounded-2xl bg-white mb-6 px-4 h-12 border border-slate-100 shadow-sm">
+            <Search size={18} color="#94A3B8" strokeWidth={2.5} />
+            <TextInput
+              className="flex-1 ml-3 text-slate-700 font-semibold text-sm h-full"
+              placeholder={t("record_page.search_placeholder")}
+              placeholderTextColor="#94A3B8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+
           {filteredRecords.length === 0 ? (
-            <View className="py-20 items-center justify-center bg-white rounded-md border border-slate-100 border-dashed">
-              <View className="w-16 h-16 bg-slate-50 rounded-full items-center justify-center mb-4">
-                <Search size={32} color="#CBD5E1" />
+            <View className="py-20 items-center justify-center bg-white rounded-3xl border border-slate-100 border-dashed shadow-sm">
+              <View className="w-16 h-16 bg-slate-50 rounded-full items-center justify-center mb-4 border border-slate-100">
+                <Search size={28} color="#CBD5E1" strokeWidth={1.5} />
               </View>
-              <Text className="text-slate-500 font-medium text-base">{t("record_page.no_records")}</Text>
+              <Text className="text-slate-400 font-bold text-sm tracking-wide">{t("record_page.no_records")}</Text>
             </View>
           ) : (
             filteredRecords.map((item) => (
               <TouchableOpacity
                 key={item.id}
-                activeOpacity={0.7}
+                activeOpacity={0.75}
                 onPress={() => router.push({ pathname: "/dashboard/profile", params: { id: item.id, from: "/dashboard/record" } } as any)}
-                className="bg-white rounded-md p-4 mb-4 border border-slate-200"
+                className="bg-white rounded-3xl p-5 mb-4 border border-slate-100 shadow-sm"
               >
-                <View className="flex-row items-start justify-between">
-                  <View className="flex-row flex-1 mr-3">
-                    <View className="w-12 h-12 bg-blue-50 rounded-full items-center justify-center mr-4">
-                      <User size={24} color="#3B82F6" />
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center flex-1 mr-3">
+                    <View className="w-12 h-12 bg-slate-50 rounded-full items-center justify-center mr-4 border border-slate-100/50">
+                      <User size={22} color="#64748B" strokeWidth={2.5} />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-lg font-bold text-slate-900 leading-tight mb-1" numberOfLines={1}>
+                      <Text className="text-base font-bold text-slate-800 leading-tight mb-1" numberOfLines={1}>
                         {item.name}
                       </Text>
                       <View className="flex-row items-center">
-                        <Text className="text-slate-500 font-medium text-[13px]">
-                          {t("record_page.age")} <Text className="text-slate-700 font-bold">{item.age || t("record_page.na")}</Text>
+                        <Text className="text-slate-400 font-bold text-[11px] uppercase tracking-wide">
+                          {t("record_page.age")} <Text className="text-slate-700 font-black">{item.age || t("record_page.na")}</Text>
                         </Text>
-                        <View className="w-1 h-1 bg-slate-300 rounded-full mx-2" />
-                        <Text className="text-slate-500 font-medium text-[13px]">
-                          {t("record_page.reg")} <Text className="text-slate-700">{formatDate(item.createdAt?.split('T')[0])}</Text>
+                        <View className="w-1 h-1 bg-slate-300 rounded-full mx-2.5" />
+                        <Text className="text-slate-400 font-bold text-[11px] uppercase tracking-wide">
+                          {t("record_page.reg")} <Text className="text-slate-500 font-semibold">{formatDate(item.createdAt?.split('T')[0])}</Text>
                         </Text>
                       </View>
                     </View>
                   </View>
-                  <View className="bg-slate-50 p-2 rounded-full">
-                    <ChevronRight size={18} color="#94A3B8" strokeWidth={2.5} />
+                  <View className="bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                    <ChevronRight size={14} color="#94A3B8" strokeWidth={3} />
                   </View>
                 </View>
 
-                <View className="mt-4 pt-3 border-t border-slate-100 flex-row">
-                  <View className="flex-1 bg-slate-50 rounded-md p-2.5 flex-row items-center mr-2 border border-slate-100/50">
-                    <CalendarDays size={16} color="#64748B" className="mr-2" />
-                    <View>
-                      <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t("record_page.lmp_date")}</Text>
-                      <Text className="text-[13px] font-semibold text-slate-700">{formatDate(item.lmp)}</Text>
-                    </View>
+                {/* Minimalist Date Metadata Row */}
+                <View className="mt-4 pt-4 border-t border-slate-50 flex-row justify-between">
+                  <View className="flex-row items-center">
+                    <CalendarDays size={14} color="#94A3B8" strokeWidth={2.5} className="mr-1.5" />
+                    <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t("record_page.lmp_date")}: </Text>
+                    <Text className="text-slate-700 text-xs font-black">{formatDate(item.lmp)}</Text>
                   </View>
-                  <View className="flex-1 bg-slate-50 rounded-md p-2.5 flex-row items-center border border-slate-100/50">
-                    <CalendarDays size={16} color="#64748B" className="mr-2" />
-                    <View>
-                      <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{t("record_page.edd_date")}</Text>
-                      <Text className="text-[13px] font-semibold text-slate-700">{formatDate(item.edd)}</Text>
-                    </View>
+                  <View className="flex-row items-center">
+                    <CalendarDays size={14} color="#94A3B8" strokeWidth={2.5} className="mr-1.5" />
+                    <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{t("record_page.edd_date")}: </Text>
+                    <Text className="text-slate-700 text-xs font-black">{formatDate(item.edd)}</Text>
                   </View>
                 </View>
               </TouchableOpacity>

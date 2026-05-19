@@ -250,12 +250,25 @@ export default function ReportScreen() {
 
   const { tab } = useLocalSearchParams<{ tab: TabKey }>();
   const [activeTab, setActiveTab] = useState<TabKey>(tab || "all");
+  const tabScrollRef = useRef<ScrollView>(null);
+  const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});
 
   useEffect(() => {
     if (tab) {
       setActiveTab(tab);
     }
   }, [tab]);
+
+  // Auto-scroll tab bar to make the active tab visible
+  useEffect(() => {
+    const layout = tabLayouts.current[activeTab];
+    if (layout && tabScrollRef.current) {
+      // Scroll so the active tab is roughly centered
+      const scrollX = Math.max(0, layout.x - 100);
+      tabScrollRef.current.scrollTo({ x: scrollX, animated: true });
+    }
+  }, [activeTab]);
+
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -487,7 +500,7 @@ export default function ReportScreen() {
       <View className="px-6 pt-4 pb-2">
         <Animated.Text
           entering={FadeIn.duration(500)}
-          className="text-3xl font-bold text-slate-700 leading-tight"
+          className="text-2xl font-bold text-slate-700 leading-tight"
         >
           {t("reports.title")}
         </Animated.Text>
@@ -516,6 +529,7 @@ export default function ReportScreen() {
 
       <Animated.View entering={FadeInDown.delay(200).duration(500)}>
         <ScrollView
+          ref={tabScrollRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{
@@ -532,6 +546,17 @@ export default function ReportScreen() {
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
                 activeOpacity={0.8}
+                onLayout={(e) => {
+                  const layout = {
+                    x: e.nativeEvent.layout.x,
+                    width: e.nativeEvent.layout.width,
+                  };
+                  tabLayouts.current[tab.key] = layout;
+                  if (tab.key === activeTab && tabScrollRef.current) {
+                    const scrollX = Math.max(0, layout.x - 100);
+                    tabScrollRef.current.scrollTo({ x: scrollX, animated: true });
+                  }
+                }}
                 className={`px-4 py-2.5 rounded-full flex-row items-center ${
                   isActive
                     ? "bg-slate-900"

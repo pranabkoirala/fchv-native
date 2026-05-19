@@ -93,7 +93,7 @@ export default function PregnancyReportScreen() {
       <StatusBar barStyle="dark-content" />
       <CustomHeader 
         title={t("reports.pregnancy.title")} 
-        onBackPress={() => router.replace("/dashboard/report")}
+        onBackPress={() => router.back()}
       />
 
       <View className="flex-1">

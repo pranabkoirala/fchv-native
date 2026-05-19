@@ -30,7 +30,7 @@ const TabItem = ({ tab, isActive, onPress }: any) => {
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
-      style={{ flex: 1, alignItems: "center", justifyContent: "center", height: "100%"}}
+      style={{ flex: 1, alignItems: "center", justifyContent: "center", height: "100%", paddingBottom: 25}}
     >
       <Animated.View
         style={{

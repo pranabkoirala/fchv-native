@@ -9,12 +9,14 @@ import {
 import { Search, Plus, Baby, Calendar, ChevronRight } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import CustomHeader from "@/components/CustomHeader";
 import { getAllInfantMonitorings } from "@/hooks/database/models/InfantMonitoringModel";
 import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
 import { AdToBs } from "react-native-nepali-picker";
 
 export default function ChildManagementScreen() {
+  const { t } = useTranslation();
   const [infants, setInfants] = useState<InfantMonitoringStoreType[]>([]);
   const [filteredInfants, setFilteredInfants] = useState<InfantMonitoringStoreType[]>([]);
   const [search, setSearch] = useState("");
@@ -53,16 +55,17 @@ export default function ChildManagementScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-8">
       <CustomHeader
-        title="Child Registration"
-        subtitle="Manage children's health records"
+        title={t("child_page.title")}
+        subtitle={t("child_page.subtitle")}
         onBackPress={() => router.replace('/dashboard')}
         rightNode={
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => router.push("/dashboard/child/child-form")}
-            className="bg-primary/80 px-2 py-1 items-center justify-center"
+            className="bg-primary/80 px-3 py-2.5 rounded-md items-center justify-center flex-row"
           >
-            <Text className="text-white text-base font-medium">Add New</Text>
+            <Plus size={16} color="#ffffff" strokeWidth={3} />
+            <Text className="text-white font-bold text-xs ml-1.5 uppercase tracking-wider">{t("child_page.add_new")}</Text>
           </TouchableOpacity>
         }
       />
@@ -78,7 +81,7 @@ export default function ChildManagementScreen() {
             <Search size={20} color="#94A3B8" />
             <TextInput
               className="flex-1 ml-3 text-base text-[#1E293B]"
-              placeholder="Search by name..."
+              placeholder={t("child_page.search_placeholder")}
               placeholderTextColor="#94A3B8"
               value={search}
               onChangeText={setSearch}
@@ -104,19 +107,19 @@ export default function ChildManagementScreen() {
                 {/* Info */}
                 <View className="flex-1 ml-4 justify-center">
                   <Text className="text-slate-800 text-base font-bold mb-1" numberOfLines={1}>
-                    {item.baby_name || 'Unnamed Baby'}
+                    {item.baby_name || t("child_page.unnamed_baby")}
                   </Text>
                   
                   <View className="flex-row items-center mb-1">
                     <Text className="text-slate-500 font-medium text-[13px]" numberOfLines={1}>
-                      Mother: <Text className="text-slate-700">{item.mother_name || 'Unknown'}</Text>
+                      {t("child_page.mother")}: <Text className="text-slate-700">{item.mother_name || t("child_page.unknown")}</Text>
                     </Text>
                   </View>
 
                   <View className="flex-row items-center">
                     <Calendar size={12} color="#94A3B8" />
                     <Text className="text-slate-400 text-[11px] font-medium ml-1" numberOfLines={1}>
-                      {item.date_of_birth ? AdToBs(item.date_of_birth) : 'N/A'} (B.S.)
+                      {item.date_of_birth ? AdToBs(item.date_of_birth) : 'N/A'} {t("child_page.bs")}
                     </Text>
                   </View>
                 </View>
@@ -132,11 +135,11 @@ export default function ChildManagementScreen() {
               <View className="w-24 h-24 bg-slate-50 rounded-full items-center justify-center mb-4">
                 <Baby size={40} color="#CBD5E1" strokeWidth={1.5} />
               </View>
-              <Text className="text-slate-600 font-bold text-lg text-center mb-2">No Records Found</Text>
+              <Text className="text-slate-600 font-bold text-lg text-center mb-2">{t("child_page.no_records")}</Text>
               <Text className="text-slate-400 text-sm text-center leading-5 px-6">
                 {search 
-                  ? "We couldn't find any children matching your search. Try a different name."
-                  : "Start by registering a new child using the + button above."}
+                  ? t("child_page.no_results_msg")
+                  : t("child_page.no_records_msg")}
               </Text>
             </View>
           )}

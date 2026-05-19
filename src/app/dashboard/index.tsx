@@ -8,7 +8,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Animated,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import {
@@ -110,7 +109,6 @@ export default function DashboardScreen() {
 
   const todaysTasks = todos.filter(t => t.task_date === todayBsDate);
 
-  const pageAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (isConnected) doSync();
@@ -118,8 +116,6 @@ export default function DashboardScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      pageAnim.setValue(0);
-
       const load = async () => {
         setLoading(true);
         try {
@@ -270,11 +266,8 @@ export default function DashboardScreen() {
           setChildTrend(trend.map((b) => ({ label: b.label, value: b.child })));
           setMotherTrend(trend.map((b) => ({ label: b.label, value: b.mother })));
           await fetchTodos();
-
-          Animated.timing(pageAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
         } catch (err) {
           console.error("Dashboard fetch error:", err);
-          pageAnim.setValue(1);
         } finally {
           setLoading(false);
         }
@@ -300,12 +293,7 @@ export default function DashboardScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Animated.View
-            style={{
-              opacity: pageAnim,
-              transform: [{ translateY: pageAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }],
-            }}
-          >
+          <View>
           {/* Quick Actions */}
           <View style={{ paddingHorizontal: 20, flexDirection: "row", gap: 12, marginTop: 20, marginBottom: 24 }}>
             <TouchableOpacity 
@@ -540,7 +528,7 @@ export default function DashboardScreen() {
               )}
             </View>
           </View>
-          </Animated.View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

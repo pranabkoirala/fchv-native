@@ -23,15 +23,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const { t, i18n } = useI18nTranslation();
-  const [language, setLanguageState] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("np");
 
   useEffect(() => {
     const loadLanguage = async () => {
       const savedLanguage = await storage.get<Language>("language");
-      if (savedLanguage) {
-        await i18n.changeLanguage(savedLanguage);
-        setLanguageState(savedLanguage);
-      }
+      const initialLang = savedLanguage || "np";
+      await i18n.changeLanguage(initialLang);
+      setLanguageState(initialLang);
     };
     loadLanguage();
   }, []);

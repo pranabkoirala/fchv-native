@@ -30,7 +30,7 @@ const TopHeader = () => {
       
       <TouchableOpacity 
         activeOpacity={0.8}
-        onPress={() => router.push("/dashboard/settings")} 
+        onPress={() => router.push("/dashboard/fchv-profile")} 
         className="bg-white p-2 rounded-full shadow-sm shadow-slate-200"
       >
         <CircleUserRound size={28} color="#475569" strokeWidth={2} />
