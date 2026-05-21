@@ -117,8 +117,7 @@ export default function DashboardScreen() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   const scrollRef = useRef<ScrollView>(null);
-  const { todos, fetchTodos, removeTodo, toggleTodo } = useTodo();
-  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const { todos, fetchTodos, toggleTodo } = useTodo();
 
   const todayBsDate = (() => {
     try {
