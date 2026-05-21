@@ -1,8 +1,11 @@
-import { getDb } from '../db';
-import { CreateInfantMonitoringPayload, InfantMonitoringStoreType } from '../types/infantMonitoringModal';
+import { getDb } from "../db";
+import {
+  CreateInfantMonitoringPayload,
+  InfantMonitoringStoreType,
+} from "../types/infantMonitoringModal";
 
 export async function createInfantMonitoring(
-  payload: CreateInfantMonitoringPayload
+  payload: CreateInfantMonitoringPayload,
 ): Promise<InfantMonitoringStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -28,25 +31,25 @@ export async function createInfantMonitoring(
       remarks = excluded.remarks,
       updated_at = excluded.updated_at;`,
     [
-      payload.id, 
-      payload.mother_id ?? null, 
+      payload.id,
+      payload.mother_id ?? null,
       payload.baby_name ?? null,
       payload.date_of_birth ?? null,
       payload.birth_place ?? null,
-      payload.status ?? 'alive',
+      payload.status ?? "alive",
       payload.fchv_present ?? 0,
       payload.skilled_birth_attended ?? 0,
-      payload.baby_weight ?? null, 
+      payload.baby_weight ?? null,
       payload.umbilical_ointment ?? 0,
       payload.skin_to_skin ?? 0,
       payload.early_breastfeeding ?? 0,
       payload.asphyxiated_newborn ?? 0,
-      payload.remarks ?? null, 
+      payload.remarks ?? null,
       0, // is_synced
       0, // is_deleted
-      now, 
-      now
-    ]
+      now,
+      now,
+    ],
   );
 
   return {
@@ -54,11 +57,13 @@ export async function createInfantMonitoring(
     is_synced: 0,
     is_deleted: 0,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 }
 
-export async function getAllInfantMonitorings(): Promise<InfantMonitoringStoreType[]> {
+export async function getAllInfantMonitorings(): Promise<
+  InfantMonitoringStoreType[]
+> {
   const db = await getDb();
   const rows = await db.getAllAsync<any>(
     `SELECT cm.*, 
@@ -66,24 +71,31 @@ export async function getAllInfantMonitorings(): Promise<InfantMonitoringStoreTy
      FROM child_monitoring cm
      LEFT JOIN mother m ON cm.mother_id = m.id
      WHERE cm.is_deleted = 0 
-     ORDER BY cm.created_at DESC`
+     ORDER BY cm.created_at DESC`,
   );
   return rows;
 }
 
 export async function deleteInfantMonitoring(id: string): Promise<void> {
   const db = await getDb();
-  await db.runAsync(`UPDATE child_monitoring SET is_deleted = 1, updated_at = ? WHERE id = ?`, [new Date().toISOString(), id]);
+  await db.runAsync(
+    `UPDATE child_monitoring SET is_deleted = 1, updated_at = ? WHERE id = ?`,
+    [new Date().toISOString(), id],
+  );
 }
 
-export async function getInfantMonitoringByMother(motherId: string): Promise<InfantMonitoringStoreType | null> {
+export async function getInfantMonitoringByMother(
+  motherId: string,
+): Promise<InfantMonitoringStoreType | null> {
   const db = await getDb();
   return await db.getFirstAsync<InfantMonitoringStoreType>(
     `SELECT * FROM child_monitoring WHERE mother_id = ? AND is_deleted = 0 ORDER BY created_at DESC`,
   );
 }
 
-export async function getChildTrend(): Promise<{ month: number; year: number; count: number }[]> {
+export async function getChildTrend(): Promise<
+  { month: number; year: number; count: number }[]
+> {
   const db = await getDb();
   // Using substr for extraction and removed the 1-year filter to show all registrations
   const query = `

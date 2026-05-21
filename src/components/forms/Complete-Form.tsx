@@ -563,13 +563,12 @@ export default function CompleteForm({ id }: { id?: string }) {
       <StepIndicator />
 
       <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1"
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           {renderStep()}
         </ScrollView>
-      </KeyboardAvoidingView>
 
       <View className="p-6 pb-28 flex-row gap-4 bg-white items-center">
         {currentStep > 1 && (
@@ -598,6 +597,7 @@ export default function CompleteForm({ id }: { id?: string }) {
           </TouchableOpacity>
         )}
       </View>
+      </KeyboardAvoidingView>
 
       <CameraCapture
         visible={showCamera}

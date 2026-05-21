@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
-import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import { Pill, Droplet, ChevronLeft } from "lucide-react-native";
+import { useLocalSearchParams, useFocusEffect } from "expo-router";
+import { Pill, Droplet } from "lucide-react-native";
 import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
 import {
   getSupplementByMother,
@@ -25,7 +25,6 @@ const SectionTitle = ({ title, icon: Icon, colorClass }: any) => (
 
 export default function SupplementsScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { showToast } = useToast();
 
@@ -36,7 +35,10 @@ export default function SupplementsScreen() {
 
   const [supplementModalVisible, setSupplementModalVisible] = useState(false);
   const [selectedSupplementKey, setSelectedSupplementKey] = useState<
-    "iron_pregnancy" | "iron_post_delivery" | "vitamin_a_post_delivery" | "calcium"
+    | "iron_pregnancy"
+    | "iron_post_delivery"
+    | "vitamin_a_post_delivery"
+    | "calcium"
   >("iron_pregnancy");
   const [selectedSupplementName, setSelectedSupplementName] = useState("");
 

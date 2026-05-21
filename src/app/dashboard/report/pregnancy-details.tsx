@@ -1,32 +1,32 @@
-import React, { useState, useEffect } from "react";
+import { calculateAge } from "@/utils/parse";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-  View,
-  Text,
+  Activity,
+  Calendar,
+  Heart,
+  Info,
+  MapPin,
+  Phone,
+  User,
+} from "lucide-react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
   ScrollView,
   StatusBar,
-  ActivityIndicator,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useLanguage } from "../../../context/LanguageContext";
-import {
-  User,
-  Calendar,
-  MapPin,
-  Activity,
-  Info,
-  Phone,
-  Heart,
-} from "lucide-react-native";
-import Colors from "../../../constants/Colors";
+import municipalitiesData from "../../../assets/json/municipalities.json";
 import CustomHeader from "../../../components/CustomHeader";
-import { getPregnancyById } from "../../../hooks/database/models/PregnantWomenModal";
+import Colors from "../../../constants/Colors";
+import { useLanguage } from "../../../context/LanguageContext";
 import {
   getMotherProfile,
   MotherProfileDbItem,
 } from "../../../hooks/database/models/MotherModel";
-import municipalitiesData from "../../../assets/json/municipalities.json";
-import { calculateAge } from "@/utils/parse";
+import { getPregnancyById } from "../../../hooks/database/models/PregnantWomenModal";
 
 export default function PregnancyDetailsScreen() {
   const { id } = useLocalSearchParams();

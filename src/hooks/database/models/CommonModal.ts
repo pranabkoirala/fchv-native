@@ -1,12 +1,12 @@
+import { toSqlParam } from "@/utils/parse";
 import { SQLiteDatabase } from "expo-sqlite";
 import { getDb } from "../db";
 import { TableType } from "../types/table";
-import { toSqlParam } from "@/utils/parse";
 
 export async function deleteRecords(
   tableName: TableType,
   ids: string[],
-  deleteType: "hard" | "soft"
+  deleteType: "hard" | "soft",
 ): Promise<void> {
   if (ids.length === 0) return;
 
@@ -16,7 +16,7 @@ export async function deleteRecords(
     const placeholders = ids.map(() => "?").join(",");
     await db.runAsync(
       `DELETE FROM ${tableName} WHERE id IN (${placeholders})`,
-      ids
+      ids,
     );
   } else {
     const placeholders = ids.map(() => "?").join(",");
@@ -26,7 +26,7 @@ export async function deleteRecords(
       `UPDATE ${tableName}
    SET is_synced = ?, is_deleted = ?, updated_at = ?
    WHERE id IN (${placeholders})`,
-      [0, 1, now, ...ids]
+      [0, 1, now, ...ids],
     );
   }
 }
@@ -44,7 +44,7 @@ export async function bulkInsertToTempTable<T>(
     rows: (item: T) => any[]; // must match columns length/order
     onConflict?: "none" | "replace" | "ignore"; // optional
   },
-  items: T[]
+  items: T[],
 ) {
   if (!items?.length) return;
 
@@ -68,7 +68,7 @@ export async function bulkInsertToTempTable<T>(
     const vals = rows(item);
     if (vals.length !== columns.length) {
       throw new Error(
-        `Row values length (${vals.length}) != columns length (${columns.length}) for table ${table}`
+        `Row values length (${vals.length}) != columns length (${columns.length}) for table ${table}`,
       );
     }
     await db.runAsync(sql, vals.map(toSqlParam));

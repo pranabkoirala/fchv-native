@@ -720,12 +720,14 @@
     "lmp_date": "LMP Date (BS)",
     "select_lmp": "Select LMP Date",
     "edd_date": "Expected Delivery Date (EDD)",
-    "caretaker_name": "Caretaker's Name",
-    "caretaker_phone": "Caretaker's Phone",
+    "caretaker_name": "Husband's Name",
+    "caretaker_phone": "Husband's Phone",
     "validation": {
       "mother_req": "Please select a mother",
       "gravida_req": "Gravida is required",
       "parity_req": "Parity is required",
+      "caretaker_name_req": "Caretaker's name is required",
+      "caretaker_phone_req": "Caretaker's phone number is required",
       "lmp_req": "LMP date is required",
       "parity_invalid": "Parity cannot be greater than Gravida",
       "phone_digits": "Must be 10 digits"

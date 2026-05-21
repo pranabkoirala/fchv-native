@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { Check } from "lucide-react-native";
-import { useLanguage } from "../../context/LanguageContext";
-import { useRouter } from "expo-router";
 import NavigationLayout from "@/components/NavigationLayout";
+import { useRouter } from "expo-router";
+import { Check } from "lucide-react-native";
+import { useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated from "react-native-reanimated";
+import { useLanguage } from "../../context/LanguageContext";
 
 type LanguageOption = {
   code: "en" | "np";

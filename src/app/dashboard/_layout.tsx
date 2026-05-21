@@ -1,7 +1,7 @@
-import { View } from "react-native";
-import { Drawer } from "expo-router/drawer";
-import CustomDrawer from "@/components/navigation/CustomDrawer";
 import BottomNavigation from "@/components/navigation/BottomNavigation";
+import CustomDrawer from "@/components/navigation/CustomDrawer";
+import { Drawer } from "expo-router/drawer";
+import { View } from "react-native";
 
 export default function DashboardLayout() {
   return (
@@ -47,7 +47,7 @@ export default function DashboardLayout() {
         />
 
         <Drawer.Screen
-          name="settings"
+          name="fchv-profile"
           options={{
             title: "My Profile",
             drawerItemStyle: { display: "none" },

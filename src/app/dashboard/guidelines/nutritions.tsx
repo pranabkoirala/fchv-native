@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -7,22 +7,7 @@ import {
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  ShieldCheck,
-  ChevronDown,
-  ChevronUp,
-  Pill,
-  Lightbulb,
-  Milk,
-  Salad,
-  Droplets,
-  Beef,
-  Baby,
-  Soup,
-  Carrot,
-  Wheat,
-  Dna,
-} from "lucide-react-native";
+import { ChevronDown, ChevronUp, Pill, Lightbulb } from "lucide-react-native";
 import * as LucideIcons from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useLanguage } from "@/context/LanguageContext";

@@ -1,11 +1,16 @@
-import { getDb } from '../db';
 import * as Crypto from "expo-crypto";
-import { bulkInsertToTempTable } from './CommonModal';
-import { setSyncTimestamp } from './SyncModel';
-import { CreatePregnancyPayload, PregnancyStoreType } from '../types/pregnancyModal';
+import { getDb } from "../db";
+import {
+  CreatePregnancyPayload,
+  PregnancyStoreType,
+} from "../types/pregnancyModal";
+import { bulkInsertToTempTable } from "./CommonModal";
+import { setSyncTimestamp } from "./SyncModel";
 
 export async function createPregnancy(
-  payload: Omit<CreatePregnancyPayload, 'id' | 'created_at' | 'updated_at'> & { id?: string }
+  payload: Omit<CreatePregnancyPayload, "id" | "created_at" | "updated_at"> & {
+    id?: string;
+  },
 ): Promise<PregnancyStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -44,12 +49,12 @@ export async function createPregnancy(
       payload.selected ? 1 : 0,
       payload.ended ? 1 : 0,
       payload.delivered ? 1 : 0,
-      payload.risk_level || 'normal',
+      payload.risk_level || "normal",
       0,
       0,
       now,
-      now
-    ]
+      now,
+    ],
   );
 
   return {
@@ -65,11 +70,11 @@ export async function createPregnancy(
     selected: payload.selected ? 1 : 0,
     ended: payload.ended ? 1 : 0,
     delivered: payload.delivered ? 1 : 0,
-    risk_level: payload.risk_level || 'normal',
+    risk_level: payload.risk_level || "normal",
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 }
 
@@ -81,7 +86,7 @@ export async function unSyncedPregnancies(): Promise<CreatePregnancyPayload[]> {
       (m.first_name || ' ' || m.last_name) as mother_name
      FROM pregnancy p
      LEFT JOIN mother m ON p.mother_id = m.id
-     WHERE p.is_synced = 0 AND p.is_deleted = 0`
+     WHERE p.is_synced = 0 AND p.is_deleted = 0`,
   );
 
   return rows.map((row) => ({
@@ -98,18 +103,20 @@ export async function unSyncedPregnancies(): Promise<CreatePregnancyPayload[]> {
     selected: row.selected === 1,
     ended: row.ended === 1,
     delivered: row.delivered === 1,
-    risk_level: (row.risk_level as any) || 'normal',
-    is_synced: false
+    risk_level: (row.risk_level as any) || "normal",
+    is_synced: false,
   }));
 }
 
-export async function getPregnancyByMotherId(motherId: string): Promise<PregnancyStoreType | null> {
+export async function getPregnancyByMotherId(
+  motherId: string,
+): Promise<PregnancyStoreType | null> {
   const db = await getDb();
   return await db.getFirstAsync<PregnancyStoreType>(
     `SELECT * FROM pregnancy 
      WHERE mother_id = ? AND is_deleted = 0 
      ORDER BY created_at DESC LIMIT 1`,
-    [motherId]
+    [motherId],
   );
 }
 
@@ -118,13 +125,11 @@ export async function deletePregnancy(id: string): Promise<void> {
   const now = new Date().toISOString();
   await db.runAsync(
     `UPDATE pregnancy SET is_deleted = 1, updated_at = ? WHERE id = ?`,
-    [now, id]
+    [now, id],
   );
 }
 
-export async function insertToTempPregnancyTable(
-  apiRes: any[]
-) {
+export async function insertToTempPregnancyTable(apiRes: any[]) {
   if (!apiRes.length) return;
   const db = await getDb();
 
@@ -140,7 +145,7 @@ export async function insertToTempPregnancyTable(
     "is_synced",
     "is_deleted",
     "created_at",
-    "updated_at"
+    "updated_at",
   ];
 
   await bulkInsertToTempTable<any>(
@@ -161,19 +166,17 @@ export async function insertToTempPregnancyTable(
         1,
         item.deleted ? 1 : 0,
         item.created_at,
-        item.updated_at
-      ]
+        item.updated_at,
+      ],
     },
-    apiRes
+    apiRes,
   );
 }
 
 export async function moveTempToRealPregnancyTable() {
   const db = await getDb();
 
-  const staged = await db.getAllAsync<any>(
-    `SELECT * FROM pregnancy_staging`
-  );
+  const staged = await db.getAllAsync<any>(`SELECT * FROM pregnancy_staging`);
 
   if (!staged.length) return;
 
@@ -211,8 +214,8 @@ export async function moveTempToRealPregnancyTable() {
         1,
         item.is_deleted,
         item.created_at,
-        item.updated_at
-      ]
+        item.updated_at,
+      ],
     );
   }
 
@@ -223,14 +226,14 @@ export async function moveTempToRealPregnancyTable() {
 export async function getSelectedPregnancy(): Promise<PregnancyStoreType | null> {
   const db = await getDb();
   return await db.getFirstAsync<PregnancyStoreType>(
-    `SELECT * FROM pregnancy WHERE selected = 1 AND is_deleted = 0`
+    `SELECT * FROM pregnancy WHERE selected = 1 AND is_deleted = 0`,
   );
 }
 
 export async function getPregnancyCount(): Promise<number> {
   const db = await getDb();
   const result = await db.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM pregnancy WHERE is_deleted = 0 AND is_current = 1"
+    "SELECT COUNT(*) as count FROM pregnancy WHERE is_deleted = 0 AND is_current = 1",
   );
   return result?.count ?? 0;
 }
@@ -272,7 +275,7 @@ export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
     ORDER BY p.updated_at DESC
   `;
   const rows = await db.getAllAsync<any>(query);
-  return rows.map(row => ({
+  return rows.map((row) => ({
     ...row,
     gravida: row.gravida || 0,
     parity: row.parity || 0,
@@ -295,11 +298,13 @@ export async function getPregnancyById(id: string): Promise<any> {
 
 export async function updatePregnancy(
   id: string,
-  payload: Partial<Omit<CreatePregnancyPayload, 'id' | 'created_at' | 'updated_at'>>
+  payload: Partial<
+    Omit<CreatePregnancyPayload, "id" | "created_at" | "updated_at">
+  >,
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
-  
+
   const sets: string[] = ["updated_at = ?"];
   const values: any[] = [now];
 
@@ -357,7 +362,9 @@ export async function updatePregnancy(
   await db.runAsync(sql, values);
 }
 
-export async function getPregnancyTrend(): Promise<{ month: number; year: number; count: number }[]> {
+export async function getPregnancyTrend(): Promise<
+  { month: number; year: number; count: number }[]
+> {
   const db = await getDb();
   // Using substr for more robust date extraction since strftime can be picky about formats
   const query = `
@@ -375,4 +382,3 @@ export async function getPregnancyTrend(): Promise<{ month: number; year: number
   const rows = await db.getAllAsync<any>(query);
   return rows;
 }
-

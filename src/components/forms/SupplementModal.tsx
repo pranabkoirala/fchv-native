@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Text } from "react-native";
 import { saveSupplement } from "../../hooks/database/models/SupplementModel";
 import { useTranslation } from "react-i18next";

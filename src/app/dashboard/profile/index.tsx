@@ -1,46 +1,46 @@
-import { useState, useCallback } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
-import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import {
-  User,
-  Calendar,
+  AlertTriangle,
   Baby,
+  Calendar,
   FileText,
   Info,
-  AlertTriangle,
   Stethoscope,
+  User,
 } from "lucide-react-native";
-import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
-import { getMaternalDeathByMother } from "../../../hooks/database/models/MaternalDeathModel";
-import { getNewbornDeathByMother } from "../../../hooks/database/models/NewbornDeathModel";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import CustomHeader from "../../../components/CustomHeader";
 import MaternalDeathModal from "../../../components/forms/MaternalDeathModal";
 import NewbornDeathModal from "../../../components/forms/NewbornDeathModal";
-import { HmisRecordStoreType } from "../../../hooks/database/types/hmisRecordModal";
-import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
-import { NewbornDeathStoreType } from "../../../hooks/database/types/newbornDeathModal";
+import CounselingSection from "../../../components/profile/CounselingSection";
+import FamilyPlanningSection from "../../../components/profile/FamilyPlanningSection";
 import Colors from "../../../constants/Colors";
-import CustomHeader from "../../../components/CustomHeader";
 import { useToast } from "../../../context/ToastContext";
-import { useTranslation } from "react-i18next";
+import { getInfantMonitoringByMother } from "../../../hooks/database/models/InfantMonitoringModel";
+import { getMaternalDeathByMother } from "../../../hooks/database/models/MaternalDeathModel";
+import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
+import { getNewbornDeathByMother } from "../../../hooks/database/models/NewbornDeathModel";
+import { getPregnancyByMotherId } from "../../../hooks/database/models/PregnantWomenModal";
 import {
   getSupplementByMother,
   SupplementStoreType,
 } from "../../../hooks/database/models/SupplementModel";
-import SupplementsScreen from "./supplements";
-import FamilyPlanningSection from "../../../components/profile/FamilyPlanningSection";
-import CounselingSection from "../../../components/profile/CounselingSection";
 import { getVisitsByMotherId } from "../../../hooks/database/models/VisitModel";
-import { getInfantMonitoringByMother } from "../../../hooks/database/models/InfantMonitoringModel";
-import { getPregnancyByMotherId } from "../../../hooks/database/models/PregnantWomenModal";
+import { HmisRecordStoreType } from "../../../hooks/database/types/hmisRecordModal";
+import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
+import { NewbornDeathStoreType } from "../../../hooks/database/types/newbornDeathModal";
+import SupplementsScreen from "./supplements";
 
 const SectionTitle = ({ title, icon: Icon, colorClass }: any) => (
   <View className="flex-row items-center mb-4 mt-2">

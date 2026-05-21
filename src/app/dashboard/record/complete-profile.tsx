@@ -1,6 +1,5 @@
-import React from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import CompleteForm from '@/components/forms/Complete-Form';
+import CompleteForm from "@/components/forms/Complete-Form";
+import { useLocalSearchParams } from "expo-router";
 
 export default function CompleteProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -1,33 +1,32 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StatusBar,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useTranslation } from "react-i18next";
 import {
+  Activity,
   Baby,
   Calendar,
-  MapPin,
-  Activity,
-  Clock,
   Info,
-  User,
+  MapPin,
   Phone,
+  User,
 } from "lucide-react-native";
-import Colors from "../../../constants/Colors";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StatusBar,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import municipalitiesData from "../../../assets/json/municipalities.json";
 import CustomHeader from "../../../components/CustomHeader";
-import { getAllNewbornDeaths } from "../../../hooks/database/models/NewbornDeathModel";
+import Colors from "../../../constants/Colors";
 import {
   getMotherProfile,
   MotherProfileDbItem,
 } from "../../../hooks/database/models/MotherModel";
+import { getAllNewbornDeaths } from "../../../hooks/database/models/NewbornDeathModel";
 import { NewbornDeathStoreType } from "../../../hooks/database/types/newbornDeathModal";
-import municipalitiesData from "../../../assets/json/municipalities.json";
 
 export default function ChildDeathDetailsScreen() {
   const { id } = useLocalSearchParams();

@@ -1,50 +1,46 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StatusBar,
-  Image,
-  TextInput,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
-import TopHeader from "@/components/layout/TopHeader";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import {
-  Bell,
-  ClipboardList,
-  CheckCircle,
   AlertCircle,
+  CheckCircle,
   CheckSquare,
-  Square,
+  ClipboardList,
   Clock,
   MapPin,
   Plus,
-  X,
   Trash2,
+  X,
 } from "lucide-react-native";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { CalendarPicker } from "react-native-nepali-picker";
 import Animated, {
-  FadeInDown,
   FadeIn,
+  FadeInDown,
   Layout,
   SlideInDown,
   SlideOutDown,
 } from "react-native-reanimated";
-import { CalendarPicker } from "react-native-nepali-picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import {
-  getAllTodos,
-  createTodo,
-  updateTodo,
-  deleteTodo,
-  TodoItem,
-} from "../../../hooks/database/models/TodoModel";
 import { useLanguage } from "../../../context/LanguageContext";
-import { useTranslation } from "react-i18next";
+import {
+  createTodo,
+  deleteTodo,
+  getAllTodos,
+  TodoItem,
+  updateTodo,
+} from "../../../hooks/database/models/TodoModel";
 
 type Priority = "URGENT" | "MEDIUM" | "NORMAL";
 
@@ -72,7 +68,8 @@ function parseTaskString(raw: string): RichTaskData {
   };
 }
 
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedTouchableOpacity =
+  Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function TasksScreen() {
   const router = useRouter();
@@ -119,8 +116,8 @@ export default function TasksScreen() {
       await updateTodo(id, { is_completed: newStatus });
       setTodos((prev) =>
         prev.map((todo) =>
-          todo.id === id ? { ...todo, is_completed: newStatus } : todo
-        )
+          todo.id === id ? { ...todo, is_completed: newStatus } : todo,
+        ),
       );
     } catch (error) {
       console.error("Failed to toggle todo:", error);
@@ -137,16 +134,16 @@ export default function TasksScreen() {
   };
 
   const onTimeChange = (event: any, date?: Date) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       setShowTimePicker(false);
     }
     if (date) {
       setSelectedTime(date);
       const hours = date.getHours();
       const minutes = date.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const ampm = hours >= 12 ? "PM" : "AM";
       const formattedHours = hours % 12 || 12;
-      const formattedMinutes = minutes.toString().padStart(2, '0');
+      const formattedMinutes = minutes.toString().padStart(2, "0");
       setNewTaskTime(`${formattedHours}:${formattedMinutes} ${ampm}`);
     }
   };
@@ -168,11 +165,11 @@ export default function TasksScreen() {
         JSON.stringify(payload),
         newTaskDescription.trim() || undefined,
         newTaskDate.trim() || undefined,
-        newTaskTime.trim() || undefined
+        newTaskTime.trim() || undefined,
       );
       setTodos([newItem, ...todos]);
       setModalVisible(false);
-      
+
       // Reset form
       setNewTaskTitle("");
       setNewTaskDescription("");
@@ -215,8 +212,8 @@ export default function TasksScreen() {
       >
         {t("todo_tasks.title")}
       </Animated.Text>
-      
-      <Animated.View 
+
+      <Animated.View
         entering={FadeInDown.delay(100).duration(400)}
         className="flex-row mt-2"
       >
@@ -279,9 +276,9 @@ export default function TasksScreen() {
   const renderTaskCard = (todo: TodoItem, index: number) => {
     const isDone = todo.is_completed === 1;
     const parsed = parseTaskString(todo.task);
-    
+
     // Priority Badge Styles
-    const pStyles: Record<string, { bg: string, text: string }> = {
+    const pStyles: Record<string, { bg: string; text: string }> = {
       URGENT: { bg: "bg-rose-100", text: "text-rose-700" },
       MEDIUM: { bg: "bg-amber-100", text: "text-amber-700" },
       NORMAL: { bg: "bg-emerald-100", text: "text-emerald-700" },
@@ -314,14 +311,14 @@ export default function TasksScreen() {
         {/* Content */}
         <View className="flex-1">
           <View className="flex-row justify-between items-start">
-            <Text 
+            <Text
               className={`text-[16px] font-bold flex-1 mr-2 ${
                 isDone ? "text-slate-400 line-through" : "text-slate-800"
               }`}
             >
               {parsed.title}
             </Text>
-            
+
             {/* Priority Badge */}
             <View className={`px-2 py-0.5 rounded ${pStyle.bg}`}>
               <Text className={`text-[10px] font-bold ${pStyle.text}`}>
@@ -357,7 +354,7 @@ export default function TasksScreen() {
                 {todo.task_time || parsed.time || t("todo_tasks.anytime")}
               </Text>
             </View>
-            
+
             <View className="flex-row items-center">
               {isDone ? (
                 <>
@@ -369,7 +366,10 @@ export default function TasksScreen() {
               ) : (
                 <>
                   <MapPin size={14} color="#64748B" />
-                  <Text className="text-[12px] text-slate-600 font-medium ml-1.5" numberOfLines={1}>
+                  <Text
+                    className="text-[12px] text-slate-600 font-medium ml-1.5"
+                    numberOfLines={1}
+                  >
                     {parsed.location || t("todo_tasks.general")}
                   </Text>
                 </>
@@ -380,7 +380,7 @@ export default function TasksScreen() {
 
         {/* Delete Button */}
         {isDone && (
-          <TouchableOpacity 
+          <TouchableOpacity
             className="absolute -top-2 -right-2 bg-rose-50 p-2 rounded-full border border-rose-100"
             onPress={() => handleDeleteTodo(todo.id)}
           >
@@ -399,25 +399,35 @@ export default function TasksScreen() {
       onRequestClose={() => setModalVisible(false)}
     >
       <View className="flex-1 bg-black/40 justify-end">
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <Animated.View 
+          <Animated.View
             entering={SlideInDown.duration(300)}
             exiting={SlideOutDown.duration(300)}
             className="bg-white rounded-t-3xl p-6 pb-10"
           >
             <View className="flex-row justify-between items-center mb-5">
-              <Text className="text-xl font-black text-slate-900">{t("todo_tasks.add_task")}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)} className="bg-slate-100 p-2 rounded-full">
+              <Text className="text-xl font-black text-slate-900">
+                {t("todo_tasks.add_task")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                className="bg-slate-100 p-2 rounded-full"
+              >
                 <X size={20} color="#64748B" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            >
               {/* Title Input */}
               <View className="mb-4">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("todo_tasks.task_title")}</Text>
+                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  {t("todo_tasks.task_title")}
+                </Text>
                 <TextInput
                   className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800"
                   placeholder={t("todo_tasks.task_title_ph")}
@@ -428,7 +438,9 @@ export default function TasksScreen() {
 
               {/* Description Input */}
               <View className="mb-4">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("todo_tasks.description")}</Text>
+                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  {t("todo_tasks.description")}
+                </Text>
                 <TextInput
                   className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 h-24"
                   placeholder={t("todo_tasks.description_ph")}
@@ -442,23 +454,31 @@ export default function TasksScreen() {
               {/* Date & Time Row */}
               <View className="flex-row gap-3 mb-4">
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("todo_tasks.date")}</Text>
+                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    {t("todo_tasks.date")}
+                  </Text>
                   <TouchableOpacity
                     onPress={() => setShowDatePicker(true)}
                     className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 h-[50px] justify-center"
                   >
-                    <Text className={`text-base ${newTaskDate ? "text-slate-800" : "text-slate-400"}`}>
+                    <Text
+                      className={`text-base ${newTaskDate ? "text-slate-800" : "text-slate-400"}`}
+                    >
                       {newTaskDate || t("todo_tasks.select_date")}
                     </Text>
                   </TouchableOpacity>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("todo_tasks.time")}</Text>
+                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    {t("todo_tasks.time")}
+                  </Text>
                   <TouchableOpacity
                     onPress={() => setShowTimePicker(true)}
                     className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 h-[50px] justify-center"
                   >
-                    <Text className={`text-base ${newTaskTime ? "text-slate-800" : "text-slate-400"}`}>
+                    <Text
+                      className={`text-base ${newTaskTime ? "text-slate-800" : "text-slate-400"}`}
+                    >
                       {newTaskTime || t("todo_tasks.select_time")}
                     </Text>
                   </TouchableOpacity>
@@ -468,7 +488,9 @@ export default function TasksScreen() {
               {/* Patient & Location Row */}
               <View className="flex-row gap-3 mb-4">
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("todo_tasks.patient_label")}</Text>
+                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    {t("todo_tasks.patient_label")}
+                  </Text>
                   <TextInput
                     className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800"
                     placeholder={t("todo_tasks.patient_ph")}
@@ -477,7 +499,9 @@ export default function TasksScreen() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("todo_tasks.location")}</Text>
+                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                    {t("todo_tasks.location")}
+                  </Text>
                   <TextInput
                     className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800"
                     placeholder={t("todo_tasks.location_ph")}
@@ -489,7 +513,9 @@ export default function TasksScreen() {
 
               {/* Priority */}
               <View className="mb-6">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">{t("todo_tasks.priority")}</Text>
+                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  {t("todo_tasks.priority")}
+                </Text>
                 <View className="flex-row bg-slate-50 border border-slate-200 rounded-xl overflow-hidden h-[48px]">
                   {(["NORMAL", "MEDIUM", "URGENT"] as Priority[]).map((p) => {
                     const isSelected = newTaskPriority === p;
@@ -499,7 +525,9 @@ export default function TasksScreen() {
                         onPress={() => setNewTaskPriority(p)}
                         className={`flex-1 items-center justify-center ${isSelected ? "bg-slate-800" : ""}`}
                       >
-                        <Text className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-500"}`}>
+                        <Text
+                          className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-500"}`}
+                        >
                           {t(`todo_tasks.priority_levels.${p}`)}
                         </Text>
                       </TouchableOpacity>
@@ -533,12 +561,12 @@ export default function TasksScreen() {
         theme="light"
         brandColor="#356169"
         date={newTaskDate || undefined}
-        dayTextStyle={{ fontWeight: 'normal' }}
-        weekTextStyle={{ fontWeight: 'normal' }}
-        titleTextStyle={{ fontWeight: 'normal' }}
+        dayTextStyle={{ fontWeight: "normal" }}
+        weekTextStyle={{ fontWeight: "normal" }}
+        titleTextStyle={{ fontWeight: "normal" }}
       />
 
-      {showTimePicker && Platform.OS === 'android' && (
+      {showTimePicker && Platform.OS === "android" && (
         <DateTimePicker
           value={selectedTime}
           mode="time"
@@ -548,14 +576,18 @@ export default function TasksScreen() {
         />
       )}
 
-      {showTimePicker && Platform.OS === 'ios' && (
+      {showTimePicker && Platform.OS === "ios" && (
         <Modal transparent visible={showTimePicker} animationType="slide">
           <View className="flex-1 justify-end bg-black/30">
             <View className="bg-white p-4 rounded-t-2xl pb-8">
               <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-lg font-bold text-slate-800">{t("todo_tasks.select_time")}</Text>
+                <Text className="text-lg font-bold text-slate-800">
+                  {t("todo_tasks.select_time")}
+                </Text>
                 <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                  <Text className="text-[#356169] font-bold text-base">{t("todo_tasks.done")}</Text>
+                  <Text className="text-[#356169] font-bold text-base">
+                    {t("todo_tasks.done")}
+                  </Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
@@ -564,7 +596,7 @@ export default function TasksScreen() {
                 is24Hour={false}
                 display="spinner"
                 onChange={onTimeChange}
-                style={{ alignSelf: 'center', width: '100%' }}
+                style={{ alignSelf: "center", width: "100%" }}
               />
             </View>
           </View>
@@ -576,7 +608,7 @@ export default function TasksScreen() {
   return (
     <View className="flex-1 bg-[#F8FAFC] pt-14">
       <StatusBar barStyle="dark-content" />
-      
+
       {/* Scrollable Content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -593,7 +625,9 @@ export default function TasksScreen() {
           ) : todos.length === 0 ? (
             <View className="py-10 items-center justify-center bg-white rounded-3xl border border-slate-100">
               <CheckSquare size={40} color="#E2E8F0" />
-              <Text className="text-slate-400 font-bold mt-3">{t("todo_tasks.no_tasks")}</Text>
+              <Text className="text-slate-400 font-bold mt-3">
+                {t("todo_tasks.no_tasks")}
+              </Text>
             </View>
           ) : (
             todos.map((todo, index) => renderTaskCard(todo, index))

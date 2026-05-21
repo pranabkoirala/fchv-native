@@ -1,8 +1,8 @@
-import { getDb } from '../db';
-import { CreateMotherPayload, MotherStoreType } from '../types/motherModal';
+import { getDb } from "../db";
+import { CreateMotherPayload, MotherStoreType } from "../types/motherModal";
 
 export async function createMother(
-  payload: Omit<CreateMotherPayload, 'created_at' | 'updated_at'>
+  payload: Omit<CreateMotherPayload, "created_at" | "updated_at">,
 ): Promise<MotherStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -27,8 +27,8 @@ export async function createMother(
       payload.is_synced ? 1 : 0,
       0,
       now,
-      now
-    ]
+      now,
+    ],
   );
 
   return {
@@ -64,12 +64,12 @@ export async function createMother(
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 }
 
 export async function updateMother(
-  payload: Omit<CreateMotherPayload, 'created_at' | 'updated_at'>
+  payload: Omit<CreateMotherPayload, "created_at" | "updated_at">,
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -138,15 +138,15 @@ export async function updateMother(
       payload.partner_age ?? null,
       payload.is_synced ? 1 : 0,
       now,
-      payload.id
-    ]
+      payload.id,
+    ],
   );
 }
 
 export async function unSyncedMothers(): Promise<CreateMotherPayload[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<MotherStoreType>(
-    `SELECT * FROM mother WHERE is_synced = 0 AND is_deleted = 0`
+    `SELECT * FROM mother WHERE is_synced = 0 AND is_deleted = 0`,
   );
 
   return rows.map((row) => ({
@@ -179,7 +179,7 @@ export async function unSyncedMothers(): Promise<CreateMotherPayload[]> {
     partner_mobile: row.partner_mobile ?? undefined,
     partner_age: row.partner_age ?? undefined,
     updated_at: row.updated_at,
-    is_synced: false
+    is_synced: false,
   }));
 }
 
@@ -188,7 +188,7 @@ export async function deleteMother(id: string): Promise<void> {
   const now = new Date().toISOString();
   await db.runAsync(
     `UPDATE mother SET is_deleted = 1, updated_at = ? WHERE id = ?`,
-    [now, id]
+    [now, id],
   );
 }
 
@@ -253,7 +253,7 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
     const firstName = row.first_name || "";
     const lastName = row.last_name || "";
     const dob = row.date_of_birth || "";
-    
+
     let age = 0;
     if (dob) {
       const birthDate = new Date(dob);
@@ -274,7 +274,7 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
         if (!isNaN(lmpDate.getTime())) {
           const eddDate = new Date(lmpDate);
           eddDate.setDate(eddDate.getDate() + 280);
-          eddCalculated = eddDate.toISOString().split('T')[0];
+          eddCalculated = eddDate.toISOString().split("T")[0];
         }
       } catch (e) {}
     }
@@ -291,7 +291,9 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       phone_number: row.phone_number || "",
       ward: row.address_ward || "",
       municipality: row.address_municipality || "",
-      image: row.photo || "https://vectorified.com/images/no-profile-picture-icon-13.png",
+      image:
+        row.photo ||
+        "https://vectorified.com/images/no-profile-picture-icon-13.png",
       lmp: lmpRaw,
       edd: eddCalculated,
       anc: 0,
@@ -303,7 +305,7 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       birth_place: row.birth_place || "",
       baby_status: row.baby_status || "",
       remarks: row.baby_remarks || "",
-      createdAt: row.created_at || ""
+      createdAt: row.created_at || "",
     };
   });
 }
@@ -335,7 +337,9 @@ export interface MotherProfileDbItem extends MotherListDbItem {
   children?: any[]; // Array to hold child monitoring data
 }
 
-export async function getMotherProfile(id: string): Promise<MotherProfileDbItem | null> {
+export async function getMotherProfile(
+  id: string,
+): Promise<MotherProfileDbItem | null> {
   const db = await getDb();
   const query = `
     SELECT 
@@ -397,7 +401,7 @@ export async function getMotherProfile(id: string): Promise<MotherProfileDbItem 
       if (!isNaN(lmpDate.getTime())) {
         const eddDate = new Date(lmpDate);
         eddDate.setDate(eddDate.getDate() + 280);
-        eddCalculated = eddDate.toISOString().split('T')[0];
+        eddCalculated = eddDate.toISOString().split("T")[0];
       }
     } catch (e) {}
   }
@@ -431,11 +435,17 @@ export async function getMotherProfile(id: string): Promise<MotherProfileDbItem 
     addressLocality: row.address_locality || "",
     addressHouseNumber: row.address_house_number || "",
     pregnancyId: row.pregnancyId || null,
-    gravida: (row.gravida !== null && row.gravida !== undefined) ? String(row.gravida) : "",
-    parity: (row.parity !== null && row.parity !== undefined) ? String(row.parity) : "",
+    gravida:
+      row.gravida !== null && row.gravida !== undefined
+        ? String(row.gravida)
+        : "",
+    parity:
+      row.parity !== null && row.parity !== undefined ? String(row.parity) : "",
     ward: row.address_ward || "",
     municipality: row.address_municipality || "",
-    image: row.photo || "https://vectorified.com/images/no-profile-picture-icon-13.png",
+    image:
+      row.photo ||
+      "https://vectorified.com/images/no-profile-picture-icon-13.png",
     lmp: lmpRaw,
     edd: eddCalculated || "N/A",
     anc: 0,
@@ -446,14 +456,14 @@ export async function getMotherProfile(id: string): Promise<MotherProfileDbItem 
     pregnancy_count: row.pregnancy_count || 0,
     date_of_birth: row.date_of_birth || "",
     age: 0,
-    children: children || []
+    children: children || [],
   };
 }
 
 export async function getMotherCount(): Promise<number> {
   const db = await getDb();
   const result = await db.getFirstAsync<any>(
-    "SELECT COUNT(*) as count FROM mother WHERE is_deleted = 0"
+    "SELECT COUNT(*) as count FROM mother WHERE is_deleted = 0",
   );
   const count = result?.count ?? 0;
   return Number(count);

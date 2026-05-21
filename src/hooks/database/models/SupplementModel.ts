@@ -1,5 +1,5 @@
-import * as Crypto from 'expo-crypto';
-import { getDb } from '../db';
+import * as Crypto from "expo-crypto";
+import { getDb } from "../db";
 
 export interface SupplementStoreType {
   id: string;
@@ -14,11 +14,13 @@ export interface SupplementStoreType {
   updated_at: string;
 }
 
-export async function getSupplementByMother(mother_id: string): Promise<SupplementStoreType | null> {
+export async function getSupplementByMother(
+  mother_id: string,
+): Promise<SupplementStoreType | null> {
   const db = await getDb();
   const result = await db.getFirstAsync<SupplementStoreType>(
     `SELECT * FROM supplements WHERE mother_id = ? AND is_deleted = 0`,
-    [mother_id]
+    [mother_id],
   );
   return result || null;
 }
@@ -39,10 +41,20 @@ export async function saveSupplement(payload: {
 
   if (existing) {
     // Update
-    const newIronPreg = payload.iron_pregnancy !== undefined ? payload.iron_pregnancy : existing.iron_pregnancy;
-    const newIronPost = payload.iron_post_delivery !== undefined ? payload.iron_post_delivery : existing.iron_post_delivery;
-    const newVitA = payload.vitamin_a_post_delivery !== undefined ? payload.vitamin_a_post_delivery : existing.vitamin_a_post_delivery;
-    const newCalcium = payload.calcium !== undefined ? payload.calcium : existing.calcium;
+    const newIronPreg =
+      payload.iron_pregnancy !== undefined
+        ? payload.iron_pregnancy
+        : existing.iron_pregnancy;
+    const newIronPost =
+      payload.iron_post_delivery !== undefined
+        ? payload.iron_post_delivery
+        : existing.iron_post_delivery;
+    const newVitA =
+      payload.vitamin_a_post_delivery !== undefined
+        ? payload.vitamin_a_post_delivery
+        : existing.vitamin_a_post_delivery;
+    const newCalcium =
+      payload.calcium !== undefined ? payload.calcium : existing.calcium;
 
     await db.runAsync(
       `UPDATE supplements SET 
@@ -53,7 +65,7 @@ export async function saveSupplement(payload: {
         updated_at = ?,
         is_synced = 0
        WHERE id = ?`,
-      [newIronPreg, newIronPost, newVitA, newCalcium, now, existing.id]
+      [newIronPreg, newIronPost, newVitA, newCalcium, now, existing.id],
     );
 
     return {
@@ -63,7 +75,7 @@ export async function saveSupplement(payload: {
       vitamin_a_post_delivery: newVitA,
       calcium: newCalcium,
       updated_at: now,
-      is_synced: 0
+      is_synced: 0,
     };
   } else {
     // Insert
@@ -73,15 +85,15 @@ export async function saveSupplement(payload: {
         is_synced, is_deleted, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?)`,
       [
-        id, 
-        payload.mother_id, 
-        payload.iron_pregnancy || 0, 
-        payload.iron_post_delivery || 0, 
-        payload.vitamin_a_post_delivery || 0, 
+        id,
+        payload.mother_id,
+        payload.iron_pregnancy || 0,
+        payload.iron_post_delivery || 0,
+        payload.vitamin_a_post_delivery || 0,
         payload.calcium || 0,
-        now, 
-        now
-      ]
+        now,
+        now,
+      ],
     );
 
     return {
@@ -94,7 +106,7 @@ export async function saveSupplement(payload: {
       is_synced: 0,
       is_deleted: 0,
       created_at: now,
-      updated_at: now
+      updated_at: now,
     };
   }
 }

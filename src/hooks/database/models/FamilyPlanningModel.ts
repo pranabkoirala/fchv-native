@@ -1,5 +1,5 @@
-import * as Crypto from 'expo-crypto';
-import { getDb } from '../db';
+import * as Crypto from "expo-crypto";
+import { getDb } from "../db";
 
 export interface FamilyPlanningStoreType {
   id: string;
@@ -11,11 +11,13 @@ export interface FamilyPlanningStoreType {
   updated_at: string;
 }
 
-export async function getFamilyPlanningByMother(mother_id: string): Promise<FamilyPlanningStoreType | null> {
+export async function getFamilyPlanningByMother(
+  mother_id: string,
+): Promise<FamilyPlanningStoreType | null> {
   const db = await getDb();
   const result = await db.getFirstAsync<FamilyPlanningStoreType>(
     `SELECT * FROM family_planning WHERE mother_id = ? AND is_deleted = 0`,
-    [mother_id]
+    [mother_id],
   );
   return result || null;
 }
@@ -36,14 +38,18 @@ export async function saveFamilyPlanning(payload: {
       `UPDATE family_planning 
        SET family_planning = ?, updated_at = ?, is_synced = 0 
        WHERE mother_id = ?`,
-      [payload.family_planning, now, payload.mother_id]
+      [payload.family_planning, now, payload.mother_id],
     );
-    return { ...existing, family_planning: payload.family_planning, updated_at: now };
+    return {
+      ...existing,
+      family_planning: payload.family_planning,
+      updated_at: now,
+    };
   } else {
     await db.runAsync(
       `INSERT INTO family_planning (id, mother_id, family_planning, created_at, updated_at, is_synced, is_deleted) 
        VALUES (?, ?, ?, ?, ?, 0, 0)`,
-      [id, payload.mother_id, payload.family_planning, now, now]
+      [id, payload.mother_id, payload.family_planning, now, now],
     );
     return {
       id,

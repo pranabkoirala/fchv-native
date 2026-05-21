@@ -1,23 +1,18 @@
-import React, { useState, useEffect } from "react";
+import CustomHeader from "@/components/CustomHeader";
+import Colors from "@/constants/Colors";
+import { getDb } from "@/hooks/database/db";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  View,
-  Text,
+  ActivityIndicator,
   ScrollView,
   StatusBar,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
+  Text,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
-import { Printer } from "lucide-react-native";
-import CustomHeader from "@/components/CustomHeader";
-import { useRouter } from "expo-router";
 import { AdToBs } from "react-native-nepali-picker";
-import { getDb } from "@/hooks/database/db";
-import * as Print from "expo-print";
-import * as Sharing from "expo-sharing";
-import Colors from "@/constants/Colors";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ServiceReportScreen() {
   const router = useRouter();

@@ -1,36 +1,33 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StatusBar,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { calculateAge } from "@/utils/parse";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  Activity,
+  Calendar,
+  HeartPulse,
+  Info,
+  MapPin,
+  Navigation,
+  User,
+} from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  User,
-  Calendar,
-  MapPin,
-  CheckCircle,
-  XCircle,
-  HeartPulse,
-  Activity,
-  Navigation,
-  Info,
-} from "lucide-react-native";
-import Colors from "../../../constants/Colors";
+  ActivityIndicator,
+  ScrollView,
+  StatusBar,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import municipalitiesData from "../../../assets/json/municipalities.json";
 import CustomHeader from "../../../components/CustomHeader";
+import Colors from "../../../constants/Colors";
 import { getAllMaternalDeaths } from "../../../hooks/database/models/MaternalDeathModel";
 import {
   getMotherProfile,
   MotherProfileDbItem,
 } from "../../../hooks/database/models/MotherModel";
 import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
-import { AdToBs } from "react-native-nepali-picker";
-import municipalitiesData from "../../../assets/json/municipalities.json";
-import { calculateAge } from "@/utils/parse";
 
 export default function MaternalDeathDetailsScreen() {
   const { id } = useLocalSearchParams();

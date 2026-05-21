@@ -1,27 +1,22 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  TextInput,
   ImageBackground,
-  Image,
   InteractionManager,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  Search,
-  Mic,
   ArrowRight,
   ShieldCheck,
   Stethoscope,
   Salad,
   Users,
   Baby,
-  Play,
   ChevronRight,
 } from "lucide-react-native";
 import { router } from "expo-router";
@@ -59,30 +54,6 @@ const CATEGORY_CARDS = [
   },
 ];
 
-const VIDEOS = [
-  {
-    id: "v1",
-    thumb:
-      "https://images.unsplash.com/photo-1607990283143-e81e7a2c9349?w=400&q=80",
-    titleKey: "learn_page.videos.v1_title",
-    metaKey: "learn_page.videos.v1_meta",
-  },
-  {
-    id: "v2",
-    thumb:
-      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80",
-    titleKey: "learn_page.videos.v2_title",
-    metaKey: "learn_page.videos.v2_meta",
-  },
-  {
-    id: "v3",
-    thumb:
-      "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=400&q=80",
-    titleKey: "learn_page.videos.v3_title",
-    metaKey: "learn_page.videos.v3_meta",
-  },
-];
-
 const GUIDELINES = [
   {
     id: "breastfeeding",
@@ -115,7 +86,6 @@ const GUIDELINES = [
 ];
 
 export default function GuidelinesIndexScreen() {
-  const [search, setSearch] = useState("");
   const { t } = useLanguage();
   const [isReady, setIsReady] = useState(false);
 

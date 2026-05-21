@@ -1,46 +1,44 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  TextInput,
-  ActivityIndicator,
-  Image,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  Search,
-  ChevronRight,
-  Bell,
-  User,
-  Baby,
-  Heart,
   AlertTriangle,
+  Baby,
+  ChevronRight,
+  Heart,
+  Search,
+  User,
   Users,
 } from "lucide-react-native";
-import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useLanguage } from "../../../context/LanguageContext";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Colors from "../../../constants/Colors";
+import { useLanguage } from "../../../context/LanguageContext";
 
 // Database models
+import { getAllInfantMonitorings } from "../../../hooks/database/models/InfantMonitoringModel";
+import { getAllMaternalDeaths } from "../../../hooks/database/models/MaternalDeathModel";
 import {
   getAllMothersList,
   MotherListDbItem,
 } from "../../../hooks/database/models/MotherModel";
-import { getAllInfantMonitorings } from "../../../hooks/database/models/InfantMonitoringModel";
-import { InfantMonitoringStoreType } from "../../../hooks/database/types/infantMonitoringModal";
+import { getAllNewbornDeaths } from "../../../hooks/database/models/NewbornDeathModel";
 import {
   getPregnantWomenList,
   PregnantWomenListItem,
 } from "../../../hooks/database/models/PregnantWomenModal";
-import { getAllMaternalDeaths } from "../../../hooks/database/models/MaternalDeathModel";
+import { InfantMonitoringStoreType } from "../../../hooks/database/types/infantMonitoringModal";
 import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
-import { getAllNewbornDeaths } from "../../../hooks/database/models/NewbornDeathModel";
 import { NewbornDeathStoreType } from "../../../hooks/database/types/newbornDeathModal";
-import TopHeader from "@/components/layout/TopHeader";
 import { getWardById } from "../../../utils/locationHelper";
 
 const AnimatedTouchableOpacity =

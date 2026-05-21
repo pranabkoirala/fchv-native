@@ -1,58 +1,51 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import TopHeader from "@/components/layout/TopHeader";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  TextInput,
+  Activity,
+  AlertCircle,
+  Baby,
+  Check,
+  CheckCircle,
+  Clock,
+  Heart,
+  Smile,
+  UserPlus,
+  Users,
+} from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
-import {
-  Plus,
-  Smile,
-  Baby,
-  Activity,
-  Users,
-  Heart,
-  ClipboardList,
-  CheckCircle,
-  Check,
-  UserPlus,
-  AlertCircle,
-  Stethoscope,
-  ChevronRight,
-  Clock,
-} from "lucide-react-native";
-import { useRouter } from "expo-router";
-import { useTranslation } from "react-i18next";
-import { useTodo } from "../../hooks/useTodo";
 import { AdToBs } from "react-native-nepali-picker";
-import TopHeader from "@/components/layout/TopHeader";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { doSync } from "../../api/services/sync/sync";
-import {
-  getMotherCount,
-  getAllMothersList,
-} from "../../hooks/database/models/MotherModel";
-import {
-  getPregnantWomenList,
-  getPregnancyTrend,
-} from "../../hooks/database/models/PregnantWomenModal";
+import { getAdolescentIfaCount } from "../../hooks/database/models/AdolescentIfaModel";
 import {
   getAllInfantMonitorings,
   getChildTrend,
 } from "../../hooks/database/models/InfantMonitoringModel";
 import { getTotalMaternalDeaths } from "../../hooks/database/models/MaternalDeathModel";
+import {
+  getAllMothersList,
+  getMotherCount,
+} from "../../hooks/database/models/MotherModel";
 import { getTotalNewbornDeaths } from "../../hooks/database/models/NewbornDeathModel";
-import { getAdolescentIfaCount } from "../../hooks/database/models/AdolescentIfaModel";
+import {
+  getPregnancyTrend,
+  getPregnantWomenList,
+} from "../../hooks/database/models/PregnantWomenModal";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { useTodo } from "../../hooks/useTodo";
 
+import { Skeleton } from "@/components/common/Skeleton"; // Checking if this exists, if not I'll use a View
 import StatCard from "@/components/dashboard/StatCard";
 import TrendChart from "@/components/dashboard/TrendChart";
-import TodoItem from "@/components/dashboard/TodoItem";
-import { Skeleton } from "@/components/common/Skeleton"; // Checking if this exists, if not I'll use a View
 import { getMunicipalityById, getWardById } from "../../utils/locationHelper";
 
 const parseDate = (dateStr: string | undefined | null): Date | null => {
@@ -376,7 +369,7 @@ export default function DashboardScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar backgroundColor="#f9fafb" />
       <TopHeader />
 
       <KeyboardAvoidingView

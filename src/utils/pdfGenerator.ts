@@ -1,39 +1,57 @@
-import * as Print from 'expo-print';
-import * as Share from 'expo-sharing';
-import { StorageAccessFramework, readAsStringAsync, writeAsStringAsync, EncodingType } from 'expo-file-system/legacy';
-import { Platform } from 'react-native';
-import { getPregnantWomenList, PregnantWomenListItem } from '../hooks/database/models/PregnantWomenModal';
-import { getAllMaternalDeaths } from '../hooks/database/models/MaternalDeathModel';
-import { getAllNewbornDeaths } from '../hooks/database/models/NewbornDeathModel';
-import { getAllInfantMonitorings } from '../hooks/database/models/InfantMonitoringModel';
-import { getAllAdolescentIfa } from '../hooks/database/models/AdolescentIfaModel';
-import { AdToBs } from 'react-native-nepali-picker';
-import storage from './storage';
+import {
+  EncodingType,
+  readAsStringAsync,
+  StorageAccessFramework,
+  writeAsStringAsync,
+} from "expo-file-system/legacy";
+import * as Print from "expo-print";
+import * as Share from "expo-sharing";
+import { Platform } from "react-native";
+import { AdToBs } from "react-native-nepali-picker";
+import { getAllAdolescentIfa } from "../hooks/database/models/AdolescentIfaModel";
+import { getCounselingByMother } from "../hooks/database/models/CounselingModel";
+import { getAllInfantMonitorings } from "../hooks/database/models/InfantMonitoringModel";
+import { getAllMaternalDeaths } from "../hooks/database/models/MaternalDeathModel";
+import { getAllNewbornDeaths } from "../hooks/database/models/NewbornDeathModel";
+import {
+  getPregnantWomenList,
+  PregnantWomenListItem,
+} from "../hooks/database/models/PregnantWomenModal";
+import storage from "./storage";
 
-export const convertToNepaliNumber = (num: number | string | null | undefined): string => {
-  if (num === null || num === undefined) return '';
-  const nepaliNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
-  return String(num).replace(/[0-9]/g, match => nepaliNumbers[parseInt(match)]);
+export const convertToNepaliNumber = (
+  num: number | string | null | undefined,
+): string => {
+  if (num === null || num === undefined) return "";
+  const nepaliNumbers = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"];
+  return String(num).replace(
+    /[0-9]/g,
+    (match) => nepaliNumbers[parseInt(match)],
+  );
 };
 
 const parseDateToNepali = (dateStr: string | null | undefined) => {
-  if (!dateStr) return { year: '', month: '', day: '' };
+  if (!dateStr) return { year: "", month: "", day: "" };
   try {
     const bsDate = AdToBs(dateStr);
-    const [year, month, day] = bsDate.split('-');
+    const [year, month, day] = bsDate.split("-");
     return {
       year: convertToNepaliNumber(year),
       month: convertToNepaliNumber(month),
       day: convertToNepaliNumber(day),
     };
   } catch (e) {
-    return { year: '', month: '', day: '' };
+    return { year: "", month: "", day: "" };
   }
 };
 
-const convertAdYmdToBs = (y: number | string | null | undefined, m: number | string | null | undefined, d: number | string | null | undefined) => {
-  if (!y || !m || !d) return { year: '', month: '', day: '' };
-  const adString = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+const convertAdYmdToBs = (
+  y: number | string | null | undefined,
+  m: number | string | null | undefined,
+  d: number | string | null | undefined,
+) => {
+  if (!y || !m || !d) return { year: "", month: "", day: "" };
+  const adString = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   return parseDateToNepali(adString);
 };
 
@@ -51,18 +69,18 @@ const getCss = () => `
 `;
 
 const getEmptyRows = (cols: number, count = 3) => {
-  let rows = '';
+  let rows = "";
   for (let i = 0; i < count; i++) {
-    rows += '<tr>';
+    rows += "<tr>";
     for (let j = 0; j < cols; j++) {
-      rows += '<td></td>';
+      rows += "<td></td>";
     }
-    rows += '</tr>';
+    rows += "</tr>";
   }
   return rows;
 };
 
-const generatePregnancyTable = (data: PregnantWomenListItem[]) => {
+const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
   let html = `
     <div class="title" style="text-align: center;">मातृ तथा नवजात शिशु सम्बन्धि विवरण</div>
     <table>
@@ -86,13 +104,25 @@ const generatePregnancyTable = (data: PregnantWomenListItem[]) => {
         </tr>
         <tr>
   `;
-  for(let i=1; i<=23; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
+  for (let i = 1; i <= 23; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
   html += `</tr></thead><tbody>`;
 
-  data.forEach((item, index) => {
-    const regDate = parseDateToNepali(item.created_at ? item.created_at.split('T')[0] : null);
+  for (let index = 0; index < data.length; index++) {
+    const item = data[index];
+    const regDate = parseDateToNepali(
+      item.created_at ? item.created_at.split("T")[0] : null,
+    );
     const lmp = parseDateToNepali(item.lmp_date);
     const edd = parseDateToNepali(item.edd);
+
+    // Look up counseling status for this mother
+    let isCounseled = false;
+    try {
+      const counseling = await getCounselingByMother(item.mother_id);
+      isCounseled = counseling?.is_counseled === 1;
+    } catch (e) {
+      console.log("Error fetching counseling for mother:", item.mother_id, e);
+    }
 
     html += `
       <tr>
@@ -101,11 +131,12 @@ const generatePregnancyTable = (data: PregnantWomenListItem[]) => {
         <td>${item.name}</td><td>${convertToNepaliNumber(item.age)}</td>
         <td>${lmp.day}</td><td>${lmp.month}</td><td>${lmp.year}</td>
         <td>${edd.day}</td><td>${edd.month}</td><td>${edd.year}</td>
-        <td></td><td></td>
+        <td>${isCounseled ? "✔️" : ""}</td>
+        <td>${!isCounseled ? "✔️" : ""}</td>
         <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
       </tr>
     `;
-  });
+  }
 
   if (data.length === 0) {
     html += getEmptyRows(23, 5);
@@ -139,27 +170,31 @@ const generateMaternalDeathTable = (data: any[]) => {
         </tr>
         <tr>
   `;
-  for(let i=1; i<=16; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
+  for (let i = 1; i <= 16; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
   html += `</tr></thead><tbody>`;
 
   data.forEach((item, index) => {
-    const deathDate = convertAdYmdToBs(item.death_year, item.death_month, item.death_day);
+    const deathDate = convertAdYmdToBs(
+      item.death_year,
+      item.death_month,
+      item.death_day,
+    );
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
-        <td>${item.mother_name || ''}</td>
+        <td>${item.mother_name || ""}</td>
         <td>${convertToNepaliNumber(item.mother_age)}</td>
-        <td>${item.death_condition === 'Pregnant' ? '✔️' : '❌'}</td>
-        <td>${item.death_condition === 'Labor' ? '✔️' : '❌'}</td>
-        <td>${item.death_condition === 'Post_delivery' ? '✔️' : '❌'}</td>
+        <td>${item.death_condition === "Pregnant" ? "✔️" : "❌"}</td>
+        <td>${item.death_condition === "Labor" ? "✔️" : "❌"}</td>
+        <td>${item.death_condition === "Post_delivery" ? "✔️" : "❌"}</td>
         <td>${deathDate.day}</td>
         <td>${deathDate.month}</td>
         <td>${deathDate.year}</td>
         <td></td><td></td><td></td>
-        <td>${item.death_place === 'Home' ? '✔️' : '❌'}</td>
-        <td>${item.death_place === 'Institution' ? '✔️' : '❌'}</td>
-        <td>${item.death_place === 'Other' ? '✔️' : '❌'}</td>
-        <td>${item.remarks || ''}</td>
+        <td>${item.death_place === "Home" ? "✔️" : "❌"}</td>
+        <td>${item.death_place === "Institution" ? "✔️" : "❌"}</td>
+        <td>${item.death_place === "Other" ? "✔️" : "❌"}</td>
+        <td>${item.remarks || ""}</td>
       </tr>
     `;
   });
@@ -197,32 +232,36 @@ const generateNewbornDeathTable = (data: any[]) => {
         </tr>
         <tr>
   `;
-  for(let i=1; i<=17; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
+  for (let i = 1; i <= 17; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
   html += `</tr></thead><tbody>`;
 
-  const newbornData = data.filter(item => item.death_age_unit === 'days');
+  const newbornData = data.filter((item) => item.death_age_unit === "days");
 
   newbornData.forEach((item, index) => {
-    const birthDate = convertAdYmdToBs(item.birth_year, item.birth_month, item.birth_day);
+    const birthDate = convertAdYmdToBs(
+      item.birth_year,
+      item.birth_month,
+      item.birth_day,
+    );
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
-        <td>${item.baby_name || ''}</td>
-        <td>${item.mother_name || ''}</td>
+        <td>${item.baby_name || ""}</td>
+        <td>${item.mother_name || ""}</td>
         <td></td>
         <td>${birthDate.day}</td>
         <td>${birthDate.month}</td>
         <td>${birthDate.year}</td>
-        <td>${item.birth_condition === 'Preterm' ? '✔️' : '❌'}</td>
-        <td>${item.birth_condition === 'LowWeight' ? '✔️' : '❌'}</td>
-        <td>${item.birth_condition === 'Normal' ? '✔️' : '❌'}</td>
-        <td>${item.birth_condition === 'Other' ? '✔️' : '❌'}</td>
+        <td>${item.birth_condition === "Preterm" ? "✔️" : "❌"}</td>
+        <td>${item.birth_condition === "LowWeight" ? "✔️" : "❌"}</td>
+        <td>${item.birth_condition === "Normal" ? "✔️" : "❌"}</td>
+        <td>${item.birth_condition === "Other" ? "✔️" : "❌"}</td>
         <td>${convertToNepaliNumber(item.death_age_days)}</td>
-        <td>${item.cause_of_death || ''}</td>
-        <td>${item.death_place === 'Home' ? '✔️' : '❌'}</td>
-        <td>${item.death_place === 'Institution' ? '✔️' : '❌'}</td>
-        <td>${item.death_place === 'Other' ? '✔️' : '❌'}</td>
-        <td>${item.remarks || ''}</td>
+        <td>${item.cause_of_death || ""}</td>
+        <td>${item.death_place === "Home" ? "✔️" : "❌"}</td>
+        <td>${item.death_place === "Institution" ? "✔️" : "❌"}</td>
+        <td>${item.death_place === "Other" ? "✔️" : "❌"}</td>
+        <td>${item.remarks || ""}</td>
       </tr>
     `;
   });
@@ -254,24 +293,28 @@ const generateChildDeathTable = (data: any[]) => {
         </tr>
         <tr>
   `;
-  for(let i=1; i<=9; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
+  for (let i = 1; i <= 9; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
   html += `</tr></thead><tbody>`;
-  
-  const childData = data.filter(item => item.death_age_unit === 'months');
-  
+
+  const childData = data.filter((item) => item.death_age_unit === "months");
+
   childData.forEach((item, index) => {
-    const birthDate = convertAdYmdToBs(item.birth_year, item.birth_month, item.birth_day);
+    const birthDate = convertAdYmdToBs(
+      item.birth_year,
+      item.birth_month,
+      item.birth_day,
+    );
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
-        <td>${item.baby_name || ''}</td>
-        <td>${item.mother_name || ''}</td>
+        <td>${item.baby_name || ""}</td>
+        <td>${item.mother_name || ""}</td>
         <td>${birthDate.day}</td>
         <td>${birthDate.month}</td>
         <td>${birthDate.year}</td>
         <td>${convertToNepaliNumber(item.death_age_days)}</td>
-        <td>${item.cause_of_death || ''}</td>
-        <td>${item.remarks || ''}</td>
+        <td>${item.cause_of_death || ""}</td>
+        <td>${item.remarks || ""}</td>
       </tr>
     `;
   });
@@ -279,7 +322,7 @@ const generateChildDeathTable = (data: any[]) => {
   if (childData.length === 0) {
     html += getEmptyRows(9, 3);
   }
-  
+
   html += `</tbody></table>`;
   return html;
 };
@@ -305,7 +348,7 @@ const generateInfantCareTable = (data: any[]) => {
         </tr>
         <tr>
   `;
-  for(let i=1; i<=9; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
+  for (let i = 1; i <= 9; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
   html += `</tr></thead><tbody>`;
 
   data.forEach((item) => {
@@ -313,14 +356,14 @@ const generateInfantCareTable = (data: any[]) => {
     html += `
       <tr>
         <td>${dob.day}/${dob.month}/${dob.year}</td>
-        <td>${item.mother_name || ''}</td>
-        <td>${item.baby_name || ''}</td>
+        <td>${item.mother_name || ""}</td>
+        <td>${item.baby_name || ""}</td>
         <td></td>
-        <td>${item.birth_place === 'home' ? '✔️' : '❌'}</td>
-        <td>${item.birth_place === 'institution' ? '✔️' : '❌'}</td>
-        <td>${item.birth_place === 'other' ? '✔️' : '❌'}</td>
-        <td>${item.fchv_present ? '✔️' : '❌'}</td>
-        <td>${item.asphyxiated_newborn ? '✔️' : '❌'}</td>
+        <td>${item.birth_place === "home" ? "✔️" : "❌"}</td>
+        <td>${item.birth_place === "institution" ? "✔️" : "❌"}</td>
+        <td>${item.birth_place === "other" ? "✔️" : "❌"}</td>
+        <td>${item.fchv_present ? "✔️" : "❌"}</td>
+        <td>${item.asphyxiated_newborn ? "✔️" : "❌"}</td>
       </tr>
     `;
   });
@@ -339,35 +382,46 @@ const savePdfToDevice = async (htmlContent: string, fileName: string) => {
     base64: false,
   });
 
-  if (Platform.OS === 'android') {
+  if (Platform.OS === "android") {
     try {
-      let directoryUri = await storage.get<string>('export_directory_uri');
+      let directoryUri = await storage.get<string>("export_directory_uri");
 
       if (!directoryUri) {
-        const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+        const permissions =
+          await StorageAccessFramework.requestDirectoryPermissionsAsync();
         if (!permissions.granted) return;
 
         directoryUri = permissions.directoryUri;
-        await storage.set('export_directory_uri', directoryUri);
+        await storage.set("export_directory_uri", directoryUri);
       }
 
-      const base64 = await readAsStringAsync(uri, { encoding: EncodingType.Base64 });
+      const base64 = await readAsStringAsync(uri, {
+        encoding: EncodingType.Base64,
+      });
 
       try {
-        const newUri = await StorageAccessFramework.createFileAsync(directoryUri, fileName, 'application/pdf');
-        await writeAsStringAsync(newUri, base64, { encoding: EncodingType.Base64 });
+        const newUri = await StorageAccessFramework.createFileAsync(
+          directoryUri,
+          fileName,
+          "application/pdf",
+        );
+        await writeAsStringAsync(newUri, base64, {
+          encoding: EncodingType.Base64,
+        });
       } catch (e) {
         // If file creation fails (e.g., folder deleted or permission revoked), clear cached URI
-        await storage.remove('export_directory_uri');
-        alert('Download folder not found or permission revoked. Please try again.');
+        await storage.remove("export_directory_uri");
+        alert(
+          "Download folder not found or permission revoked. Please try again.",
+        );
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred during download.');
+      alert("An error occurred during download.");
     }
   } else {
     await Share.shareAsync(uri, {
-      mimeType: 'application/pdf',
+      mimeType: "application/pdf",
       dialogTitle: `Export ${fileName}`,
     });
   }
@@ -395,7 +449,7 @@ export const exportAllDataToPdf = async () => {
     const adolescents = await getAllAdolescentIfa();
 
     const htmlContent = wrapHtml(`
-      ${generatePregnancyTable(pregnancies)}
+      ${await generatePregnancyTable(pregnancies)}
       ${generateMaternalDeathTable(maternalDeaths)}
       ${generateNewbornDeathTable(newbornDeaths)}
       ${generateChildDeathTable(newbornDeaths)}
@@ -404,9 +458,9 @@ export const exportAllDataToPdf = async () => {
       ${generateAdolescentIfaTable(adolescents)}
     `);
 
-    await savePdfToDevice(htmlContent, 'FCHV_Export_All.pdf');
+    await savePdfToDevice(htmlContent, "FCHV_Export_All.pdf");
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error("Error generating PDF:", error);
     throw error;
   }
 };
@@ -414,10 +468,10 @@ export const exportAllDataToPdf = async () => {
 export const exportPregnancyToPdf = async () => {
   try {
     const data = await getPregnantWomenList();
-    const htmlContent = wrapHtml(generatePregnancyTable(data));
-    await savePdfToDevice(htmlContent, 'FCHV_Pregnancy.pdf');
+    const htmlContent = wrapHtml(await generatePregnancyTable(data));
+    await savePdfToDevice(htmlContent, "FCHV_Pregnancy.pdf");
   } catch (error) {
-    console.error('Error generating Pregnancy PDF:', error);
+    console.error("Error generating Pregnancy PDF:", error);
     throw error;
   }
 };
@@ -426,9 +480,9 @@ export const exportMaternalDeathToPdf = async () => {
   try {
     const data = await getAllMaternalDeaths();
     const htmlContent = wrapHtml(generateMaternalDeathTable(data));
-    await savePdfToDevice(htmlContent, 'FCHV_Maternal_Death.pdf');
+    await savePdfToDevice(htmlContent, "FCHV_Maternal_Death.pdf");
   } catch (error) {
-    console.error('Error generating Maternal Death PDF:', error);
+    console.error("Error generating Maternal Death PDF:", error);
     throw error;
   }
 };
@@ -437,9 +491,9 @@ export const exportNewbornDeathToPdf = async () => {
   try {
     const data = await getAllNewbornDeaths();
     const htmlContent = wrapHtml(generateNewbornDeathTable(data));
-    await savePdfToDevice(htmlContent, 'FCHV_Newborn_Death.pdf');
+    await savePdfToDevice(htmlContent, "FCHV_Newborn_Death.pdf");
   } catch (error) {
-    console.error('Error generating Newborn Death PDF:', error);
+    console.error("Error generating Newborn Death PDF:", error);
     throw error;
   }
 };
@@ -448,9 +502,9 @@ export const exportChildDeathToPdf = async () => {
   try {
     const data = await getAllNewbornDeaths();
     const htmlContent = wrapHtml(generateChildDeathTable(data));
-    await savePdfToDevice(htmlContent, 'FCHV_Child_Death.pdf');
+    await savePdfToDevice(htmlContent, "FCHV_Child_Death.pdf");
   } catch (error) {
-    console.error('Error generating Child Death PDF:', error);
+    console.error("Error generating Child Death PDF:", error);
     throw error;
   }
 };
@@ -459,9 +513,9 @@ export const exportInfantCareToPdf = async () => {
   try {
     const data = await getAllInfantMonitorings();
     const htmlContent = wrapHtml(generateInfantCareTable(data));
-    await savePdfToDevice(htmlContent, 'FCHV_Infant_Care.pdf');
+    await savePdfToDevice(htmlContent, "FCHV_Infant_Care.pdf");
   } catch (error) {
-    console.error('Error generating Infant Care PDF:', error);
+    console.error("Error generating Infant Care PDF:", error);
     throw error;
   }
 };
@@ -506,8 +560,18 @@ const generateAdolescentIfaTable = (data: any[]) => {
         <tr>
           <th style="font-size: 8px; font-weight: normal; padding: 2px;">१०-१४</th>
           <th style="font-size: 8px; font-weight: normal; padding: 2px;">१५-१९</th>
-          ${Array.from({ length: 13 }).map((_, i) => `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`).join('')}
-          ${Array.from({ length: 13 }).map((_, i) => `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`).join('')}
+          ${Array.from({ length: 13 })
+            .map(
+              (_, i) =>
+                `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
+            )
+            .join("")}
+          ${Array.from({ length: 13 })
+            .map(
+              (_, i) =>
+                `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
+            )
+            .join("")}
         </tr>
       </thead>
       <tbody>
@@ -522,8 +586,8 @@ const generateAdolescentIfaTable = (data: any[]) => {
   let totalP2Completed = 0;
 
   data.forEach((item, index) => {
-    const is10_14 = item.age_group === '10-14';
-    const is15_19 = item.age_group === '15-19';
+    const is10_14 = item.age_group === "10-14";
+    const is15_19 = item.age_group === "15-19";
 
     if (is10_14) total10_14++;
     if (is15_19) total15_19++;
@@ -539,14 +603,24 @@ const generateAdolescentIfaTable = (data: any[]) => {
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
-        <td style="text-align: left; padding-left: 5px;">${item.name || ''}</td>
-        <td>${is10_14 ? '✔️' : ''}</td>
-        <td>${is15_19 ? '✔️' : ''}</td>
-        ${Array.from({ length: 13 }).map((_, i) => `<td>${item[`phase1_week_${i + 1}`] === 1 ? '✔️' : ''}</td>`).join('')}
-        <td>${item.phase1_completed === 1 ? '✔️' : ''}</td>
-        ${Array.from({ length: 13 }).map((_, i) => `<td>${item[`phase2_week_${i + 1}`] === 1 ? '✔️' : ''}</td>`).join('')}
-        <td>${item.phase2_completed === 1 ? '✔️' : ''}</td>
-        <td style="text-align: left; padding-left: 5px; font-size: 8px;">${item.remarks || ''}</td>
+        <td style="text-align: left; padding-left: 5px;">${item.name || ""}</td>
+        <td>${is10_14 ? "✔️" : ""}</td>
+        <td>${is15_19 ? "✔️" : ""}</td>
+        ${Array.from({ length: 13 })
+          .map(
+            (_, i) =>
+              `<td>${item[`phase1_week_${i + 1}`] === 1 ? "✔️" : ""}</td>`,
+          )
+          .join("")}
+        <td>${item.phase1_completed === 1 ? "✔️" : ""}</td>
+        ${Array.from({ length: 13 })
+          .map(
+            (_, i) =>
+              `<td>${item[`phase2_week_${i + 1}`] === 1 ? "✔️" : ""}</td>`,
+          )
+          .join("")}
+        <td>${item.phase2_completed === 1 ? "✔️" : ""}</td>
+        <td style="text-align: left; padding-left: 5px; font-size: 8px;">${item.remarks || ""}</td>
       </tr>
     `;
   });
@@ -560,12 +634,12 @@ const generateAdolescentIfaTable = (data: any[]) => {
   html += `
     <tr style="background-color: #f2f2f2; font-weight: bold;">
       <td colspan="2" style="text-align: center; font-weight: bold;">जम्मा</td>
-      <td>${total10_14 > 0 ? convertToNepaliNumber(total10_14) : '०'}</td>
-      <td>${total15_19 > 0 ? convertToNepaliNumber(total15_19) : '०'}</td>
-      ${totalP1Weeks.map(v => `<td>${v > 0 ? convertToNepaliNumber(v) : '०'}</td>`).join('')}
-      <td>${totalP1Completed > 0 ? convertToNepaliNumber(totalP1Completed) : '०'}</td>
-      ${totalP2Weeks.map(v => `<td>${v > 0 ? convertToNepaliNumber(v) : '०'}</td>`).join('')}
-      <td>${totalP2Completed > 0 ? convertToNepaliNumber(totalP2Completed) : '०'}</td>
+      <td>${total10_14 > 0 ? convertToNepaliNumber(total10_14) : "०"}</td>
+      <td>${total15_19 > 0 ? convertToNepaliNumber(total15_19) : "०"}</td>
+      ${totalP1Weeks.map((v) => `<td>${v > 0 ? convertToNepaliNumber(v) : "०"}</td>`).join("")}
+      <td>${totalP1Completed > 0 ? convertToNepaliNumber(totalP1Completed) : "०"}</td>
+      ${totalP2Weeks.map((v) => `<td>${v > 0 ? convertToNepaliNumber(v) : "०"}</td>`).join("")}
+      <td>${totalP2Completed > 0 ? convertToNepaliNumber(totalP2Completed) : "०"}</td>
       <td></td>
     </tr>
   `;
@@ -578,10 +652,9 @@ export const exportAdolescentIfaToPdf = async () => {
   try {
     const data = await getAllAdolescentIfa();
     const htmlContent = wrapHtml(generateAdolescentIfaTable(data));
-    await savePdfToDevice(htmlContent, 'FCHV_Iron_Adolescent.pdf');
+    await savePdfToDevice(htmlContent, "FCHV_Iron_Adolescent.pdf");
   } catch (error) {
-    console.error('Error generating Adolescent IFA PDF:', error);
+    console.error("Error generating Adolescent IFA PDF:", error);
     throw error;
   }
 };
-

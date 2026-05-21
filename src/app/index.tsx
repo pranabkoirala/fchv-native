@@ -1,9 +1,9 @@
-import { View, Text } from "react-native";
-import React, { useEffect } from "react";
+import { ACCESS_TOKEN_KEY } from "@/constants/token";
+import storage from "@/utils/storage";
 import { useRouter } from "expo-router";
 import { Loader2Icon } from "lucide-react-native";
-import storage from "@/utils/storage";
-import { ACCESS_TOKEN_KEY } from "@/constants/token";
+import { useEffect } from "react";
+import { Text, View } from "react-native";
 
 export default function WelcomeScreen() {
   const router = useRouter();

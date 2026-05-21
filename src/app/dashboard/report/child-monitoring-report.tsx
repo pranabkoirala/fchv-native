@@ -1,27 +1,27 @@
-import React, { useState, useCallback } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { ChevronRight, User } from "lucide-react-native";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  Alert,
   ActivityIndicator,
+  Alert,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useFocusEffect } from "expo-router";
-import { Trash2, Edit, ChevronRight, User } from "lucide-react-native";
-import Colors from "../../../constants/Colors";
 import CustomHeader from "../../../components/CustomHeader";
+import Colors from "../../../constants/Colors";
 
-import {
-  getAllInfantMonitorings,
-  deleteInfantMonitoring,
-} from "../../../hooks/database/models/InfantMonitoringModel";
-import { InfantMonitoringStoreType } from "../../../hooks/database/types/infantMonitoringModal";
-import { getAllMothersList } from "../../../hooks/database/models/MotherModel";
 import { AdToBs } from "react-native-nepali-picker";
+import {
+  deleteInfantMonitoring,
+  getAllInfantMonitorings,
+} from "../../../hooks/database/models/InfantMonitoringModel";
+import { getAllMothersList } from "../../../hooks/database/models/MotherModel";
+import { InfantMonitoringStoreType } from "../../../hooks/database/types/infantMonitoringModal";
 
 export default function ChildMonitoringReportScreen() {
   const router = useRouter();

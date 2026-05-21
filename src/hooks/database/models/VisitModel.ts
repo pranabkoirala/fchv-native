@@ -1,9 +1,9 @@
-import { getDb } from '../db';
-import * as Crypto from 'expo-crypto';
-import { CreateVisitPayload, VisitStoreType } from '../types/visitModal';
+import * as Crypto from "expo-crypto";
+import { getDb } from "../db";
+import { CreateVisitPayload, VisitStoreType } from "../types/visitModal";
 
 export async function createVisit(
-  payload: Omit<CreateVisitPayload, 'created_at' | 'updated_at'>
+  payload: Omit<CreateVisitPayload, "created_at" | "updated_at">,
 ): Promise<VisitStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -24,8 +24,8 @@ export async function createVisit(
       payload.is_synced ? 1 : 0,
       0,
       now,
-      now
-    ]
+      now,
+    ],
   );
 
   return {
@@ -39,47 +39,49 @@ export async function createVisit(
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 }
 
 export async function updateVisit(
   id: string,
-  payload: Partial<Omit<CreateVisitPayload, 'id' | 'created_at' | 'updated_at'>>
+  payload: Partial<
+    Omit<CreateVisitPayload, "id" | "created_at" | "updated_at">
+  >,
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
 
-  const sets: string[] = ['updated_at = ?'];
+  const sets: string[] = ["updated_at = ?"];
   const values: any[] = [now];
 
   if (payload.name !== undefined) {
-    sets.push('name = ?');
+    sets.push("name = ?");
     values.push(payload.name);
   }
   if (payload.address !== undefined) {
-    sets.push('address = ?');
+    sets.push("address = ?");
     values.push(payload.address);
   }
   if (payload.visit_date !== undefined) {
-    sets.push('visit_date = ?');
+    sets.push("visit_date = ?");
     values.push(payload.visit_date);
   }
   if (payload.visit_type !== undefined) {
-    sets.push('visit_type = ?');
+    sets.push("visit_type = ?");
     values.push(payload.visit_type);
   }
   if (payload.visit_notes !== undefined) {
-    sets.push('visit_notes = ?');
+    sets.push("visit_notes = ?");
     values.push(payload.visit_notes);
   }
   if (payload.is_synced !== undefined) {
-    sets.push('is_synced = ?');
+    sets.push("is_synced = ?");
     values.push(payload.is_synced ? 1 : 0);
   }
 
   values.push(id);
-  await db.runAsync(`UPDATE visit SET ${sets.join(', ')} WHERE id = ?`, values);
+  await db.runAsync(`UPDATE visit SET ${sets.join(", ")} WHERE id = ?`, values);
 }
 
 export async function deleteVisit(id: string): Promise<void> {
@@ -87,7 +89,7 @@ export async function deleteVisit(id: string): Promise<void> {
   const now = new Date().toISOString();
   await db.runAsync(
     `UPDATE visit SET is_deleted = 1, updated_at = ? WHERE id = ?`,
-    [now, id]
+    [now, id],
   );
 }
 
@@ -95,7 +97,7 @@ export async function getVisitById(id: string): Promise<VisitStoreType | null> {
   const db = await getDb();
   return await db.getFirstAsync<VisitStoreType>(
     `SELECT * FROM visit WHERE id = ? AND is_deleted = 0`,
-    [id]
+    [id],
   );
 }
 
@@ -126,21 +128,21 @@ export async function getAllVisits(): Promise<VisitListItem[]> {
     ORDER BY v.visit_date DESC, v.created_at DESC
   `;
   const rows = await db.getAllAsync<any>(query);
-  return rows.map(row => ({
+  return rows.map((row) => ({
     id: row.id,
     mother_id: row.mother_id,
-    name: row.name || 'Unknown',
-    address: row.address || '',
+    name: row.name || "Unknown",
+    address: row.address || "",
     visit_date: row.visit_date,
     visit_type: row.visit_type,
-    visit_notes: row.visit_notes || '',
+    visit_notes: row.visit_notes || "",
   }));
 }
 
 export async function getVisitCount(): Promise<number> {
   const db = await getDb();
   const result = await db.getFirstAsync<{ count: number }>(
-    'SELECT COUNT(*) as count FROM visit WHERE is_deleted = 0'
+    "SELECT COUNT(*) as count FROM visit WHERE is_deleted = 0",
   );
   return result?.count ?? 0;
 }
@@ -148,7 +150,7 @@ export async function getVisitCount(): Promise<number> {
 export async function unSyncedVisits(): Promise<CreateVisitPayload[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<VisitStoreType>(
-    `SELECT * FROM visit WHERE is_synced = 0 AND is_deleted = 0`
+    `SELECT * FROM visit WHERE is_synced = 0 AND is_deleted = 0`,
   );
 
   return rows.map((row) => ({
@@ -163,10 +165,12 @@ export async function unSyncedVisits(): Promise<CreateVisitPayload[]> {
   }));
 }
 
-export async function getVisitsByMotherId(motherId: string): Promise<VisitStoreType[]> {
+export async function getVisitsByMotherId(
+  motherId: string,
+): Promise<VisitStoreType[]> {
   const db = await getDb();
   return await db.getAllAsync<VisitStoreType>(
     `SELECT * FROM visit WHERE mother_id = ? AND is_deleted = 0 ORDER BY visit_date ASC`,
-    [motherId]
+    [motherId],
   );
 }

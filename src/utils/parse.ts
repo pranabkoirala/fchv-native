@@ -16,7 +16,9 @@ const safeParse = <T>(value: string): T => {
  *
  * If the value is falsy or cannot be parsed, falls back to the current time.
  */
-export function toISOStringSafe(value: string | number | null | undefined): string {
+export function toISOStringSafe(
+  value: string | number | null | undefined,
+): string {
   // Null / undefined / empty
   if (value === null || value === undefined || value === "") {
     return new Date().toISOString();
@@ -48,20 +50,20 @@ const toSqlParam = (v: any): Primitive => {
   return v;
 };
 
-  const calculateAge = (dob?: string) => {
-    if (!dob) return null;
-    try {
-      const birthDate = new Date(dob);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return age > 0 ? age : null;
-    } catch (e) {
-      return null;
+const calculateAge = (dob?: string) => {
+  if (!dob) return null;
+  try {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
     }
-  };
+    return age > 0 ? age : null;
+  } catch (e) {
+    return null;
+  }
+};
 
-export {safeParse, toSqlParam, calculateAge};
+export { calculateAge, safeParse, toSqlParam };

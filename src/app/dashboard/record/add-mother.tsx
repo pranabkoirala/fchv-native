@@ -1,18 +1,18 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Baby, User } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Platform,
-  KeyboardAvoidingView,
   Animated,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import React, { useState, useRef, useEffect } from "react";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { User, Baby } from "lucide-react-native";
 import CustomHeader from "../../../components/CustomHeader";
 import MotherForm from "../../../components/MotherForm";
 import PregnancyForm from "../../../components/PregnancyForm";

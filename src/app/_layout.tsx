@@ -31,7 +31,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="dark" backgroundColor="white" translucent={true} />
+        <StatusBar backgroundColor="#f9fafb" />
         <View style={{ flex: 1, backgroundColor: "white" }}>
           <ToastProvider>
             <LanguageProvider>

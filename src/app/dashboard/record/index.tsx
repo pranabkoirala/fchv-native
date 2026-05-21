@@ -1,28 +1,28 @@
-import React, { useState, useCallback } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  ActivityIndicator,
-  TextInput,
-} from "react-native";
-import { useRouter, useFocusEffect } from "expo-router";
-import {
-  Plus,
+  CalendarDays,
   ChevronLeft,
+  ChevronRight,
+  Plus,
   Search,
   User,
-  CalendarDays,
-  ChevronRight,
 } from "lucide-react-native";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  ActivityIndicator,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import {
   getAllMothersList,
   MotherListDbItem,
 } from "../../../hooks/database/models/MotherModel";
-import { useTranslation } from "react-i18next";
 
 export default function RecordScreen() {
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function RecordScreen() {
             <ChevronLeft size={20} color="#1E293B" strokeWidth={2.5} />
           </TouchableOpacity>
           <View>
-            <Text className="text-xl font-black text-slate-800 tracking-tight">
+            <Text className="text-xl font-bold text-slate-800 tracking-tight">
               {t("record_page.title")}
             </Text>
             <Text className="text-xs text-slate-400 font-bold mt-0.5 uppercase tracking-wider">
@@ -105,7 +105,7 @@ export default function RecordScreen() {
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
         >
           {/* Search Bar */}
-          <View className="flex-row items-center rounded-2xl bg-white mb-6 px-4 h-12 border border-slate-100 shadow-sm">
+          <View className="flex-row items-center rounded-xl bg-white mb-6 px-4 h-12 border border-slate-100">
             <Search size={18} color="#94A3B8" strokeWidth={2.5} />
             <TextInput
               className="flex-1 ml-3 text-slate-700 font-semibold text-sm h-full"
@@ -117,7 +117,7 @@ export default function RecordScreen() {
           </View>
 
           {filteredRecords.length === 0 ? (
-            <View className="py-20 items-center justify-center bg-white rounded-3xl border border-slate-100 border-dashed shadow-sm">
+            <View className="py-20 items-center justify-center bg-white rounded-3xl border border-slate-100 border-dashed">
               <View className="w-16 h-16 bg-slate-50 rounded-full items-center justify-center mb-4 border border-slate-100">
                 <Search size={28} color="#CBD5E1" strokeWidth={1.5} />
               </View>
@@ -136,7 +136,7 @@ export default function RecordScreen() {
                     params: { id: item.id, from: "/dashboard/record" },
                   } as any)
                 }
-                className="bg-white rounded-3xl p-5 mb-4 border border-slate-100 shadow-sm"
+                className="bg-white rounded-2xl p-5 mb-4 border border-slate-100"
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center flex-1 mr-3">
@@ -174,31 +174,35 @@ export default function RecordScreen() {
 
                 {/* Minimalist Date Metadata Row */}
                 <View className="mt-4 pt-4 border-t border-slate-50 flex-row justify-between">
-                  <View className="flex-row items-center">
-                    <CalendarDays
-                      size={14}
-                      color="#94A3B8"
-                      strokeWidth={2.5}
-                      className="mr-1.5"
-                    />
-                    <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                      {t("record_page.lmp_date")}:{" "}
-                    </Text>
-                    <Text className="text-slate-700 text-xs font-black">
+                  <View className="flex-col gap-1">
+                    <View className="flex-row gap-1 items-center">
+                      <CalendarDays
+                        size={14}
+                        color="#94A3B8"
+                        strokeWidth={2.5}
+                        className="mr-1.5"
+                      />
+                      <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                        {t("record_page.lmp_date")}:{" "}
+                      </Text>
+                    </View>
+                    <Text className="text-slate-700 ml-5 text-xs font-black">
                       {formatDate(item.lmp)}
                     </Text>
                   </View>
-                  <View className="flex-row items-center">
-                    <CalendarDays
-                      size={14}
-                      color="#94A3B8"
-                      strokeWidth={2.5}
-                      className="mr-1.5"
-                    />
-                    <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                      {t("record_page.edd_date")}:{" "}
-                    </Text>
-                    <Text className="text-slate-700 text-xs font-black">
+                  <View className="flex-col gap-1 items-center">
+                    <View className="flex-row items-center gap-1">
+                      <CalendarDays
+                        size={14}
+                        color="#94A3B8"
+                        strokeWidth={2.5}
+                        className="mr-1.5"
+                      />
+                      <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                        {t("record_page.edd_date")}:{" "}
+                      </Text>
+                    </View>
+                    <Text className="text-slate-700 ml-5 text-xs font-black">
                       {formatDate(item.edd)}
                     </Text>
                   </View>

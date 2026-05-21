@@ -1,31 +1,30 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useLanguage } from "../../../context/LanguageContext";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  ActivityIndicator,
-  Alert,
-  Share,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useFocusEffect } from "expo-router";
-import {
-  Users,
-  Filter,
-  Search,
   Calendar,
   ChevronRight,
   Download,
+  Search,
+  Users,
 } from "lucide-react-native";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Share,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import CustomHeader from "../../../components/CustomHeader";
+import Colors from "../../../constants/Colors";
+import { useLanguage } from "../../../context/LanguageContext";
 import {
   getPregnantWomenList,
   PregnantWomenListItem,
 } from "../../../hooks/database/models/PregnantWomenModal";
-import Colors from "../../../constants/Colors";
-import CustomHeader from "../../../components/CustomHeader";
 
 export default function PregnancyReportScreen() {
   const router = useRouter();

@@ -8,11 +8,14 @@ import {
   Alert,
   TextInput,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { useToast } from "@/context/ToastContext";
-import { createAdolescentIfa, getAdolescentIfaById } from "@/hooks/database/models/AdolescentIfaModel";
+import {
+  createAdolescentIfa,
+  getAdolescentIfaById,
+} from "@/hooks/database/models/AdolescentIfaModel";
 import CustomHeader from "@/components/CustomHeader";
 import { useTranslation } from "react-i18next";
 
@@ -69,7 +72,8 @@ export default function AdolescentRegistrationForm() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!name.trim()) e.name = isNp ? "किशोरीको नाम आवश्यक छ" : "Name is required";
+    if (!name.trim())
+      e.name = isNp ? "किशोरीको नाम आवश्यक छ" : "Name is required";
     return e;
   };
 
@@ -83,8 +87,8 @@ export default function AdolescentRegistrationForm() {
     setIsLoading(true);
     try {
       // Calculate phase completion status
-      const phase1Completed = p1Weeks.every(w => w) ? 1 : 0;
-      const phase2Completed = p2Weeks.every(w => w) ? 1 : 0;
+      const phase1Completed = p1Weeks.every((w) => w) ? 1 : 0;
+      const phase2Completed = p2Weeks.every((w) => w) ? 1 : 0;
 
       const payload: any = {
         id: id || Crypto.randomUUID(),
@@ -104,13 +108,17 @@ export default function AdolescentRegistrationForm() {
       });
 
       await createAdolescentIfa(payload);
-      showToast(isNp ? "रेकर्ड सफलतापूर्वक सुरक्षित गरियो" : "Record saved successfully");
+      showToast(
+        isNp
+          ? "रेकर्ड सफलतापूर्वक सुरक्षित गरियो"
+          : "Record saved successfully",
+      );
       router.back();
     } catch (error) {
       console.error(error);
       Alert.alert(
         isNp ? "त्रुटि" : "Error",
-        isNp ? "रेकर्ड सेभ गर्न असफल भयो।" : "Failed to save record."
+        isNp ? "रेकर्ड सेभ गर्न असफल भयो।" : "Failed to save record.",
       );
     } finally {
       setIsLoading(false);
@@ -138,22 +146,47 @@ export default function AdolescentRegistrationForm() {
     }
   };
 
-  const p1Completed = p1Weeks.every(w => w);
-  const p2Completed = p2Weeks.every(w => w);
+  const p1Completed = p1Weeks.every((w) => w);
+  const p2Completed = p2Weeks.every((w) => w);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8FAFC", paddingBottom: 60, paddingTop: 25 }}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: "#F8FAFC",
+        paddingBottom: 60,
+        paddingTop: 25,
+      }}
+    >
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <CustomHeader
-        title={id ? (isNp ? "किशोरी विवरण सम्पादन" : "Edit Adolescent") : (isNp ? "किशोरी लक्षित आइरन फोलिक एसिड वितरण" : "Adolescent IFA Form")}
+        title={
+          id
+            ? isNp
+              ? "किशोरी विवरण सम्पादन"
+              : "Edit Adolescent"
+            : isNp
+              ? "किशोरी लक्षित आइरन फोलिक एसिड वितरण"
+              : "Adolescent IFA Form"
+        }
         onBackPress={() => router.back()}
       />
-      <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 60 }}
+      >
         <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
-          
           {/* Adolescent Name */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: "#334155", fontSize: 14, fontWeight: "500", marginBottom: 8 }}>
+            <Text
+              style={{
+                color: "#334155",
+                fontSize: 14,
+                fontWeight: "500",
+                marginBottom: 8,
+              }}
+            >
               {isNp ? "किशोरीको नाम" : "Adolescent's Name"}
             </Text>
             <TextInput
@@ -176,13 +209,29 @@ export default function AdolescentRegistrationForm() {
               }}
             />
             {errors.name && (
-              <Text style={{ color: "#EF4444", fontSize: 12, marginTop: 4, marginLeft: 2 }}>{errors.name}</Text>
+              <Text
+                style={{
+                  color: "#EF4444",
+                  fontSize: 12,
+                  marginTop: 4,
+                  marginLeft: 2,
+                }}
+              >
+                {errors.name}
+              </Text>
             )}
           </View>
 
           {/* Age Group Selection */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ color: "#334155", fontSize: 14, fontWeight: "500", marginBottom: 8 }}>
+            <Text
+              style={{
+                color: "#334155",
+                fontSize: 14,
+                fontWeight: "500",
+                marginBottom: 8,
+              }}
+            >
               {isNp ? "उमेर समूह (वर्ष)" : "Age Group (Years)"}
             </Text>
             <View style={{ flexDirection: "row", gap: 12 }}>
@@ -211,7 +260,13 @@ export default function AdolescentRegistrationForm() {
                     marginRight: 10,
                   }}
                 />
-                <Text style={{ fontSize: 14, fontWeight: "500", color: ageGroup === "10-14" ? "#7C3AED" : "#475569" }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "500",
+                    color: ageGroup === "10-14" ? "#7C3AED" : "#475569",
+                  }}
+                >
                   10 - 14 {isNp ? "वर्ष" : "Years"}
                 </Text>
               </TouchableOpacity>
@@ -241,7 +296,13 @@ export default function AdolescentRegistrationForm() {
                     marginRight: 10,
                   }}
                 />
-                <Text style={{ fontSize: 14, fontWeight: "500", color: ageGroup === "15-19" ? "#7C3AED" : "#475569" }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "500",
+                    color: ageGroup === "15-19" ? "#7C3AED" : "#475569",
+                  }}
+                >
                   15 - 19 {isNp ? "वर्ष" : "Years"}
                 </Text>
               </TouchableOpacity>
@@ -250,12 +311,26 @@ export default function AdolescentRegistrationForm() {
 
           {/* Phase 1 (पहिलो चरण) */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ color: "#1C5D3A", fontSize: 15, fontWeight: "600", marginBottom: 12 }}>
+            <Text
+              style={{
+                color: "#1C5D3A",
+                fontSize: 15,
+                fontWeight: "600",
+                marginBottom: 12,
+              }}
+            >
               {isNp ? "पहिलो चरण (साउन - असोज)" : "Phase 1 (Shrawan - Ashwin)"}
             </Text>
-            
+
             {/* 13 Weekly Checkboxes in a neat grid */}
-            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
               {Array.from({ length: 13 }).map((_, idx) => {
                 const isChecked = p1Weeks[idx];
                 return (
@@ -274,7 +349,13 @@ export default function AdolescentRegistrationForm() {
                       backgroundColor: isChecked ? "#ECFDF5" : "#FFFFFF",
                     }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: "500", color: isChecked ? "#047857" : "#475569" }}>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "500",
+                        color: isChecked ? "#047857" : "#475569",
+                      }}
+                    >
                       W{idx + 1}
                     </Text>
                   </TouchableOpacity>
@@ -283,11 +364,29 @@ export default function AdolescentRegistrationForm() {
             </View>
 
             {/* Custom Yes/No sliding capsule for 13 Weeks Completed */}
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
-              <Text style={{ color: "#475569", fontSize: 14, fontWeight: "500" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: 16,
+              }}
+            >
+              <Text
+                style={{ color: "#475569", fontSize: 14, fontWeight: "500" }}
+              >
                 {isNp ? "१३ हप्ता खाएको छ?" : "13 Weeks Intake Completed?"}
               </Text>
-              <View style={{ flexDirection: "row", backgroundColor: "#E2E8F0", borderRadius: 20, padding: 3, width: 110, height: 34 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  backgroundColor: "#E2E8F0",
+                  borderRadius: 20,
+                  padding: 3,
+                  width: 110,
+                  height: 34,
+                }}
+              >
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => handlePhaseCompleteToggle(1, false)}
@@ -299,8 +398,14 @@ export default function AdolescentRegistrationForm() {
                     backgroundColor: !p1Completed ? "#FFFFFF" : "transparent",
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: !p1Completed ? "#1E293B" : "#64748B" }}>
-                    {isNp ? "होइन" : "No"}
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: !p1Completed ? "#1E293B" : "#64748B",
+                    }}
+                  >
+                    {isNp ? "छैन" : "No"}
                   </Text>
                 </TouchableOpacity>
 
@@ -315,8 +420,14 @@ export default function AdolescentRegistrationForm() {
                     backgroundColor: p1Completed ? "#FFFFFF" : "transparent",
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: p1Completed ? "#1E293B" : "#64748B" }}>
-                    {isNp ? "हो" : "Yes"}
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: p1Completed ? "#1E293B" : "#64748B",
+                    }}
+                  >
+                    {isNp ? "छ" : "Yes"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -325,12 +436,26 @@ export default function AdolescentRegistrationForm() {
 
           {/* Phase 2 (दोस्रो चरण) */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ color: "#1C5D3A", fontSize: 15, fontWeight: "600", marginBottom: 12 }}>
+            <Text
+              style={{
+                color: "#1C5D3A",
+                fontSize: 15,
+                fontWeight: "600",
+                marginBottom: 12,
+              }}
+            >
               {isNp ? "दोस्रो चरण (माघ - चैत)" : "Phase 2 (Magh - Chaitra)"}
             </Text>
-            
+
             {/* 13 Weekly Checkboxes */}
-            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
               {Array.from({ length: 13 }).map((_, idx) => {
                 const isChecked = p2Weeks[idx];
                 return (
@@ -349,7 +474,13 @@ export default function AdolescentRegistrationForm() {
                       backgroundColor: isChecked ? "#ECFDF5" : "#FFFFFF",
                     }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: "500", color: isChecked ? "#047857" : "#475569" }}>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "500",
+                        color: isChecked ? "#047857" : "#475569",
+                      }}
+                    >
                       W{idx + 1}
                     </Text>
                   </TouchableOpacity>
@@ -358,11 +489,29 @@ export default function AdolescentRegistrationForm() {
             </View>
 
             {/* Custom Yes/No toggle capsule for 26 Weeks Completed */}
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 16 }}>
-              <Text style={{ color: "#475569", fontSize: 14, fontWeight: "500" }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: 16,
+              }}
+            >
+              <Text
+                style={{ color: "#475569", fontSize: 14, fontWeight: "500" }}
+              >
                 {isNp ? "२६ हप्ता पूरा खाएको छ?" : "26 Weeks Total Completed?"}
               </Text>
-              <View style={{ flexDirection: "row", backgroundColor: "#E2E8F0", borderRadius: 20, padding: 3, width: 110, height: 34 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  backgroundColor: "#E2E8F0",
+                  borderRadius: 20,
+                  padding: 3,
+                  width: 110,
+                  height: 34,
+                }}
+              >
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => handlePhaseCompleteToggle(2, false)}
@@ -374,8 +523,14 @@ export default function AdolescentRegistrationForm() {
                     backgroundColor: !p2Completed ? "#FFFFFF" : "transparent",
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: !p2Completed ? "#1E293B" : "#64748B" }}>
-                    {isNp ? "होइन" : "No"}
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: !p2Completed ? "#1E293B" : "#64748B",
+                    }}
+                  >
+                    {isNp ? "छैन" : "No"}
                   </Text>
                 </TouchableOpacity>
 
@@ -390,8 +545,14 @@ export default function AdolescentRegistrationForm() {
                     backgroundColor: p2Completed ? "#FFFFFF" : "transparent",
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: p2Completed ? "#1E293B" : "#64748B" }}>
-                    {isNp ? "हो" : "Yes"}
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "600",
+                      color: p2Completed ? "#1E293B" : "#64748B",
+                    }}
+                  >
+                    {isNp ? "छ" : "Yes"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -400,7 +561,14 @@ export default function AdolescentRegistrationForm() {
 
           {/* Remarks */}
           <View style={{ marginBottom: 30 }}>
-            <Text style={{ color: "#334155", fontSize: 14, fontWeight: "500", marginBottom: 8 }}>
+            <Text
+              style={{
+                color: "#334155",
+                fontSize: 14,
+                fontWeight: "500",
+                marginBottom: 8,
+              }}
+            >
               {isNp ? "Remarks" : "Remarks"}
             </Text>
             <TextInput
@@ -433,10 +601,15 @@ export default function AdolescentRegistrationForm() {
             className="py-4 px-6 bg-primary/80 rounded-xl items-center justify-center"
           >
             <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600" }}>
-              {isLoading ? (isNp ? "सुरक्षित गर्दै..." : "Saving...") : (isNp ? "सेभ गर्नुहोस्" : "Save Record")}
+              {isLoading
+                ? isNp
+                  ? "सुरक्षित गर्दै..."
+                  : "Saving..."
+                : isNp
+                  ? "सेभ गर्नुहोस्"
+                  : "Save Record"}
             </Text>
           </TouchableOpacity>
-
         </View>
       </ScrollView>
     </SafeAreaView>

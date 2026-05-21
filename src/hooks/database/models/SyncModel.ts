@@ -6,19 +6,19 @@ export async function ensureSyncRow(tableName: TableType): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
-    [tableName]
+    [tableName],
   );
 }
 
 export async function getSyncTimestamp(
-  tableName: TableType
+  tableName: TableType,
 ): Promise<string | null> {
   const db = await getDb();
   await ensureSyncRow(tableName);
 
   const row = await db.getFirstAsync<Pick<SyncRow, "last_synced_at">>(
     `SELECT last_synced_at FROM sync WHERE table_name = ?;`,
-    [tableName]
+    [tableName],
   );
 
   return row?.last_synced_at ?? null;
@@ -26,12 +26,12 @@ export async function getSyncTimestamp(
 
 export async function setSyncTimestamp(
   tableName: TableType,
-  timestamp: string | null
+  timestamp: string | null,
 ): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT OR REPLACE INTO sync (table_name, last_synced_at) VALUES (?, ?);`,
-    [tableName, timestamp]
+    [tableName, timestamp],
   );
 }
 

@@ -5,22 +5,21 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Alert,
 } from "react-native";
 import { Search, Plus, Heart, ChevronRight, Trash2 } from "lucide-react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import CustomHeader from "@/components/CustomHeader";
-import { getAllAdolescentIfa, deleteAdolescentIfa } from "@/hooks/database/models/AdolescentIfaModel";
+import { getAllAdolescentIfa } from "@/hooks/database/models/AdolescentIfaModel";
 import { AdolescentIfaStoreType } from "@/hooks/database/types/adolescentIfaModal";
-import { useToast } from "@/context/ToastContext";
 
 export default function AdolescentManagementScreen() {
   const { t } = useTranslation();
-  const { showToast } = useToast();
   const [records, setRecords] = useState<AdolescentIfaStoreType[]>([]);
-  const [filteredRecords, setFilteredRecords] = useState<AdolescentIfaStoreType[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<
+    AdolescentIfaStoreType[]
+  >([]);
   const [search, setSearch] = useState("");
 
   const loadRecords = async () => {
@@ -36,14 +35,14 @@ export default function AdolescentManagementScreen() {
   useFocusEffect(
     useCallback(() => {
       loadRecords();
-    }, [])
+    }, []),
   );
 
   const filterData = (data: AdolescentIfaStoreType[], query: string) => {
     let result = data;
     if (query) {
-      result = result.filter(v =>
-        v.name?.toLowerCase().includes(query.toLowerCase())
+      result = result.filter((v) =>
+        v.name?.toLowerCase().includes(query.toLowerCase()),
       );
     }
     setFilteredRecords(result);
@@ -54,15 +53,21 @@ export default function AdolescentManagementScreen() {
   }, [search, records]);
 
   const handleEdit = (id: string) => {
-    router.push({ pathname: "/dashboard/adolescent/adolescent-form", params: { id } });
+    router.push({
+      pathname: "/dashboard/adolescent/adolescent-form",
+      params: { id },
+    });
   };
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-10">
       <CustomHeader
         title={t("adolescent_page.title", "Adolescent Girls IFA")}
-        subtitle={t("adolescent_page.subtitle", "Iron Folic Acid (IFA) distribution records")}
-        onBackPress={() => router.replace('/dashboard')}
+        subtitle={t(
+          "adolescent_page.subtitle",
+          "Iron Folic Acid (IFA) distribution records",
+        )}
+        onBackPress={() => router.replace("/dashboard")}
         rightNode={
           <TouchableOpacity
             activeOpacity={0.8}
@@ -88,7 +93,10 @@ export default function AdolescentManagementScreen() {
             <Search size={20} color="#94A3B8" />
             <TextInput
               className="flex-1 ml-3 text-base text-[#1E293B]"
-              placeholder={t("adolescent_page.search_placeholder", "Search by name...")}
+              placeholder={t(
+                "adolescent_page.search_placeholder",
+                "Search by name...",
+              )}
               placeholderTextColor="#94A3B8"
               value={search}
               onChangeText={setSearch}
@@ -113,25 +121,55 @@ export default function AdolescentManagementScreen() {
 
                 {/* Info */}
                 <View className="flex-1 ml-4 justify-center">
-                  <Text className="text-slate-800 text-base font-bold mb-1" numberOfLines={1}>
+                  <Text
+                    className="text-slate-800 text-base font-bold mb-1"
+                    numberOfLines={1}
+                  >
                     {item.name}
                   </Text>
-                  
+
                   <View className="flex-row items-center mb-1.5">
                     <Text className="text-slate-500 font-medium text-[13px]">
-                      {t("adolescent_page.age_group", "Age Group")}: <Text className="text-purple-700 font-bold">{item.age_group} {t("adolescent_page.years", "Yrs")}</Text>
+                      {t("adolescent_page.age_group", "Age Group")}:{" "}
+                      <Text className="text-purple-700 font-bold">
+                        {item.age_group} {t("adolescent_page.years", "Yrs")}
+                      </Text>
                     </Text>
                   </View>
 
                   <View className="flex-row gap-x-2 flex-wrap gap-y-1">
-                    <View className={`px-2 py-0.5 rounded-full ${item.phase1_completed ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50 border border-slate-200'}`}>
-                      <Text className={`text-[10px] font-semibold ${item.phase1_completed ? 'text-emerald-700' : 'text-slate-500'}`}>
-                        {item.phase1_completed ? t("adolescent_page.phase1_done", "Phase 1: Completed") : t("adolescent_page.phase1_pending", "Phase 1: In Progress")}
+                    <View
+                      className={`px-2 py-0.5 rounded-full ${item.phase1_completed ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-200"}`}
+                    >
+                      <Text
+                        className={`text-[10px] font-semibold ${item.phase1_completed ? "text-emerald-700" : "text-slate-500"}`}
+                      >
+                        {item.phase1_completed
+                          ? t(
+                              "adolescent_page.phase1_done",
+                              "Phase 1: Completed",
+                            )
+                          : t(
+                              "adolescent_page.phase1_pending",
+                              "Phase 1: In Progress",
+                            )}
                       </Text>
                     </View>
-                    <View className={`px-2 py-0.5 rounded-full ${item.phase2_completed ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50 border border-slate-200'}`}>
-                      <Text className={`text-[10px] font-semibold ${item.phase2_completed ? 'text-emerald-700' : 'text-slate-500'}`}>
-                        {item.phase2_completed ? t("adolescent_page.phase2_done", "Phase 2: Completed") : t("adolescent_page.phase2_pending", "Phase 2: In Progress")}
+                    <View
+                      className={`px-2 py-0.5 rounded-full ${item.phase2_completed ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-200"}`}
+                    >
+                      <Text
+                        className={`text-[10px] font-semibold ${item.phase2_completed ? "text-emerald-700" : "text-slate-500"}`}
+                      >
+                        {item.phase2_completed
+                          ? t(
+                              "adolescent_page.phase2_done",
+                              "Phase 2: Completed",
+                            )
+                          : t(
+                              "adolescent_page.phase2_pending",
+                              "Phase 2: In Progress",
+                            )}
                       </Text>
                     </View>
                   </View>
@@ -154,9 +192,15 @@ export default function AdolescentManagementScreen() {
                 {t("adolescent_page.no_records", "No Records Found")}
               </Text>
               <Text className="text-slate-400 text-sm text-center leading-5 px-6">
-                {search 
-                  ? t("adolescent_page.no_results_msg", "We couldn't find any adolescent girls matching your search.")
-                  : t("adolescent_page.no_records_msg", "Start by adding a new adolescent girl distribution record.")}
+                {search
+                  ? t(
+                      "adolescent_page.no_results_msg",
+                      "We couldn't find any adolescent girls matching your search.",
+                    )
+                  : t(
+                      "adolescent_page.no_records_msg",
+                      "Start by adding a new adolescent girl distribution record.",
+                    )}
               </Text>
             </View>
           )}

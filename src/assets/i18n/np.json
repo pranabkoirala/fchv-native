@@ -718,13 +718,15 @@
     "lmp_date": "अन्तिम महिनावारी मिति (LMP)",
     "select_lmp": "LMP मिति चयन गर्नुहोस्",
     "edd_date": "अपेक्षित सुत्केरी मिति (EDD)",
-    "caretaker_name": "कुरुवा/हेरचाहकर्ताको नाम",
-    "caretaker_phone": "कुरुवा/हेरचाहकर्ताको फोन",
+    "caretaker_name": "श्रीमानको नाम",
+    "caretaker_phone": "श्रीमानको फोन",
     "validation": {
       "mother_req": "कृपया आमा चयन गर्नुहोस्",
       "gravida_req": "गर्भावस्था संख्या आवश्यक छ",
       "parity_req": "जन्म संख्या आवश्यक छ",
       "lmp_req": "LMP मिति आवश्यक छ",
+      "caretaker_name_req": "श्रीमानको नाम आवश्यक छ",
+      "caretaker_phone_req": "श्रीमानको फोन नम्बर आवश्यक छ",
       "parity_invalid": "Parity, Gravida भन्दा बढी हुन सक्दैन",
       "phone_digits": "१० अंकको हुनुपर्छ"
     },

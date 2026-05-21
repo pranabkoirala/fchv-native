@@ -1,9 +1,12 @@
-import { getDb } from '../db';
-import { CreateMaternalDeathPayload, MaternalDeathStoreType } from '../types/maternalDeathModal';
-import * as Crypto from 'expo-crypto';
+import * as Crypto from "expo-crypto";
+import { getDb } from "../db";
+import {
+  CreateMaternalDeathPayload,
+  MaternalDeathStoreType,
+} from "../types/maternalDeathModal";
 
 export async function createMaternalDeath(
-  payload: CreateMaternalDeathPayload
+  payload: CreateMaternalDeathPayload,
 ): Promise<MaternalDeathStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -30,44 +33,48 @@ export async function createMaternalDeath(
       remarks = excluded.remarks,
       updated_at = excluded.updated_at;`,
     [
-      id, 
-      payload.mother_id ?? null, 
-      payload.serial_no ?? null, 
-      payload.mother_name ?? null, 
-      payload.mother_age ?? null, 
-      payload.death_condition ?? null, 
-      payload.death_condition_other ?? '',
-      payload.death_day ?? null, 
-      payload.death_month ?? null, 
-      payload.death_year ?? null, 
-      payload.death_place ?? null, 
-      payload.death_place_other ?? '',
-      payload.remarks ?? null, 
-      now, 
-      now
-    ]
+      id,
+      payload.mother_id ?? null,
+      payload.serial_no ?? null,
+      payload.mother_name ?? null,
+      payload.mother_age ?? null,
+      payload.death_condition ?? null,
+      payload.death_condition_other ?? "",
+      payload.death_day ?? null,
+      payload.death_month ?? null,
+      payload.death_year ?? null,
+      payload.death_place ?? null,
+      payload.death_place_other ?? "",
+      payload.remarks ?? null,
+      now,
+      now,
+    ],
   );
 
   return {
     ...payload,
     created_at: now,
-    updated_at: now
+    updated_at: now,
   };
 }
 
-export async function getAllMaternalDeaths(): Promise<MaternalDeathStoreType[]> {
+export async function getAllMaternalDeaths(): Promise<
+  MaternalDeathStoreType[]
+> {
   const db = await getDb();
   const rows = await db.getAllAsync<MaternalDeathStoreType>(
-    `SELECT * FROM hmis_maternal_death ORDER BY created_at DESC`
+    `SELECT * FROM hmis_maternal_death ORDER BY created_at DESC`,
   );
   return rows;
 }
 
-export async function getMaternalDeathByMother(motherId: string): Promise<MaternalDeathStoreType | null> {
+export async function getMaternalDeathByMother(
+  motherId: string,
+): Promise<MaternalDeathStoreType | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<MaternalDeathStoreType>(
     `SELECT * FROM hmis_maternal_death WHERE mother_id = ?`,
-    [motherId]
+    [motherId],
   );
   return row;
 }
@@ -75,7 +82,7 @@ export async function getMaternalDeathByMother(motherId: string): Promise<Matern
 export async function getTotalMaternalDeaths(): Promise<number> {
   const db = await getDb();
   const result = await db.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(*) as count FROM hmis_maternal_death`
+    `SELECT COUNT(*) as count FROM hmis_maternal_death`,
   );
   return result?.count || 0;
 }
