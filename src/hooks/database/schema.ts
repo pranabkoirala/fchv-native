@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS counseling (
     id TEXT PRIMARY KEY,
     mother_id TEXT NOT NULL,
     is_counseled INTEGER DEFAULT 0,
+    counseled_topics TEXT,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,

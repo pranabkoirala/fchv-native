@@ -16,8 +16,8 @@ export async function createMaternalDeath(
   await db.runAsync(
     `INSERT INTO hmis_maternal_death 
       (id, mother_id, serial_no, mother_name, mother_age, death_condition, death_condition_other,
-       death_day, death_month, death_year, death_place, death_place_other, remarks, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       death_day, death_month, death_year, death_place, death_place_other, child_condition, remarks, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       mother_id = excluded.mother_id,
       serial_no = excluded.serial_no,
@@ -30,6 +30,7 @@ export async function createMaternalDeath(
       death_year = excluded.death_year,
       death_place = excluded.death_place,
       death_place_other = excluded.death_place_other,
+      child_condition = excluded.child_condition,
       remarks = excluded.remarks,
       updated_at = excluded.updated_at;`,
     [
@@ -45,6 +46,7 @@ export async function createMaternalDeath(
       payload.death_year ?? null,
       payload.death_place ?? null,
       payload.death_place_other ?? "",
+      payload.child_condition ?? null,
       payload.remarks ?? null,
       now,
       now,

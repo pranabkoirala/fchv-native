@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 24;
+export const SCHEMA_VERSION = 26;
 
 type Migration = {
   version: number;
@@ -544,6 +544,26 @@ export const MIGRATIONS: Migration[] = [
         await db.execAsync(`ALTER TABLE supplements ADD COLUMN calcium INTEGER DEFAULT 0;`);
       } catch (e) {
         console.log("Migration 24 (calcium column in supplements) already applied or failed:", e);
+      }
+    }
+  },
+  {
+    version: 25,
+    up: async (db) => {
+      try {
+        await db.execAsync(`ALTER TABLE counseling ADD COLUMN counseled_topics TEXT;`);
+      } catch (e) {
+        console.log("Migration 25 (counseled_topics column in counseling) already applied or failed:", e);
+      }
+    }
+  },
+  {
+    version: 26,
+    up: async (db) => {
+      try {
+        await db.execAsync(`ALTER TABLE hmis_maternal_death ADD COLUMN child_condition TEXT;`);
+      } catch (e) {
+        console.log("Migration 26 (child_condition column in hmis_maternal_death) already applied or failed:", e);
       }
     }
   }

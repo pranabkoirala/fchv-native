@@ -6,9 +6,9 @@ const generateId = () =>
 export interface TodoItem {
   id: string;
   task: string;
-  description?: string;
-  task_date?: string;
-  task_time?: string;
+  description?: string | null;
+  task_date?: string | null;
+  task_time?: string | null;
   is_completed: number;
   created_at: string;
   updated_at: string;
@@ -16,9 +16,9 @@ export interface TodoItem {
 
 export async function createTodo(
   task: string,
-  description?: string,
-  task_date?: string,
-  task_time?: string,
+  description?: string | null,
+  task_date?: string | null,
+  task_time?: string | null,
 ): Promise<TodoItem> {
   const db = await getDb();
   const id = generateId();
@@ -41,9 +41,9 @@ export async function createTodo(
   return {
     id,
     task,
-    description,
-    task_date,
-    task_time,
+    description: description || null,
+    task_date: task_date || null,
+    task_time: task_time || null,
     is_completed: 0,
     created_at: now,
     updated_at: now,
@@ -69,7 +69,7 @@ export async function updateTodo(
 
   Object.entries(updates).forEach(([key, value]) => {
     sets.push(`${key} = ?`);
-    params.push(value);
+    params.push(value === undefined ? null : value);
   });
 
   if (sets.length === 0) return;

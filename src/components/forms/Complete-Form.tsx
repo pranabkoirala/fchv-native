@@ -10,6 +10,7 @@ import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
 import { CalendarPicker, AdToBs, BsToAd } from "react-native-nepali-picker";
 import { updateMother, getMotherProfile } from "../../hooks/database/models/MotherModel";
+import { updatePregnancy } from "../../hooks/database/models/PregnantWomenModal";
 import { useToast } from "../../context/ToastContext";
 import CameraCapture from "../CameraCapture";
 import { FieldLabel, BoxInput, SelectInput } from "../FormElements";
@@ -73,6 +74,8 @@ export default function CompleteForm({ id }: { id?: string }) {
   const [showCamera, setShowCamera] = useState(false);
   const [showDobPicker, setShowDobPicker] = useState(false);
   const [showLmpPicker, setShowLmpPicker] = useState(false);
+  const [pregnancyId, setPregnancyId] = useState<string | null>(null);
+  const [edd, setEdd] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 

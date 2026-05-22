@@ -5,6 +5,7 @@ export interface CounselingStoreType {
   id: string;
   mother_id: string;
   is_counseled: number; // 0 or 1
+  counseled_topics: string | null;
   is_synced: number;
   is_deleted: number;
   created_at: string;
@@ -26,6 +27,7 @@ export async function saveCounseling(payload: {
   id?: string;
   mother_id: string;
   is_counseled: number;
+  counseled_topics?: string | null;
 }): Promise<CounselingStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -36,21 +38,27 @@ export async function saveCounseling(payload: {
   if (existing) {
     await db.runAsync(
       `UPDATE counseling 
-       SET is_counseled = ?, updated_at = ?, is_synced = 0 
+       SET is_counseled = ?, counseled_topics = ?, updated_at = ?, is_synced = 0 
        WHERE mother_id = ?`,
-      [payload.is_counseled, now, payload.mother_id],
+      [payload.is_counseled, payload.counseled_topics ?? null, now, payload.mother_id],
     );
-    return { ...existing, is_counseled: payload.is_counseled, updated_at: now };
+    return { 
+      ...existing, 
+      is_counseled: payload.is_counseled, 
+      counseled_topics: payload.counseled_topics ?? null,
+      updated_at: now 
+    };
   } else {
     await db.runAsync(
-      `INSERT INTO counseling (id, mother_id, is_counseled, created_at, updated_at, is_synced, is_deleted) 
-       VALUES (?, ?, ?, ?, ?, 0, 0)`,
-      [id, payload.mother_id, payload.is_counseled, now, now],
+      `INSERT INTO counseling (id, mother_id, is_counseled, counseled_topics, created_at, updated_at, is_synced, is_deleted) 
+       VALUES (?, ?, ?, ?, ?, ?, 0, 0)`,
+      [id, payload.mother_id, payload.is_counseled, payload.counseled_topics ?? null, now, now],
     );
     return {
       id,
       mother_id: payload.mother_id,
       is_counseled: payload.is_counseled,
+      counseled_topics: payload.counseled_topics ?? null,
       created_at: now,
       updated_at: now,
       is_synced: 0,

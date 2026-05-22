@@ -6,6 +6,7 @@ import {
   CheckSquare,
   ClipboardList,
   Clock,
+  Edit2,
   MapPin,
   Plus,
   Trash2,
@@ -81,6 +82,7 @@ export default function TasksScreen() {
 
   // Modal State
   const [isModalVisible, setModalVisible] = useState(false);
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
@@ -148,6 +150,42 @@ export default function TasksScreen() {
     }
   };
 
+  const handleEditPress = (todo: TodoItem) => {
+    const parsed = parseTaskString(todo.task);
+    setEditingTodoId(todo.id);
+    setNewTaskTitle(parsed.title || "");
+    setNewTaskDescription(todo.description || "");
+    setNewTaskDate(todo.task_date || "");
+    setNewTaskPatient(parsed.patient || "");
+    setNewTaskTime(todo.task_time || parsed.time || "");
+    setNewTaskLocation(parsed.location || "");
+    setNewTaskPriority(parsed.priority || "NORMAL");
+
+    // Parse time if it exists
+    if (todo.task_time || parsed.time) {
+      try {
+        const timeStr = todo.task_time || parsed.time || "";
+        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (match) {
+          let hours = parseInt(match[1]);
+          const minutes = parseInt(match[2]);
+          const ampm = match[3].toUpperCase();
+          if (ampm === "PM" && hours < 12) hours += 12;
+          if (ampm === "AM" && hours === 12) hours = 0;
+          const d = new Date();
+          d.setHours(hours, minutes, 0, 0);
+          setSelectedTime(d);
+        }
+      } catch (e) {
+        // ignore parsing error
+      }
+    } else {
+      setSelectedTime(new Date());
+    }
+
+    setModalVisible(true);
+  };
+
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
 
@@ -160,17 +198,45 @@ export default function TasksScreen() {
     };
 
     try {
-      // Create todo with new DB schema fields
-      const newItem = await createTodo(
-        JSON.stringify(payload),
-        newTaskDescription.trim() || undefined,
-        newTaskDate.trim() || undefined,
-        newTaskTime.trim() || undefined,
-      );
-      setTodos([newItem, ...todos]);
+      if (editingTodoId) {
+        // Update database
+        await updateTodo(editingTodoId, {
+          task: JSON.stringify(payload),
+          description: newTaskDescription.trim() || null,
+          task_date: newTaskDate.trim() || null,
+          task_time: newTaskTime.trim() || null,
+        });
+
+        // Update state
+        setTodos((prev) =>
+          prev.map((todo) =>
+            todo.id === editingTodoId
+              ? {
+                ...todo,
+                task: JSON.stringify(payload),
+                description: newTaskDescription.trim() || null,
+                task_date: newTaskDate.trim() || null,
+                task_time: newTaskTime.trim() || null,
+                updated_at: new Date().toISOString(),
+              }
+              : todo,
+          ),
+        );
+      } else {
+        // Create todo with new DB schema fields
+        const newItem = await createTodo(
+          JSON.stringify(payload),
+          newTaskDescription.trim() || null,
+          newTaskDate.trim() || null,
+          newTaskTime.trim() || null,
+        );
+        setTodos([newItem, ...todos]);
+      }
+
       setModalVisible(false);
 
       // Reset form
+      setEditingTodoId(null);
       setNewTaskTitle("");
       setNewTaskDescription("");
       setNewTaskDate("");
@@ -180,7 +246,7 @@ export default function TasksScreen() {
       setNewTaskPriority("NORMAL");
       setSelectedTime(new Date());
     } catch (error) {
-      console.error("Failed to add todo:", error);
+      console.error("Failed to add or update todo:", error);
     }
   };
 
@@ -208,7 +274,7 @@ export default function TasksScreen() {
     <View className="px-6 pb-4">
       <Animated.Text
         entering={FadeIn.duration(400)}
-        className="text-3xl font-bold text-slate-700"
+        className="text-3xl font-semibold text-slate-500"
       >
         {t("todo_tasks.title")}
       </Animated.Text>
@@ -235,7 +301,7 @@ export default function TasksScreen() {
         className="flex-1 bg-[#E8F3FF] rounded-2xl p-4 items-center"
       >
         <ClipboardList size={26} color="#475569" strokeWidth={2} />
-        <Text className="text-[22px] font-black text-slate-700 mt-2">
+        <Text className="text-[22px] font-bold text-slate-700 mt-2">
           {String(stats.pending).padStart(2, "0")}
         </Text>
         <Text className="text-[13px] font-medium text-slate-500 mt-0.5">
@@ -290,9 +356,8 @@ export default function TasksScreen() {
         key={todo.id}
         entering={FadeInDown.delay(100 + index * 50).duration(400)}
         layout={Layout.springify()}
-        className={`bg-white rounded-2xl p-4 mb-4 border border-slate-100 flex-row ${
-          isDone ? "opacity-60" : ""
-        }`}
+        className={`bg-white rounded-2xl p-4 mb-4 border border-slate-100 flex-row ${isDone ? "opacity-60" : ""
+          }`}
       >
         {/* Checkbox */}
         <TouchableOpacity
@@ -309,12 +374,15 @@ export default function TasksScreen() {
         </TouchableOpacity>
 
         {/* Content */}
-        <View className="flex-1">
+        <TouchableOpacity
+          className="flex-1"
+          activeOpacity={0.7}
+          onPress={() => handleEditPress(todo)}
+        >
           <View className="flex-row justify-between items-start">
             <Text
-              className={`text-[16px] font-bold flex-1 mr-2 ${
-                isDone ? "text-slate-400 line-through" : "text-slate-800"
-              }`}
+              className={`text-[16px] font-bold flex-1 mr-2 ${isDone ? "text-slate-400 line-through" : "text-slate-800"
+                }`}
             >
               {parsed.title}
             </Text>
@@ -376,7 +444,17 @@ export default function TasksScreen() {
               )}
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
+
+        {/* Edit Button */}
+        {!isDone && (
+          <TouchableOpacity
+            className="ml-3 p-2 bg-slate-50 rounded-full border border-slate-100 self-center"
+            onPress={() => handleEditPress(todo)}
+          >
+            <Edit2 size={14} color="#475569" />
+          </TouchableOpacity>
+        )}
 
         {/* Delete Button */}
         {isDone && (
@@ -408,8 +486,8 @@ export default function TasksScreen() {
             className="bg-white rounded-t-3xl p-6 pb-10"
           >
             <View className="flex-row justify-between items-center mb-5">
-              <Text className="text-xl font-black text-slate-900">
-                {t("todo_tasks.add_task")}
+              <Text className="text-xl font-bold text-slate-800">
+                {editingTodoId ? t("todo_tasks.edit_task") : t("todo_tasks.add_task")}
               </Text>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
@@ -425,7 +503,7 @@ export default function TasksScreen() {
             >
               {/* Title Input */}
               <View className="mb-4">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                <Text className="text-md font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                   {t("todo_tasks.task_title")}
                 </Text>
                 <TextInput
@@ -438,7 +516,7 @@ export default function TasksScreen() {
 
               {/* Description Input */}
               <View className="mb-4">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                <Text className="text-md font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                   {t("todo_tasks.description")}
                 </Text>
                 <TextInput
@@ -454,7 +532,7 @@ export default function TasksScreen() {
               {/* Date & Time Row */}
               <View className="flex-row gap-3 mb-4">
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  <Text className="text-md font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     {t("todo_tasks.date")}
                   </Text>
                   <TouchableOpacity
@@ -469,7 +547,7 @@ export default function TasksScreen() {
                   </TouchableOpacity>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  <Text className="text-md font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     {t("todo_tasks.time")}
                   </Text>
                   <TouchableOpacity
@@ -488,7 +566,7 @@ export default function TasksScreen() {
               {/* Patient & Location Row */}
               <View className="flex-row gap-3 mb-4">
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  <Text className="text-md font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     {t("todo_tasks.patient_label")}
                   </Text>
                   <TextInput
@@ -499,7 +577,7 @@ export default function TasksScreen() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                  <Text className="text-md font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                     {t("todo_tasks.location")}
                   </Text>
                   <TextInput
@@ -513,7 +591,7 @@ export default function TasksScreen() {
 
               {/* Priority */}
               <View className="mb-6">
-                <Text className="text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                <Text className="text-md font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
                   {t("todo_tasks.priority")}
                 </Text>
                 <View className="flex-row bg-slate-50 border border-slate-200 rounded-xl overflow-hidden h-[48px]">
@@ -526,7 +604,7 @@ export default function TasksScreen() {
                         className={`flex-1 items-center justify-center ${isSelected ? "bg-slate-800" : ""}`}
                       >
                         <Text
-                          className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-500"}`}
+                          className={`text-md font-semibold ${isSelected ? "text-white" : "text-slate-600"}`}
                         >
                           {t(`todo_tasks.priority_levels.${p}`)}
                         </Text>
@@ -543,7 +621,7 @@ export default function TasksScreen() {
                 className={`w-full py-4 items-center bg-primary/80`}
               >
                 <Text className={`font-bold text-base text-white`}>
-                  {t("todo_tasks.create_task")}
+                  {editingTodoId ? t("todo_tasks.save_changes") : t("todo_tasks.create_task")}
                 </Text>
               </TouchableOpacity>
             </ScrollView>
@@ -639,7 +717,18 @@ export default function TasksScreen() {
       <AnimatedTouchableOpacity
         entering={FadeInDown.delay(500).springify()}
         activeOpacity={0.8}
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+          setEditingTodoId(null);
+          setNewTaskTitle("");
+          setNewTaskDescription("");
+          setNewTaskDate("");
+          setNewTaskPatient("");
+          setNewTaskTime("");
+          setNewTaskLocation("");
+          setNewTaskPriority("NORMAL");
+          setSelectedTime(new Date());
+          setModalVisible(true);
+        }}
         className="absolute bottom-28 right-6 w-[60px] h-[60px] rounded-full bg-[#356169] items-center justify-center"
       >
         <Plus size={30} color="#FFFFFF" />

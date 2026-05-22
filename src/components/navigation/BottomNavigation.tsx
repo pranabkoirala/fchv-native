@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "expo-router";
 import {
-  View,
+  BookOpen,
+  CheckSquare,
+  ClipboardList,
+  Home,
+} from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Dimensions,
+  Keyboard,
+  Platform,
   Text,
   TouchableOpacity,
-  Platform,
-  Keyboard,
-  Dimensions,
-  Animated,
+  View,
 } from "react-native";
-import {
-  Home,
-  ClipboardList,
-  CheckSquare,
-  BookOpen,
-} from "lucide-react-native";
-import { useRouter, usePathname } from "expo-router";
 import { useLanguage } from "../../context/LanguageContext";
 
 const { width } = Dimensions.get("window");
@@ -43,11 +43,13 @@ const TabItem = ({ tab, isActive, onPress }: any) => {
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={onPress}
+      className="border-t border-gray-100"
       style={{
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
         height: "100%",
+        paddingBottom: 25,
       }}
     >
       <Animated.View

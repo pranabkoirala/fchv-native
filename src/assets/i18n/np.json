@@ -78,8 +78,8 @@
       "child_sub": "मासिक जन्महरू"
     },
     "health_summary": {
-      "under_29_days": "२९ दिनभन्दा कम",
-      "29_to_59_months": "५९ महिनासम्म"
+      "under_29_days": "२९ दिनभन्दा कम बच्चाहरू",
+      "29_to_59_months": "५९ महिनासम्मका बच्चाहरू"
     },
     "activity": {
       "new_mother": "नयाँ आमा",
@@ -375,8 +375,16 @@
     "quick_stats": {
       "counseling": "परामर्श",
       "provided": "दिइएको",
-      "not_provided": "नदिइएको",
+      "not_provided": "दिएको छैन",
       "reg_date": "दर्ता मिति"
+    },
+    "counseling_card": {
+      "counseled_topics": "सल्लाह दिएका कुराहरू",
+      "title": "के तपाईंले परामर्श सेवा दिनुभयो?",
+      "no_topics": "कुनै कुरा थपिएको छैन",
+      "add_topic": "कुरा थप्नुहोस्",
+      "enter_topic": "यहाँ लेख्नुहोस्...",
+      "remove": "हटाउनुहोस्"
     },
     "anc": {
       "title": "ANC जाँचहरू",
@@ -616,7 +624,10 @@
     "save": "विवरण सुरक्षित गर्नुहोस्",
     "success": "मातृ मृत्यु विवरण सफलतापूर्वक सुरक्षित भयो।",
     "error": "विवरण सुरक्षित गर्न असफल भयो।",
-    "error_title": "त्रुटि"
+    "error_title": "त्रुटि",
+    "child_condition": "बच्चाको अवस्था",
+    "child_alive": "जीवित",
+    "child_dead": "मृत"
   },
   "newborn_death_modal": {
     "title": "नवजात / बाल मृत्यु विवरण",
@@ -845,6 +856,8 @@
     "location_ph": "जस्तै: हेटौंडा",
     "priority": "प्राथमिकता",
     "create_task": "कार्य सिर्जना गर्नुहोस्",
+    "edit_task": "कार्य सम्पादन गर्नुहोस्",
+    "save_changes": "परिवर्तनहरू बचत गर्नुहोस्",
     "priority_levels": {
       "NORMAL": "सामान्य",
       "MEDIUM": "मध्यम",

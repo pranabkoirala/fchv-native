@@ -13,6 +13,7 @@ export interface MaternalDeathStoreType {
   delivery_place_other?: string;
   death_place?: string; // 'Home', 'Institution', 'Other'
   death_place_other?: string;
+  child_condition?: string; // 'Alive', 'Dead'
   remarks?: string;
   is_synced?: number;
   is_deleted?: number;

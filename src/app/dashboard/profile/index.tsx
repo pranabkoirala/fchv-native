@@ -55,7 +55,7 @@ const SectionTitle = ({ title, icon: Icon, colorClass }: any) => (
 
 const VisitBadge = ({ label, val }: any) => (
   <View
-    className={`px-3 py-2 rounded-md flex-row items-center justify-between border mb-3 w-[48%] ${val ? "bg-emerald-50 border-emerald-200" : "bg-slate-50 border-slate-200"}`}
+    className={`px-3 py-3 rounded-md flex-row items-center justify-between border mb-3 w-[48%] ${val ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-100"}`}
   >
     <Text
       className={`text-[12px] ${val ? "text-emerald-800 font-bold" : "text-slate-500 font-medium"}`}
@@ -254,96 +254,97 @@ export default function HmisRecordProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100, paddingTop: 12 }}
       >
-        <View className="px-3 gap-y-6">
+        <View className="px-3 gap-y-3">
           {/* Main Identity Card */}
           <View className="bg-white p-5 rounded-xl border border-slate-100">
-            <View className="flex-row items-center mb-5">
-              <View className="w-16 h-16 rounded-full bg-blue-50 items-center justify-center mr-4">
-                <User size={32} color={Colors.primary} />
-              </View>
-              <View className="flex-1">
-                <View className="flex-row items-center mb-1">
-                  <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md">
-                    {t("profile.identity.serial_no")}{" "}
-                    {record.serial_no || "N/A"}
+            <View className="flex-col items-center mb-2">
+              <View className="flex-row items-center mb-5">
+                <View className="w-16 h-16 rounded-full bg-blue-50 items-center justify-center mr-4">
+                  <User size={32} color={Colors.primary} />
+                </View>
+                <View className="flex-1">
+                  <View className="flex-row items-center mb-1">
+                    <Text className="text-slate-400 font-bold text-[10px] uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md">
+                      {t("profile.identity.serial_no")}{" "}
+                      {record.serial_no || "N/A"}
+                    </Text>
+                  </View>
+                  <Text className="text-slate-900 text-xl font-extrabold leading-tight">
+                    {record.mother_name}
+                  </Text>
+                  <Text className="text-slate-500 font-medium text-[13px] mt-0.5">
+                    {record.mother_age} {t("profile.identity.years")} •{" "}
+                    {t("profile.identity.maternal_health")}
                   </Text>
                 </View>
-                <Text className="text-slate-900 text-xl font-extrabold leading-tight">
-                  {record.mother_name}
+              </View>
+
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/dashboard/record/complete-profile",
+                    params: { id: record.id },
+                  } as any)
+                }
+                className="mt-4 w-full bg-primary/80 py-3.5 flex-row items-center justify-center"
+              >
+                <FileText size={16} color="white" strokeWidth={2.5} />
+                <Text className="text-white font-bold ml-2 text-sm">
+                  Edit Mother Profile
                 </Text>
-                <Text className="text-slate-500 font-medium text-[13px] mt-0.5">
-                  {record.mother_age} {t("profile.identity.years")} •{" "}
-                  {t("profile.identity.maternal_health")}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View className="flex-1">
+            <CounselingSection
+              motherId={record.id}
+              motherName={record?.mother_name}
+            />
+          </View>
+
+          {/* Dates Grid */}
+          <View className="flex-row gap-3">
+            <View className="flex-1 bg-white p-3 py-4 rounded-md flex-row items-center border border-slate-100/50">
+              <Calendar size={18} color="#64748B" className="mr-3" />
+              <View>
+                <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">
+                  {t("profile.identity.lmp_date")}
+                </Text>
+                <Text className="text-sm font-semibold text-slate-800">
+                  {record.lmp_year
+                    ? `${record.lmp_day}/${record.lmp_month}/${record.lmp_year}`
+                    : "---"}
                 </Text>
               </View>
             </View>
-
-            {/* Dates Grid */}
-            <View className="flex-row gap-3">
-              <View className="flex-1 bg-slate-50 p-3 rounded-md flex-row items-center border border-slate-100/50">
-                <Calendar size={18} color="#64748B" className="mr-3" />
-                <View>
-                  <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">
-                    {t("profile.identity.lmp_date")}
-                  </Text>
-                  <Text className="text-sm font-semibold text-slate-800">
-                    {record.lmp_year
-                      ? `${record.lmp_day}/${record.lmp_month}/${record.lmp_year}`
-                      : "---"}
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-1 bg-blue-50 p-3 rounded-md flex-row items-center border border-blue-100/50">
-                <Calendar size={18} color={Colors.primary} className="mr-3" />
-                <View>
-                  <Text className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5">
-                    {t("profile.identity.edd_date")}
-                  </Text>
-                  <Text className="text-sm font-semibold text-blue-900">
-                    {record.edd_year
-                      ? `${record.edd_day}/${record.edd_month}/${record.edd_year}`
-                      : "---"}
-                  </Text>
-                </View>
+            <View className="flex-1 bg-white p-3 py-4 rounded-md flex-row items-center border border-slate-100/50">
+              <Calendar size={18} color={Colors.primary} className="mr-3" />
+              <View>
+                <Text className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5">
+                  {t("profile.identity.edd_date")}
+                </Text>
+                <Text className="text-sm font-semibold text-blue-900">
+                  {record.edd_year
+                    ? `${record.edd_day}/${record.edd_month}/${record.edd_year}`
+                    : "---"}
+                </Text>
               </View>
             </View>
-
-            <TouchableOpacity
-              onPress={() =>
-                router.push({
-                  pathname: "/dashboard/record/complete-profile",
-                  params: { id: record.id },
-                } as any)
-              }
-              className="mt-4 bg-primary/80 py-3.5 flex-row items-center justify-center"
-            >
-              <FileText size={16} color="white" strokeWidth={2.5} />
-              <Text className="text-white font-bold ml-2 text-sm">
-                Edit Mother Profile
-              </Text>
-            </TouchableOpacity>
           </View>
 
           {/* Quick Stats */}
-          <View className="flex-1 flex-row items-center gap-3">
-            <View className="flex-1">
-              <CounselingSection
-                motherId={record.id}
-                motherName={record?.mother_name}
-              />
+          <View className="bg-white flex-1 p-4 py-5 rounded-md border border-slate-100 flex-row items-center">
+            <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mr-3">
+              <Calendar size={18} color="#10B981" />
             </View>
-            <View className="bg-white flex-1 p-4 rounded-md border border-slate-100 flex-row items-center">
-              <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mr-3">
-                <Calendar size={18} color="#10B981" />
-              </View>
-              <View className="">
-                <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-0.5">
-                  {t("profile.quick_stats.reg_date")}
-                </Text>
-                <Text className="text-slate-800 font-bold text-sm">
-                  {record.date_day}/{record.date_month}/{record.date_year}
-                </Text>
-              </View>
+            <View className="">
+              <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-0.5">
+                {t("profile.quick_stats.reg_date")}
+              </Text>
+              <Text className="text-slate-800 font-bold text-sm">
+                {record.date_day}/{record.date_month}/{record.date_year}
+              </Text>
             </View>
           </View>
 

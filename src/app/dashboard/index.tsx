@@ -5,12 +5,11 @@ import {
   AlertCircle,
   Baby,
   Check,
-  CheckCircle,
   Clock,
   Heart,
   Smile,
   UserPlus,
-  Users,
+  Users
 } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -754,9 +753,9 @@ export default function DashboardScreen() {
                       const timeStr = isToday
                         ? t("dashboard.activity.today")
                         : d.toLocaleDateString("en-GB", {
-                            month: "short",
-                            day: "numeric",
-                          });
+                          month: "short",
+                          day: "numeric",
+                        });
 
                       return (
                         <View
@@ -822,174 +821,154 @@ export default function DashboardScreen() {
             </View>
 
             {/* Tasks Section */}
-            <View
-              style={{
-                paddingHorizontal: 20,
-                marginTop: 32,
-                marginBottom: 40,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 20,
-                }}
-              >
-                <Text
+            {
+              todaysTasks.length > 0 && (
+                <View
                   style={{
-                    fontSize: 11,
-                    fontWeight: "800",
-                    color: "#475569",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
+                    paddingHorizontal: 20,
+                    marginTop: 32,
+                    marginBottom: 40,
                   }}
                 >
-                  {t("dashboard.sections.tasks_today")}
-                </Text>
-              </View>
-
-              {/* Todo List */}
-              <View style={{ gap: 10 }}>
-                {todaysTasks.map((todo) => {
-                  const isDone = todo.is_completed === 1;
-                  const parsed = (() => {
-                    try {
-                      return JSON.parse(todo.task);
-                    } catch {
-                      return { title: todo.task };
-                    }
-                  })();
-                  const title = parsed.title || todo.task;
-                  const time = todo.task_time || parsed.time || "";
-
-                  return (
-                    <TouchableOpacity
-                      key={todo.id}
-                      activeOpacity={0.7}
-                      onPress={() => toggleTodo(todo.id, todo.is_completed)}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 20,
+                    }}
+                  >
+                    <Text
                       style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        paddingVertical: 16,
-                        paddingHorizontal: 16,
-                        backgroundColor: "white",
-                        borderRadius: 20,
-                        opacity: isDone ? 0.6 : 1,
+                        fontSize: 11,
+                        fontWeight: "800",
+                        color: "#475569",
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
                       }}
                     >
-                      <View
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 8,
-                          borderWidth: isDone ? 0 : 2,
-                          borderColor: "#CBD5E1",
-                          backgroundColor: isDone ? "#10B981" : "transparent",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          marginRight: 14,
-                        }}
-                      >
-                        {isDone && (
-                          <Check size={14} color="white" strokeWidth={3} />
-                        )}
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text
+                      {t("dashboard.sections.tasks_today")}
+                    </Text>
+                  </View>
+
+                  {/* Todo List */}
+                  <View style={{ gap: 10 }}>
+                    {todaysTasks.map((todo) => {
+                      const isDone = todo.is_completed === 1;
+                      const parsed = (() => {
+                        try {
+                          return JSON.parse(todo.task);
+                        } catch {
+                          return { title: todo.task };
+                        }
+                      })();
+                      const title = parsed.title || todo.task;
+                      const time = todo.task_time || parsed.time || "";
+
+                      return (
+                        <TouchableOpacity
+                          key={todo.id}
+                          activeOpacity={0.7}
+                          onPress={() => toggleTodo(todo.id, todo.is_completed)}
                           style={{
-                            color: isDone ? "#94A3B8" : "#0F172A",
-                            fontSize: 15,
-                            fontWeight: "700",
-                            textDecorationLine: isDone
-                              ? "line-through"
-                              : "none",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            paddingVertical: 16,
+                            paddingHorizontal: 16,
+                            backgroundColor: "white",
+                            borderRadius: 20,
+                            opacity: isDone ? 0.6 : 1,
                           }}
-                          numberOfLines={1}
                         >
-                          {title}
-                        </Text>
-                        {time || parsed.patient ? (
                           <View
                             style={{
-                              flexDirection: "row",
+                              width: 24,
+                              height: 24,
+                              borderRadius: 8,
+                              borderWidth: isDone ? 0 : 2,
+                              borderColor: "#CBD5E1",
+                              backgroundColor: isDone ? "#10B981" : "transparent",
                               alignItems: "center",
-                              marginTop: 4,
+                              justifyContent: "center",
+                              marginRight: 14,
                             }}
                           >
-                            {time ? (
+                            {isDone && (
+                              <Check size={14} color="white" strokeWidth={3} />
+                            )}
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{
+                                color: isDone ? "#94A3B8" : "#0F172A",
+                                fontSize: 15,
+                                fontWeight: "700",
+                                textDecorationLine: isDone
+                                  ? "line-through"
+                                  : "none",
+                              }}
+                              numberOfLines={1}
+                            >
+                              {title}
+                            </Text>
+                            {time || parsed.patient ? (
                               <View
                                 style={{
                                   flexDirection: "row",
                                   alignItems: "center",
-                                  marginRight: 10,
+                                  marginTop: 4,
                                 }}
                               >
-                                <Clock size={12} color="#64748B" />
-                                <Text
-                                  style={{
-                                    color: "#64748B",
-                                    fontSize: 12,
-                                    marginLeft: 4,
-                                    fontWeight: "500",
-                                  }}
-                                >
-                                  {time}
-                                </Text>
-                              </View>
-                            ) : null}
-                            {parsed.patient ? (
-                              <View
-                                style={{
-                                  flexDirection: "row",
-                                  alignItems: "center",
-                                }}
-                              >
-                                <UserPlus size={12} color="#64748B" />
-                                <Text
-                                  style={{
-                                    color: "#64748B",
-                                    fontSize: 12,
-                                    marginLeft: 4,
-                                    fontWeight: "500",
-                                  }}
-                                >
-                                  {parsed.patient}
-                                </Text>
+                                {time ? (
+                                  <View
+                                    style={{
+                                      flexDirection: "row",
+                                      alignItems: "center",
+                                      marginRight: 10,
+                                    }}
+                                  >
+                                    <Clock size={12} color="#64748B" />
+                                    <Text
+                                      style={{
+                                        color: "#64748B",
+                                        fontSize: 12,
+                                        marginLeft: 4,
+                                        fontWeight: "500",
+                                      }}
+                                    >
+                                      {time}
+                                    </Text>
+                                  </View>
+                                ) : null}
+                                {parsed.patient ? (
+                                  <View
+                                    style={{
+                                      flexDirection: "row",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <UserPlus size={12} color="#64748B" />
+                                    <Text
+                                      style={{
+                                        color: "#64748B",
+                                        fontSize: 12,
+                                        marginLeft: 4,
+                                        fontWeight: "500",
+                                      }}
+                                    >
+                                      {parsed.patient}
+                                    </Text>
+                                  </View>
+                                ) : null}
                               </View>
                             ) : null}
                           </View>
-                        ) : null}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-
-                {todaysTasks.length === 0 && (
-                  <View
-                    style={{
-                      padding: 28,
-                      alignItems: "center",
-                      backgroundColor: "white",
-                      borderRadius: 20,
-                    }}
-                  >
-                    <CheckCircle size={26} color="#E2E8F0" strokeWidth={1.5} />
-                    <Text
-                      style={{
-                        color: "#94A3B8",
-                        fontWeight: "500",
-                        fontSize: 12,
-                        marginTop: 8,
-                      }}
-                    >
-                      {t("dashboard.tasks.all_caught_up")}
-                    </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
-                )}
-              </View>
-            </View>
+                </View>
+              )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

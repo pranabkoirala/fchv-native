@@ -2,6 +2,7 @@ import { calculateAge } from "@/utils/parse";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   Activity,
+  Baby,
   Calendar,
   HeartPulse,
   Info,

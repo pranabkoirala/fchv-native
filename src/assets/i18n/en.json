@@ -78,8 +78,8 @@
       "child_sub": "Monthly births"
     },
     "health_summary": {
-      "under_29_days": "Under 29 Days",
-      "29_to_59_months": "Up to 59 Months"
+      "under_29_days": "Children Under 29 Days",
+      "29_to_59_months": "Children Up to 59 Months"
     },
     "activity": {
       "new_mother": "New Mother",
@@ -380,6 +380,14 @@
       "not_provided": "Not Provided",
       "reg_date": "Reg. Date"
     },
+    "counseling_card": {
+      "counseled_topics": "Counseled Topics",
+      "title": "Did you provide counseling service?",
+      "no_topics": "No topics added yet",
+      "add_topic": "Add Topic",
+      "enter_topic": "Enter topic...",
+      "remove": "Remove"
+    },
     "anc": {
       "title": "ANC Visits",
       "wk12": "12 Wk",
@@ -618,7 +626,10 @@
     "save": "Save Record",
     "success": "Maternal death record updated successfully.",
     "error": "Failed to save record.",
-    "error_title": "Error"
+    "error_title": "Error",
+    "child_condition": "Child Condition",
+    "child_alive": "Alive",
+    "child_dead": "Dead"
   },
   "newborn_death_modal": {
     "title": "Newborn / Child Death Record",
@@ -847,6 +858,8 @@
     "location_ph": "e.g. Hetauda",
     "priority": "Priority",
     "create_task": "Create Task",
+    "edit_task": "Edit Task",
+    "save_changes": "Save Changes",
     "priority_levels": {
       "NORMAL": "NORMAL",
       "MEDIUM": "MEDIUM",

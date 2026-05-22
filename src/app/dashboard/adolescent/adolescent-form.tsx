@@ -1,23 +1,24 @@
-import {
-  View,
-  Text,
-  SafeAreaView,
-  TouchableOpacity,
-  ScrollView,
-  StatusBar,
-  Alert,
-  TextInput,
-} from "react-native";
-import { useState, useEffect } from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import * as Crypto from "expo-crypto";
+import CustomHeader from "@/components/CustomHeader";
 import { useToast } from "@/context/ToastContext";
 import {
   createAdolescentIfa,
   getAdolescentIfaById,
 } from "@/hooks/database/models/AdolescentIfaModel";
-import CustomHeader from "@/components/CustomHeader";
+import * as Crypto from "expo-crypto";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Save } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function AdolescentRegistrationForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -247,24 +248,37 @@ export default function AdolescentRegistrationForm() {
                   backgroundColor: "#FFFFFF",
                   borderRadius: 10,
                   borderWidth: 1,
-                  borderColor: ageGroup === "10-14" ? "#7C3AED" : "#E2E8F0",
+                  borderColor: ageGroup === "10-14" ? "#6073e1ff" : "#E2E8F0",
                 }}
               >
                 <View
                   style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    borderWidth: ageGroup === "10-14" ? 5 : 1,
-                    borderColor: ageGroup === "10-14" ? "#7C3AED" : "#94A3B8",
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    borderWidth: 2,
+                    borderColor: ageGroup === "10-14" ? "#6073e1ff" : "#94A3B8",
                     marginRight: 10,
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
+                >
+                  {ageGroup === "10-14" && (
+                    <View
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: "#6073e1ff",
+                      }}
+                    />
+                  )}
+                </View>
                 <Text
                   style={{
                     fontSize: 14,
                     fontWeight: "500",
-                    color: ageGroup === "10-14" ? "#7C3AED" : "#475569",
+                    color: "#334155",
                   }}
                 >
                   10 - 14 {isNp ? "वर्ष" : "Years"}
@@ -288,19 +302,32 @@ export default function AdolescentRegistrationForm() {
               >
                 <View
                   style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    borderWidth: ageGroup === "15-19" ? 5 : 1,
-                    borderColor: ageGroup === "15-19" ? "#7C3AED" : "#94A3B8",
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    borderWidth: 2,
+                    borderColor: ageGroup === "15-19" ? "#475569" : "#94A3B8",
                     marginRight: 10,
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
+                >
+                  {ageGroup === "15-19" && (
+                    <View
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
+                        backgroundColor: "#475569",
+                      }}
+                    />
+                  )}
+                </View>
                 <Text
                   style={{
                     fontSize: 14,
                     fontWeight: "500",
-                    color: ageGroup === "15-19" ? "#7C3AED" : "#475569",
+                    color: "#334155",
                   }}
                 >
                   15 - 19 {isNp ? "वर्ष" : "Years"}
@@ -313,55 +340,15 @@ export default function AdolescentRegistrationForm() {
           <View style={{ marginBottom: 24 }}>
             <Text
               style={{
-                color: "#1C5D3A",
+                color: "#655940", // Olive/brown tone
                 fontSize: 15,
                 fontWeight: "600",
-                marginBottom: 12,
               }}
             >
               {isNp ? "पहिलो चरण (साउन - असोज)" : "Phase 1 (Shrawan - Ashwin)"}
             </Text>
 
-            {/* 13 Weekly Checkboxes in a neat grid */}
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                gap: 10,
-              }}
-            >
-              {Array.from({ length: 13 }).map((_, idx) => {
-                const isChecked = p1Weeks[idx];
-                return (
-                  <TouchableOpacity
-                    key={idx}
-                    activeOpacity={0.7}
-                    onPress={() => toggleWeek(1, idx)}
-                    style={{
-                      width: "22.5%",
-                      height: 48,
-                      borderRadius: 10,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderWidth: 1,
-                      borderColor: isChecked ? "#10B981" : "#E2E8F0",
-                      backgroundColor: isChecked ? "#ECFDF5" : "#FFFFFF",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: "500",
-                        color: isChecked ? "#047857" : "#475569",
-                      }}
-                    >
-                      W{idx + 1}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <View style={{ height: 1, backgroundColor: "#F1F5F9", marginBottom: 15 }} />
 
             {/* Custom Yes/No sliding capsule for 13 Weeks Completed */}
             <View
@@ -369,7 +356,11 @@ export default function AdolescentRegistrationForm() {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginTop: 16,
+                marginBottom: 20,
+                backgroundColor: "#F4F4F5",
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                borderRadius: 10,
               }}
             >
               <Text
@@ -432,22 +423,8 @@ export default function AdolescentRegistrationForm() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
 
-          {/* Phase 2 (दोस्रो चरण) */}
-          <View style={{ marginBottom: 24 }}>
-            <Text
-              style={{
-                color: "#1C5D3A",
-                fontSize: 15,
-                fontWeight: "600",
-                marginBottom: 12,
-              }}
-            >
-              {isNp ? "दोस्रो चरण (माघ - चैत)" : "Phase 2 (Magh - Chaitra)"}
-            </Text>
-
-            {/* 13 Weekly Checkboxes */}
+            {/* 13 Weekly Checkboxes in a neat grid */}
             <View
               style={{
                 flexDirection: "row",
@@ -457,12 +434,12 @@ export default function AdolescentRegistrationForm() {
               }}
             >
               {Array.from({ length: 13 }).map((_, idx) => {
-                const isChecked = p2Weeks[idx];
+                const isChecked = p1Weeks[idx];
                 return (
                   <TouchableOpacity
                     key={idx}
                     activeOpacity={0.7}
-                    onPress={() => toggleWeek(2, idx)}
+                    onPress={() => toggleWeek(1, idx)}
                     style={{
                       width: "22.5%",
                       height: 48,
@@ -487,6 +464,21 @@ export default function AdolescentRegistrationForm() {
                 );
               })}
             </View>
+          </View>
+
+          {/* Phase 2 (दोस्रो चरण) */}
+          <View style={{ marginBottom: 24 }}>
+            <Text
+              style={{
+                color: "#655940", // Olive/brown tone
+                fontSize: 15,
+                fontWeight: "600",
+              }}
+            >
+              {isNp ? "दोस्रो चरण (माघ - चैत)" : "Phase 2 (Magh - Chaitra)"}
+            </Text>
+
+            <View style={{ height: 1, backgroundColor: "#F1F5F9", marginBottom: 15 }} />
 
             {/* Custom Yes/No toggle capsule for 26 Weeks Completed */}
             <View
@@ -494,7 +486,11 @@ export default function AdolescentRegistrationForm() {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginTop: 16,
+                marginBottom: 20,
+                backgroundColor: "#F4F4F5",
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                borderRadius: 10,
               }}
             >
               <Text
@@ -557,6 +553,47 @@ export default function AdolescentRegistrationForm() {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* 13 Weekly Checkboxes */}
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              {Array.from({ length: 13 }).map((_, idx) => {
+                const isChecked = p2Weeks[idx];
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    activeOpacity={0.7}
+                    onPress={() => toggleWeek(2, idx)}
+                    style={{
+                      width: "22.5%",
+                      height: 48,
+                      borderRadius: 10,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1,
+                      borderColor: isChecked ? "#10B981" : "#E2E8F0",
+                      backgroundColor: isChecked ? "#ECFDF5" : "#FFFFFF",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "500",
+                        color: isChecked ? "#047857" : "#475569",
+                      }}
+                    >
+                      W{idx + 1}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           {/* Remarks */}
@@ -598,8 +635,17 @@ export default function AdolescentRegistrationForm() {
             activeOpacity={0.8}
             onPress={handleSave}
             disabled={isLoading}
-            className="py-4 px-6 bg-primary/80 rounded-xl items-center justify-center"
+            className="bg-primary/80"
+            style={{
+              paddingVertical: 16,
+              paddingHorizontal: 24,
+              borderRadius: 10,
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "row",
+            }}
           >
+            <Save size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600" }}>
               {isLoading
                 ? isNp

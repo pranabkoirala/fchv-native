@@ -33,6 +33,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
   const [deathConditionOther, setDeathConditionOther] = useState('');
   const [deathPlace, setDeathPlace] = useState('');
   const [deathPlaceOther, setDeathPlaceOther] = useState('');
+  const [childCondition, setChildCondition] = useState('');
   const [remarks, setRemarks] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,6 +51,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
   const [errDeathConditionOther, setErrDeathConditionOther] = useState(false);
   const [errDeathPlace, setErrDeathPlace] = useState(false);
   const [errDeathPlaceOther, setErrDeathPlaceOther] = useState(false);
+  const [errChildCondition, setErrChildCondition] = useState(false);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -60,6 +62,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
     if (deathCondition === 'Other' && !deathConditionOther.trim()) { setErrDeathConditionOther(true); hasError = true; } else { setErrDeathConditionOther(false); }
     if (!deathPlace) { setErrDeathPlace(true); hasError = true; } else { setErrDeathPlace(false); }
     if (deathPlace === 'Other' && !deathPlaceOther.trim()) { setErrDeathPlaceOther(true); hasError = true; } else { setErrDeathPlaceOther(false); }
+    if (!childCondition) { setErrChildCondition(true); hasError = true; } else { setErrChildCondition(false); }
 
     if (hasError) return;
 
@@ -73,6 +76,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
         death_condition_other: deathConditionOther,
         death_place: deathPlace,
         death_place_other: deathPlaceOther,
+        child_condition: childCondition,
         death_day: deathDay,
         death_month: deathMonth,
         death_year: deathYear,
@@ -87,6 +91,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       setDeathConditionOther('');
       setDeathPlace('');
       setDeathPlaceOther('');
+      setChildCondition('');
       setDeathDay(new Date().getDate());
       setDeathMonth(new Date().getMonth() + 1);
       setDeathYear(new Date().getFullYear());
@@ -97,6 +102,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       setErrDeathConditionOther(false);
       setErrDeathPlace(false);
       setErrDeathPlaceOther(false);
+      setErrChildCondition(false);
 
       onSuccess(payload as MaternalDeathStoreType);
       onClose();
@@ -251,6 +257,44 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                   )}
                 </View>
               )}
+            </View>
+
+            {/* Child Condition */}
+            <View>
+              <FieldLabel label={t("maternal_death_modal.child_condition")} hasError={errChildCondition} />
+              <View className="mt-1 flex-row gap-x-3">
+                {[
+                  { value: 'Alive', label: t("maternal_death_modal.child_alive") },
+                  { value: 'Dead', label: t("maternal_death_modal.child_dead") }
+                ].map((c) => (
+                  <Pressable
+                    key={c.value}
+                    onPress={() => { setChildCondition(c.value); setErrChildCondition(false); }}
+                    className={`flex-1 p-4 rounded-md border flex-row items-center justify-center ${
+                      childCondition === c.value
+                        ? c.value === 'Alive' ? 'bg-emerald-50 border-emerald-500 shadow-emerald-100' : 'bg-red-50 border-red-400 shadow-red-100'
+                        : errChildCondition ? 'bg-red-50 border-red-300 shadow-red-100' : 'bg-white border-slate-200 shadow-slate-100'
+                    }`}
+                  >
+                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
+                      childCondition === c.value
+                        ? c.value === 'Alive' ? 'border-emerald-500' : 'border-red-400'
+                        : errChildCondition ? 'border-red-300' : 'border-slate-300'
+                    }`}>
+                      {childCondition === c.value && (
+                        <View className={`w-2.5 h-2.5 rounded-full ${
+                          c.value === 'Alive' ? 'bg-emerald-500' : 'bg-red-400'
+                        }`} />
+                      )}
+                    </View>
+                    <Text className={`text-[14px] font-medium ${
+                      childCondition === c.value
+                        ? c.value === 'Alive' ? 'text-emerald-700' : 'text-red-600'
+                        : 'text-slate-700'
+                    }`}>{c.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
 
             {/* Remarks */}
