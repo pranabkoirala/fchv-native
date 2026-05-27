@@ -30,7 +30,8 @@ export type MotherStoreType = {
   partner_name: string | null;
   partner_mobile: string | null;
   partner_age: string | null;
-  reg_month: string | null;
+  reg_year?: number | null;
+  reg_month: number | null;
   created_at: string;
   updated_at: string;
 };

@@ -1,5 +1,5 @@
 import * as Crypto from "expo-crypto";
-import { getCurrentNepaliMonth } from "../../../utils/dateHelper";
+import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import { CreateVisitPayload, VisitStoreType } from "../types/visitModal";
 
@@ -9,10 +9,11 @@ export async function createVisit(
   const db = await getDb();
   const now = new Date().toISOString();
   const id = payload.id || Crypto.randomUUID();
+  const { year: currentYear, month: currentMonth } = getCurrentNepaliDate();
 
   await db.runAsync(
     `INSERT OR REPLACE INTO visit 
-      (id, mother_id, name, address, visit_date, visit_type, visit_notes, is_synced, is_deleted, reg_month, created_at, updated_at)
+      (id, mother_id, name, address, visit_date, visit_type, visit_notes, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       id,
@@ -24,7 +25,8 @@ export async function createVisit(
       payload.visit_notes ?? null,
       payload.is_synced ? 1 : 0,
       0,
-      getCurrentNepaliMonth(),
+      currentYear,
+      currentMonth,
       now,
       now,
     ],
@@ -40,7 +42,8 @@ export async function createVisit(
     visit_notes: payload.visit_notes ?? null,
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
-    reg_month: getCurrentNepaliMonth(),
+    reg_year: currentYear,
+    reg_month: currentMonth,
     created_at: now,
     updated_at: now,
   };

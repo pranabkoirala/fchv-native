@@ -195,7 +195,7 @@ export default function LoginScreen() {
               activeOpacity={0.85}
               onPress={handleLogin}
               disabled={isLoading}
-              className="w-full h-14 mt-3 bg-primary/80 items-center justify-center flex-row"
+              className="w-full h-14 mt-3 bg-primary/80 rounded-lg items-center justify-center flex-row"
             >
               {isLoading ? (
                 <ActivityIndicator color="white" size="small" />

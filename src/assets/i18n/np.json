@@ -979,8 +979,8 @@
     "title": "बालबालिका विवरण",
     "identity": {
       "birth_place": "जन्म स्थान",
-      "status": "अवस्था",
-      "baby_weight": "तौल",
+      "status": "जन्म मिति अवस्था",
+      "baby_weight": "शिशुको तौल",
       "date_of_birth": "जन्म मिति",
       "years": "वर्ष"
     },
@@ -1048,6 +1048,30 @@
         "save_success": "रेकर्ड सफलतापूर्वक सुरक्षित गरियो",
         "save_failed": "रेकर्ड सुरक्षित गर्न असफल भयो"
       }
-    }
+    },
+    "age": "उमेर",
+    "reg_date": "दर्ता मिति",
+    "gender": "लिङ्ग",
+    "boy": "छोरा",
+    "girl": "छोरी",
+    "dob_label": "जन्म मिति"
+  },
+  "counseling_section": {
+    "malnutrition_screening": "कुपोषण स्क्रिनिङ",
+    "is_malnourished": "के बच्चालाई कुपोषण लागेको छ?",
+    "severity_medium": "मध्यम",
+    "severity_severe": "कडा",
+    "add": "थप्नुहोस्",
+    "counseling": "परामर्श",
+    "added_successfully": "काउन्सिलिङ थपियो!",
+    "record": "रेकर्ड",
+    "delete_confirm_title": "काउन्सिलिङ हटाउने?",
+    "delete_confirm_msg": "के तपाईं पछिल्लो रेकर्ड हटाउन चाहनुहुन्छ?",
+    "delete": "हटाउनुहोस्",
+    "cancel": "रद्द गर्नुहोस्",
+    "deleted_successfully": "काउन्सिलिङ हटाइयो!",
+    "delete_confirm_message": "के तपाईं पक्का हुनुहुन्छ कि भर्खरैको काउन्सिलिङ हटाउन चाहनुहुन्छ?",
+    "delete_confirm_yes": "हो, हटाउनुहोस्",
+    "delete_confirm_no": "रद्द गर्नुहोस्"
   }
 }

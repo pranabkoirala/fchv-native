@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 30;
+export const SCHEMA_VERSION = 32;
 
 type Migration = {
   version: number;
@@ -651,6 +651,67 @@ export const MIGRATIONS: Migration[] = [
           console.log(`Migration 30 query failed or already applied for ${table}:`, e);
         }
       }
-    }
-  }
+    },
+  },
+  {
+    version: 31,
+    up: async (db) => {
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_child_counseling_child_id ON child_counseling(child_id);
+        CREATE INDEX IF NOT EXISTS idx_child_counseling_reg_month ON child_counseling(reg_month);
+      `);
+    },
+  },
+  {
+    version: 32,
+    up: async (db) => {
+      // Add reg_year INTEGER column to all tables
+      const tables = [
+        "mother",
+        "pregnancy",
+        "visit",
+        "todo",
+        "hmis_maternal_death",
+        "hmis_newborn_death",
+        "child_monitoring",
+        "supplements",
+        "family_planning",
+        "counseling",
+        "adolescent_ifa",
+        "counseling_referral",
+        "child_counseling"
+      ];
+      for (const table of tables) {
+        try {
+          await db.execAsync(`ALTER TABLE ${table} ADD COLUMN reg_year INTEGER;`);
+        } catch (e) {
+          console.log(`Migration 32: reg_year already exists for ${table}:`, e);
+        }
+      }
+
+      // Migrate existing TEXT reg_month (format "YYYY-MM") to INTEGER reg_year + reg_month
+      for (const table of tables) {
+        try {
+          await db.execAsync(`
+            UPDATE ${table}
+            SET reg_year = CAST(SUBSTR(reg_month, 1, 4) AS INTEGER),
+                reg_month = CAST(SUBSTR(reg_month, 6, 2) AS INTEGER)
+            WHERE reg_month IS NOT NULL AND LENGTH(reg_month) >= 7 AND TYPEOF(reg_month) = 'text';
+          `);
+        } catch (e) {
+          console.log(`Migration 32: data migration failed for ${table}:`, e);
+        }
+      }
+
+      // Create new composite indexes
+      try {
+        await db.execAsync(`
+          CREATE INDEX IF NOT EXISTS idx_counseling_referral_reg ON counseling_referral(reg_year, reg_month);
+          CREATE INDEX IF NOT EXISTS idx_child_counseling_reg ON child_counseling(reg_year, reg_month);
+        `);
+      } catch (e) {
+        console.log("Migration 32: index creation failed:", e);
+      }
+    },
+  },
 ];

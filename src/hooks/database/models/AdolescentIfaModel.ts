@@ -1,4 +1,4 @@
-import { getCurrentNepaliMonth } from "../../../utils/dateHelper";
+import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import {
   AdolescentIfaStoreType,
@@ -25,6 +25,7 @@ export async function createAdolescentIfa(
 ): Promise<AdolescentIfaStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
+  const { year: currentYear, month: currentMonth } = getCurrentNepaliDate();
 
   const cols = [
     "id",
@@ -32,6 +33,7 @@ export async function createAdolescentIfa(
     "age_group",
     ...ALL_WEEK_COLS,
     "remarks",
+    "reg_year",
     "reg_month",
     "is_synced",
     "is_deleted",
@@ -60,7 +62,8 @@ export async function createAdolescentIfa(
     ...WEEK_COLS_PHASE2.map((c) => (payload as any)[c] ?? 0),
     payload.phase2_completed ?? 0,
     payload.remarks ?? null,
-    getCurrentNepaliMonth(),
+    currentYear,
+    currentMonth,
     0, // is_synced
     0, // is_deleted
     now,
@@ -77,7 +80,8 @@ export async function createAdolescentIfa(
     ...payload,
     is_synced: 0,
     is_deleted: 0,
-    reg_month: getCurrentNepaliMonth(),
+    reg_year: currentYear,
+    reg_month: currentMonth,
     created_at: now,
     updated_at: now,
   };

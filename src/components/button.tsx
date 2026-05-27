@@ -1,6 +1,5 @@
 import { Save } from "lucide-react-native";
-import { ActivityIndicator, TouchableOpacity, Text, View } from "react-native";
-import React from "react";
+import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
 
 export const Button = ({
   onPress,
@@ -17,7 +16,7 @@ export const Button = ({
     activeOpacity={0.88}
     onPress={onPress}
     disabled={isLoading}
-    className="bg-primary/80 px-5 h-14 flex-row items-center justify-center mb-2"
+    className="bg-primary/80 px-5 rounded-lg h-14 flex-row items-center justify-center mb-2"
   >
     {isLoading ? (
       <ActivityIndicator color="white" size="small" />

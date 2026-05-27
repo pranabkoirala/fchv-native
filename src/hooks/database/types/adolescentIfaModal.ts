@@ -31,7 +31,8 @@ export interface AdolescentIfaStoreType {
   phase2_week_13: number;
   phase2_completed: number;
   remarks?: string;
-  reg_month?: string;
+  reg_year?: number;
+  reg_month?: number;
   is_synced: number;
   is_deleted: number;
   created_at: string;

@@ -980,8 +980,8 @@
   "child_profile": {
     "title": "Child Profile",
     "identity": {
-      "birth_place": "Birth Place",
-      "status": "Status",
+      "birth_place": "Birth Location",
+      "status": "Birth Status",
       "baby_weight": "Baby Weight",
       "date_of_birth": "Date of Birth",
       "years": "Years"
@@ -1050,6 +1050,30 @@
         "save_success": "Record saved successfully",
         "save_failed": "Failed to save record"
       }
-    }
+    },
+    "age": "Age",
+    "reg_date": "Registration Date",
+    "gender": "Gender",
+    "boy": "Boy",
+    "girl": "Girl",
+    "dob_label": "Birth Date"
+  },
+  "counseling_section": {
+    "malnutrition_screening": "Malnutrition Screening",
+    "is_malnourished": "Is the child malnourished?",
+    "severity_medium": "Medium",
+    "severity_severe": "Severe",
+    "add": "Add",
+    "counseling": "Counseling",
+    "added_successfully": "Counseling added!",
+    "record": "Record",
+    "delete_confirm_title": "Delete Counseling?",
+    "delete_confirm_msg": "Are you sure you want to delete the latest entry?",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "deleted_successfully": "Counseling entry deleted!",
+    "delete_confirm_message": "Are you sure you want to remove the latest counseling entry?",
+    "delete_confirm_yes": "Yes, Delete",
+    "delete_confirm_no": "Cancel"
   }
 }

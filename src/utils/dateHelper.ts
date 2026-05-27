@@ -1,15 +1,20 @@
 import NepaliDate from "nepali-date-converter";
 
 /**
- * Returns the current Nepali month and year in format "Month Year" or "Year-Month"
- * For health reporting in Nepal, months are 1-indexed (Baisakh=1, etc.)
+ * Returns the current Nepali year and month as integers.
+ * Month is 1-indexed (Baisakh=1, Chaitra=12).
  */
-export const getCurrentNepaliMonth = (): string => {
+export const getCurrentNepaliDate = (): { year: number; month: number } => {
     const now = new NepaliDate();
-    const year = now.getYear();
-    const month = now.getMonth() + 1; // getMonth() is 0-indexed
+    return {
+        year: now.getYear(),
+        month: now.getMonth() + 1, // getMonth() is 0-indexed
+    };
+};
 
-    // Return format could be "YYYY-MM" for easy sorting/filtering
+/** @deprecated Use getCurrentNepaliDate() instead */
+export const getCurrentNepaliMonth = (): string => {
+    const { year, month } = getCurrentNepaliDate();
     return `${year}-${month.toString().padStart(2, '0')}`;
 };
 
@@ -18,6 +23,15 @@ export const NepaliMonthNames = [
     "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"
 ];
 
+export const NepaliMonthNamesNp = [
+    "बैशाख", "जेठ", "असार", "श्रावण", "भदौ", "असोज",
+    "कार्तिक", "मंसिर", "पौष", "माघ", "फाल्गुन", "चैत्र"
+];
+
 export const getNepaliMonthName = (monthIndex: number): string => {
     return NepaliMonthNames[monthIndex - 1] || "";
+};
+
+export const getNepaliMonthNameNp = (monthIndex: number): string => {
+    return NepaliMonthNamesNp[monthIndex - 1] || "";
 };

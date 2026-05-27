@@ -1,4 +1,4 @@
-import { getCurrentNepaliMonth } from "../../../utils/dateHelper";
+import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import {
   CreateInfantMonitoringPayload,
@@ -10,12 +10,13 @@ export async function createInfantMonitoring(
 ): Promise<InfantMonitoringStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
+  const { year: currentYear, month: currentMonth } = getCurrentNepaliDate();
 
   await db.runAsync(
     `INSERT INTO child_monitoring 
       (id, mother_id, baby_name, date_of_birth, birth_place, status, fchv_present, skilled_birth_attended,
-       baby_weight, umbilical_ointment, skin_to_skin, early_breastfeeding, asphyxiated_newborn, remarks, is_synced, is_deleted, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       baby_weight, umbilical_ointment, skin_to_skin, early_breastfeeding, asphyxiated_newborn, remarks, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       mother_id = excluded.mother_id,
       baby_name = excluded.baby_name,
@@ -48,7 +49,8 @@ export async function createInfantMonitoring(
       payload.remarks ?? null,
       0, // is_synced
       0, // is_deleted
-      getCurrentNepaliMonth(),
+      currentYear,
+      currentMonth,
       now,
       now,
     ],
@@ -58,7 +60,8 @@ export async function createInfantMonitoring(
     ...payload,
     is_synced: 0,
     is_deleted: 0,
-    reg_month: getCurrentNepaliMonth(),
+    reg_year: currentYear,
+    reg_month: currentMonth,
     created_at: now,
     updated_at: now,
   };

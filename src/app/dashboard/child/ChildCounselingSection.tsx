@@ -1,11 +1,11 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { AlertTriangle, Check, ShieldCheck } from "lucide-react-native";
+import { BarChart3, Check, MessageSquare, Plus, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Modal, Text, TouchableOpacity, View } from "react-native";
+import { AdToBs } from "react-native-nepali-picker";
 import {
   CHILD_COUNSELING_QUESTIONS,
-  ChildCounselingQuestion,
-  MALNUTRITION_CONTENT,
+  MALNUTRITION_CONTENT
 } from "../../../constants/ChildCounselingQuestions";
 import { useToast } from "../../../context/ToastContext";
 import {
@@ -18,6 +18,11 @@ interface ChildCounselingSectionProps {
   childId: string;
 }
 
+const toNepaliNumbers = (num: number | string) => {
+  const nepaliDigits = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"];
+  return String(num).replace(/[0-9]/g, (match) => nepaliDigits[parseInt(match)]);
+};
+
 export default function ChildCounselingSection({
   childId,
 }: ChildCounselingSectionProps) {
@@ -26,8 +31,11 @@ export default function ChildCounselingSection({
 
   const [record, setRecord] = useState<ChildCounselingStoreType | null>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  
   const [loading, setLoading] = useState(true);
+
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [pendingDeleteQuestionId, setPendingDeleteQuestionId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -57,130 +65,270 @@ export default function ChildCounselingSection({
         child_id: childId,
         answers: JSON.stringify(newAnswers),
       });
-      // Optionally show toast on success
-      // showToast("Saved successfully");
     } catch (e) {
       console.error("Failed to save answer", e);
       showToast("Failed to save");
-      // Revert on failure
       setAnswers(answers);
     }
   };
 
-  const renderQuestionGroup = (
-    title: string,
-    icon: any,
-    colorClass: string,
-    questions: ChildCounselingQuestion[]
-  ) => {
-    return (
-      <View className="bg-white p-5 rounded-xl border border-slate-100 mb-4">
-        <View className="flex-row items-center mb-4 mt-1">
-          <View className={`w-8 h-8 rounded-full items-center justify-center mr-3 ${colorClass}`}>
-            {icon}
-          </View>
-          <Text className="text-slate-800 font-bold text-lg">{title}</Text>
-        </View>
+  const handleAdd = async (questionId: string, customLogValue?: any) => {
+    const currentTime = new Date().toISOString();
 
-        <View className="gap-y-3">
-          {questions.map((question) => {
-            const value = answers[question.id];
-            return (
-              <View
-                key={question.id}
-                className="flex-row items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100/60"
-              >
-                <Text className="flex-1 text-slate-700 text-[13px] font-medium mr-4 leading-relaxed">
-                  {language === "np" ? question.ne : question.en}
-                </Text>
+    let existingLogs = [];
+    if (Array.isArray(answers[questionId])) {
+      existingLogs = answers[questionId];
+    } else if (answers[questionId]) {
+      existingLogs = [{ date: record?.updated_at || currentTime, value: true }];
+    }
+
+    const newLog = { date: currentTime, value: customLogValue || true };
+    const newAnswers = { ...answers, [questionId]: [...existingLogs, newLog] };
+
+    setAnswers(newAnswers);
+
+    try {
+      await saveChildCounseling({
+        id: record?.id,
+        child_id: childId,
+        answers: JSON.stringify(newAnswers),
+      });
+      showToast(t("counseling_section.added_successfully"));
+    } catch (e) {
+      console.error("Failed to save answer", e);
+      showToast("Failed to save");
+      setAnswers(answers);
+    }
+  };
+
+  // Open confirmation modal for deleting the latest log
+  const requestDeleteLatest = (questionId: string) => {
+    const logs = Array.isArray(answers[questionId]) ? answers[questionId] : [];
+    if (logs.length === 0) return;
+    setPendingDeleteQuestionId(questionId);
+    setDeleteModal(true);
+  };
+
+  // Actually perform the delete after confirmation
+  const confirmDeleteLatest = async () => {
+    if (!pendingDeleteQuestionId) return;
+
+    const questionId = pendingDeleteQuestionId;
+    let logs = Array.isArray(answers[questionId]) ? [...answers[questionId]] : [];
+
+    if (logs.length === 0) {
+      setDeleteModal(false);
+      setPendingDeleteQuestionId(null);
+      return;
+    }
+
+    // Remove the last (latest) entry
+    logs.pop();
+
+    const newAnswers = { ...answers, [questionId]: logs };
+    setAnswers(newAnswers);
+
+    try {
+      await saveChildCounseling({
+        id: record?.id,
+        child_id: childId,
+        answers: JSON.stringify(newAnswers),
+      });
+      showToast(t("counseling_section.deleted_successfully"));
+    } catch (e) {
+      console.error("Failed to delete answer", e);
+      showToast("Failed to delete");
+      setAnswers(answers);
+    } finally {
+      setDeleteModal(false);
+      setPendingDeleteQuestionId(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModal(false);
+    setPendingDeleteQuestionId(null);
+  };
+
+  const getLogsCount = (questionId: string): number => {
+    if (Array.isArray(answers[questionId])) return answers[questionId].length;
+    if (answers[questionId]) return 1;
+    return 0;
+  };
+
+  const renderLogsInline = (questionId: string) => {
+    let logs = [];
+    if (Array.isArray(answers[questionId])) {
+      logs = answers[questionId];
+    } else if (answers[questionId]) {
+      logs = [{ date: record?.updated_at || new Date().toISOString(), value: true }];
+    }
+
+    if (logs.length === 0) return null;
+
+    return (
+      <View className="flex-1 flex-row flex-wrap mt-2 gap-2 items-center">
+        {logs.map((log: any, index: number) => {
+          let dateStr = "";
+          try {
+            dateStr = language === "np" ? toNepaliNumbers(AdToBs(log.date.split("T")[0])) : log.date.split("T")[0];
+          } catch (e) {
+            dateStr = log.date.split("T")[0];
+          }
+          const isLatest = index === logs.length - 1;
+          const isToday = log.date?.split("T")[0] === new Date().toISOString().split("T")[0];
+          const canDelete = isLatest && isToday;
+          return (
+            <View key={index} className={`flex-row items-center ${canDelete ? "bg-blue-100" : "bg-slate-200"} px-2 py-1 rounded`}>
+              <Text className="text-[10px] text-slate-600 font-medium">
+                {t("counseling_section.record")} #{language === "np" ? toNepaliNumbers(index + 1) : index + 1}: {dateStr}
+              </Text>
+              {canDelete && (
                 <TouchableOpacity
-                  onPress={() => handleToggle(question.id, !value)}
-                  className={`w-7 h-7 rounded-md border items-center justify-center mr-1 ${value ? "bg-blue-500 border-blue-500" : "bg-white border-slate-300"
-                    }`}
+                  onPress={() => requestDeleteLatest(questionId)}
+                  className="ml-1.5"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  {value && <Check size={16} color="white" />}
+                  <Trash2 size={10} color="#DC2626" />
                 </TouchableOpacity>
-              </View>
-            );
-          })}
-        </View>
+              )}
+            </View>
+          );
+        })}
       </View>
     );
   };
 
+  const renderDeleteConfirmModal = () => (
+    <Modal
+      visible={deleteModal}
+      transparent
+      animationType="fade"
+      onRequestClose={cancelDelete}
+    >
+      <View className="flex-1 justify-center items-center bg-black/40 px-6">
+        <View className="bg-white rounded-2xl w-full max-w-[320px] overflow-hidden">
+          {/* Header */}
+          <View className="bg-red-50 px-5 pt-5 pb-4 items-center">
+            <View className="w-12 h-12 rounded-full bg-red-100 items-center justify-center mb-3">
+              <Trash2 size={22} color="#DC2626" />
+            </View>
+            <Text className="text-slate-800 text-[16px] font-bold text-center">
+              {t("counseling_section.delete_confirm_title")}
+            </Text>
+          </View>
+
+          {/* Body */}
+          <View className="px-5 py-4">
+            <Text className="text-slate-600 text-[13px] text-center leading-relaxed">
+              {t("counseling_section.delete_confirm_message")}
+            </Text>
+          </View>
+
+          {/* Actions */}
+          <View className="flex-row border-t border-slate-100">
+            <TouchableOpacity
+              onPress={cancelDelete}
+              className="flex-1 py-3.5 items-center border-r border-slate-100"
+              activeOpacity={0.7}
+            >
+              <Text className="text-slate-500 font-semibold text-[14px]">
+                {t("counseling_section.delete_confirm_no")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={confirmDeleteLatest}
+              className="flex-1 py-3.5 items-center"
+              activeOpacity={0.7}
+            >
+              <Text className="text-red-600 font-bold text-[14px]">
+                {t("counseling_section.delete_confirm_yes")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   const renderMalnutritionGroup = () => {
     const hasMalnutrition = answers[MALNUTRITION_CONTENT.main_question.id] || false;
-    const severity = answers["malnutrition_severity"];
+    const severity = answers["malnutrition_severity"] || "";
 
     return (
-      <View className="bg-white p-5 rounded-xl border border-slate-100 mb-4">
-        <View className="flex-row items-center mb-4 mt-1">
-          <View className={`w-8 h-8 rounded-full items-center justify-center mr-3 bg-amber-500`}>
-            <AlertTriangle size={16} color="white" />
-          </View>
-          <Text className="text-slate-800 font-bold text-lg">{language === "np" ? MALNUTRITION_CONTENT.title.ne : MALNUTRITION_CONTENT.title.en}</Text>
+      <View className="mb-8">
+        <View className="flex-row items-center mb-3 ml-1">
+          <BarChart3 size={18} color="#DC2626" />
+          <Text className="text-[#DC2626] font-semibold text-lg ml-2">
+            {t("counseling_section.malnutrition_screening")}
+          </Text>
         </View>
 
-        <View className="gap-y-3">
-          {/* Main Question */}
-          <View className="flex-row items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100/60">
-            <Text className="flex-1 text-slate-700 text-[13px] font-medium mr-4 leading-relaxed">
-              {language === "np" ? MALNUTRITION_CONTENT.main_question.ne : MALNUTRITION_CONTENT.main_question.en}
+        <View className="bg-white rounded-xl border border-red-50 p-4 px-3">
+          <View className="flex-row items-center justify-between">
+            <Text className="flex-1 text-slate-800 font-semibold text-[14px] leading-relaxed mr-4">
+              {t("counseling_section.is_malnourished")}
             </Text>
             <TouchableOpacity
               onPress={() => handleToggle(MALNUTRITION_CONTENT.main_question.id, !hasMalnutrition)}
-              className={`w-7 h-7 rounded-md border items-center justify-center mr-1 ${hasMalnutrition ? "bg-blue-500 border-blue-500" : "bg-white border-slate-300"
+              className={`w-[22px] h-[22px] rounded border items-center justify-center ${hasMalnutrition ? "bg-white border-slate-300" : "bg-white border-slate-300"
                 }`}
             >
-              {hasMalnutrition && <Check size={16} color="white" />}
+              {hasMalnutrition && <Check size={14} color="#334155" />}
             </TouchableOpacity>
           </View>
 
-          {/* Conditional Content */}
           {hasMalnutrition && (
-            <View className="pl-4 mt-2 gap-y-3 border-l-2 border-slate-100">
-
+            <View className="mt-5 gap-y-3">
               {/* Severity Buttons */}
               <View className="flex-row gap-x-3 mb-2">
                 <TouchableOpacity
+                  activeOpacity={0.7}
                   onPress={() => handleToggle("malnutrition_severity", "medium")}
-                  className={`flex-1 p-3 rounded-lg border flex-row justify-center items-center ${severity === "medium" ? "bg-amber-50 border-amber-500" : "bg-white border-slate-200"
+                  className={`flex-1 py-3 rounded-lg border items-center justify-center ${severity === "medium" ? "bg-[#DBEAFE] border-[#94A3B8]" : "bg-white border-slate-300"
                     }`}
                 >
-                  <Text className={`font-semibold ${severity === "medium" ? "text-amber-700" : "text-slate-500"}`}>
-                    {language === "np" ? MALNUTRITION_CONTENT.severity_medium.ne : MALNUTRITION_CONTENT.severity_medium.en}
+                  <Text className={`font-medium ${severity === "medium" ? "text-slate-800" : "text-slate-500"}`}>
+                    {t("counseling_section.severity_medium")}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  activeOpacity={0.7}
                   onPress={() => handleToggle("malnutrition_severity", "high")}
-                  className={`flex-1 p-3 rounded-lg border flex-row justify-center items-center ${severity === "high" ? "bg-rose-50 border-rose-500" : "bg-white border-slate-200"
+                  className={`flex-1 py-3 rounded-lg border items-center justify-center ${severity === "high" ? "bg-[#DBEAFE] border-[#94A3B8]" : "bg-white border-slate-300"
                     }`}
                 >
-                  <Text className={`font-semibold ${severity === "high" ? "text-rose-700" : "text-slate-500"}`}>
-                    {language === "np" ? MALNUTRITION_CONTENT.severity_high.ne : MALNUTRITION_CONTENT.severity_high.en}
+                  <Text className={`font-medium ${severity === "high" ? "text-slate-800" : "text-slate-500"}`}>
+                    {t("counseling_section.severity_severe")}
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Sub Questions */}
               {MALNUTRITION_CONTENT.sub_questions.map((q) => {
-                const value = answers[q.id];
                 return (
                   <View
                     key={q.id}
-                    className="flex-row items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100/60"
+                    className="bg-white p-3.5 rounded-xl border border-slate-200"
                   >
-                    <Text className="flex-1 text-slate-700 text-[13px] font-medium mr-4 leading-relaxed">
-                      {language === "np" ? q.ne : q.en}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => handleToggle(q.id, !value)}
-                      className={`w-7 h-7 rounded-md border items-center justify-center mr-1 ${value ? "bg-blue-500 border-blue-500" : "bg-white border-slate-300"
-                        }`}
-                    >
-                      {value && <Check size={16} color="white" />}
-                    </TouchableOpacity>
+                    <View className="flex-row items-start justify-between">
+                      <View className="flex-1 mr-4">
+                        <Text className="text-slate-700 text-[14px] font-medium leading-relaxed">
+                          {language === "np" ? q.ne : q.en}
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => handleAdd(q.id)}
+                        className="bg-[#475569] px-3 py-2 rounded-full flex-row items-center ml-2"
+                      >
+                        <Plus size={13} color="white" />
+                        <Text className="text-white text-[10px] font-medium ml-1.5">
+                          {t("counseling_section.add")}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    {renderLogsInline(q.id)}
                   </View>
                 );
               })}
@@ -191,19 +339,57 @@ export default function ChildCounselingSection({
     );
   };
 
+  const renderCounselingGroup = () => {
+    return (
+      <View className="mb-6">
+        <View className="flex-row items-center mb-3 ml-1">
+          <MessageSquare size={20} color="#166534" />
+          <Text className="text-[#166534] font-bold text-lg ml-2">{t("counseling_section.counseling")}</Text>
+        </View>
+
+        <View className="bg-white rounded-xl border border-slate-100">
+          {CHILD_COUNSELING_QUESTIONS.map((q, index) => {
+            const isLast = index === CHILD_COUNSELING_QUESTIONS.length - 1;
+            return (
+              <View
+                key={q.id}
+                className={`bg-white p-3.5 border border-slate-200 ${!isLast ? "border-b border-slate-100" : ""}`}
+              >
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1 mr-4">
+                    <Text className="text-slate-700 text-[14px] font-medium leading-relaxed">
+                      {language === "np" ? toNepaliNumbers(index + 1) : index + 1}. {language === "np" ? q.ne : q.en}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => handleAdd(q.id)}
+                    className="bg-[#475569] px-3 py-2 rounded-full flex-row items-center ml-2"
+                  >
+                    <Plus size={13} color="white" />
+                    <Text className="text-white text-[10px] font-medium ml-1.5">
+                      {t("counseling_section.add")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {renderLogsInline(q.id)}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
   if (loading) {
     return null;
   }
 
   return (
-    <View>
+    <View className="mt-2">
+      {renderDeleteConfirmModal()}
       {renderMalnutritionGroup()}
-      {renderQuestionGroup(
-        t("profile.quick_stats.counseling"),
-        <ShieldCheck size={16} color="white" />,
-        "bg-blue-500",
-        CHILD_COUNSELING_QUESTIONS
-      )}
+      {renderCounselingGroup()}
     </View>
   );
 }

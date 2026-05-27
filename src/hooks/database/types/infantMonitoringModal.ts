@@ -14,7 +14,8 @@ export interface InfantMonitoringStoreType {
   early_breastfeeding: number;
   asphyxiated_newborn: number;
   remarks?: string;
-  reg_month?: string;
+  reg_year?: number;
+  reg_month?: number;
   is_synced: number;
   is_deleted: number;
   created_at: string;

@@ -1,4 +1,4 @@
-import { getCurrentNepaliMonth } from "../../../utils/dateHelper";
+import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import { CreateMotherPayload, MotherStoreType } from "../types/motherModal";
 
@@ -7,13 +7,14 @@ export async function createMother(
 ): Promise<MotherStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
+  const { year: currentYear, month: currentMonth } = getCurrentNepaliDate();
 
   await db.runAsync(
     `INSERT INTO mother 
       (id, code, first_name, last_name, phone_number, date_of_birth, 
        address_province, address_district, address_municipality, address_ward,
-       is_synced, is_deleted, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       payload.id,
       payload.code ?? null,
@@ -27,7 +28,8 @@ export async function createMother(
       payload.address_ward ?? null,
       payload.is_synced ? 1 : 0,
       0,
-      getCurrentNepaliMonth(),
+      currentYear,
+      currentMonth,
       now,
       now,
     ],
@@ -65,7 +67,8 @@ export async function createMother(
     partner_age: null,
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
-    reg_month: getCurrentNepaliMonth(),
+    reg_year: currentYear,
+    reg_month: currentMonth,
     created_at: now,
     updated_at: now,
   };
