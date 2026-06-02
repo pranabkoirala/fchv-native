@@ -58,7 +58,7 @@ export const ProfilePicker = ({
           borderWidth: 1,
           borderColor: error ? "#fca5a5" : "#d1d5db",
           backgroundColor: "#ffffff",
-          borderRadius: 5,
+          borderRadius: 9,
           paddingVertical: 10,
           paddingHorizontal: 14,
           marginBottom: 0

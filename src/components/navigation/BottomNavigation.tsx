@@ -63,7 +63,7 @@ const TabItem = ({ tab, isActive, onPress }: any) => {
       >
         <Icon
           size={20}
-          color={isActive ? "#3B82F6" : "#64748B"}
+          color={isActive ? "#475569" : "#64748B"}
           strokeWidth={isActive ? 2.5 : 2}
         />
       </Animated.View>
@@ -71,7 +71,7 @@ const TabItem = ({ tab, isActive, onPress }: any) => {
         style={{
           fontSize: 10,
           fontWeight: isActive ? "700" : "600",
-          color: isActive ? "#3B82F6" : "#64748B",
+          color: isActive ? "#475569" : "#64748B",
         }}
       >
         {tab.label}
@@ -131,8 +131,8 @@ export default function BottomNavigation() {
     },
     {
       id: "report",
-      en_label: "Report",
-      np_label: "रिपोर्ट",
+      en_label: "Overview",
+      np_label: "विवरण",
       icon: ClipboardList,
       path: "/dashboard/report",
     },
@@ -173,7 +173,7 @@ export default function BottomNavigation() {
           flexDirection: "row",
           alignItems: "center",
           backgroundColor: "white",
-          paddingBottom: 15,
+          // paddingBottom: 15,
           paddingTop: 10,
         }}
       >

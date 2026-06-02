@@ -4,7 +4,7 @@ export default function ChildLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="child-form" />
+      <Stack.Screen name="add-child" />
       <Stack.Screen name="child-profile" />
     </Stack>
   );

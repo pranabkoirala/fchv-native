@@ -49,7 +49,6 @@ function NutritionCard({
 
   return (
     <TouchableOpacity
-      activeOpacity={0.85}
       onPress={() => setExpanded((prev) => !prev)}
       className="bg-white rounded-3xl mb-4 border border-gray-100 overflow-hidden"
     >
@@ -152,7 +151,7 @@ export default function NutritionsScreen() {
       <CustomHeader
         title={t("nutrition_page.title")}
         onBackPress={handleBack}
-        className="pt-10 pb-3 px-5"
+        className="pt-4 pb-3 px-5"
       />
 
       <View className="px-5 mt-2 mb-4">

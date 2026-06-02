@@ -870,7 +870,7 @@
     "select_date": "Select Date",
     "time": "Time",
     "select_time": "Select Time",
-    "patient_label": "Patient (Optional)",
+    "patient_label": "Patient Name",
     "patient_ph": "e.g. Sunita",
     "location": "Location",
     "location_ph": "e.g. Hetauda",
@@ -882,7 +882,10 @@
       "NORMAL": "NORMAL",
       "MEDIUM": "MEDIUM",
       "URGENT": "URGENT"
-    }
+    },
+    "title_required": "Task title is required",
+    "date_required": "Date is required",
+    "location_required": "Location is required"
   },
   "record_page": {
     "title": "Maternal Record",

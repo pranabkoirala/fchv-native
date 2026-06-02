@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "@/components/CustomHeader";
 import { useLanguage } from "@/context/LanguageContext";
 import { getAllInfantMonitorings } from "@/hooks/database/models/InfantMonitoringModel";
@@ -5,14 +6,7 @@ import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitori
 import { router, useFocusEffect } from "expo-router";
 import { Baby, Calendar, ChevronRight, Plus, Search } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
-import {
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
 
 export default function ChildManagementScreen() {
@@ -53,7 +47,7 @@ export default function ChildManagementScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-10">
+    <SafeAreaView className="flex-1 bg-white">
       <CustomHeader
         title={t("child_page.title")}
         onBackPress={() => router.back()}
@@ -63,7 +57,7 @@ export default function ChildManagementScreen() {
             className="bg-primary/80 px-3 py-2.5 rounded-md items-center justify-center flex-row"
           >
             <Plus size={16} color="#ffffff" strokeWidth={3} />
-            <Text className="text-white font-bold text-xs ml-1.5 uppercase tracking-wider">{t("child_page.add_new")}</Text>
+            <Text className="text-white font-semibold text-[15px] ml-1.5 uppercase tracking-wider">{t("child_page.add_new")}</Text>
           </TouchableOpacity>
         }
       />
@@ -95,7 +89,7 @@ export default function ChildManagementScreen() {
                 key={item.id}
                 activeOpacity={0.7}
                 onPress={() => handleProfileClick(item.id)}
-                className="bg-white p-4 rounded-md flex-row items-center border border-gray-100 shadow-sm"
+                className="bg-white p-4 rounded-2xl flex-row items-center border border-gray-200"
               >
                 {/* Avatar */}
                 <View className="w-14 h-14 bg-indigo-50 rounded-md items-center justify-center border border-indigo-100">

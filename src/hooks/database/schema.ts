@@ -314,7 +314,6 @@ CREATE TABLE IF NOT EXISTS mothers_group_meetings (
     meeting_date TEXT NOT NULL,
     meeting_location TEXT NOT NULL,
     ward_no TEXT,
-    fchv_name TEXT,
     attendees_count INTEGER DEFAULT 0,
     discussed_topics TEXT,
     decisions TEXT,

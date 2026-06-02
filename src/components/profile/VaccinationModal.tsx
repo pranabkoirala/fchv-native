@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import { VACCINE_SCHEDULE } from "@/constants/VaccineConstants";
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/context/ToastContext";
@@ -6,16 +7,7 @@ import { updateAllVaccinatedStatus } from "@/hooks/database/models/InfantMonitor
 import { toNepaliNumbers } from "@/utils/dateHelper";
 import { Calendar, Check, Syringe, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 
 interface VaccinationModalProps {

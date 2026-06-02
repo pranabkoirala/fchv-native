@@ -16,14 +16,13 @@ export async function createMothersGroupMeeting(
 
     await db.runAsync(
         `INSERT INTO mothers_group_meetings 
-      (id, meeting_date, meeting_location, ward_no, fchv_name, attendees_count, discussed_topics, decisions, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      (id, meeting_date, meeting_location, ward_no, attendees_count, discussed_topics, decisions, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
             id,
             payload.meeting_date,
             payload.meeting_location,
             payload.ward_no ?? null,
-            payload.fchv_name ?? null,
             payload.attendees_count,
             JSON.stringify(payload.discussed_topics),
             JSON.stringify(payload.decisions),
@@ -41,7 +40,6 @@ export async function createMothersGroupMeeting(
         meeting_date: payload.meeting_date,
         meeting_location: payload.meeting_location,
         ward_no: payload.ward_no ?? null,
-        fchv_name: payload.fchv_name ?? null,
         attendees_count: payload.attendees_count,
         discussed_topics: JSON.stringify(payload.discussed_topics),
         decisions: JSON.stringify(payload.decisions),

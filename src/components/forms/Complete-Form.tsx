@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   BLOOD_GROUP_OPTIONS,
   EDUCATION_LEVELS,
@@ -9,15 +10,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { Briefcase, Calendar, Camera, ChevronLeft, ChevronRight, HeartPulse, MapPin, User } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator, Alert,
-  Image,
-  Pressable,
-  SafeAreaView,
-  StatusBar,
-  Text, TouchableOpacity,
-  View
-} from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import municipalitiesData from "../../assets/json/municipalities.json";
@@ -627,7 +620,6 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
           </TouchableOpacity>
         )}
       </View>
-
 
       <CameraCapture
         visible={showCamera}

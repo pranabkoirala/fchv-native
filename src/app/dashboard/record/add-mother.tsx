@@ -1,15 +1,8 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Baby, User } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import {
-  Animated,
-  Dimensions,
-  SafeAreaView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { Animated, Dimensions, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import CustomHeader from "../../../components/CustomHeader";
 import MotherForm from "../../../components/MotherForm";
@@ -86,7 +79,7 @@ export default function AddMotherScreen() {
   }, [step]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white pt-8">
+    <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
 
       {/* Header */}

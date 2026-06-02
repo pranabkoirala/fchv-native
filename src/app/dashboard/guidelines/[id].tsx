@@ -123,7 +123,7 @@ const ExpandablePointsCard = ({ points, renderMarkdown }: any) => {
   const restPoints = points.slice(1);
 
   return (
-    <View className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden mb-2">
+    <View className="bg-white border border-gray-100 rounded-xl overflow-hidden mb-2">
       <TouchableOpacity
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}

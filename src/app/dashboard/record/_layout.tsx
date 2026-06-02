@@ -4,7 +4,7 @@ export default function RecordLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="add-record" />
+      <Stack.Screen name="add-mother" />
     </Stack>
   );
 }

@@ -9,16 +9,8 @@ import {
   User
 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import {
-  ActivityIndicator,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getAllMothersList,
   MotherListDbItem,
@@ -52,14 +44,13 @@ export default function RecordScreen() {
     r.name?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-
   const formatAge = (age: string | number | null | undefined) => {
     if (age === null || age === undefined || age === "") return t("record_page.na");
     return language === "np" ? toNepaliNumbers(String(age)) : String(age);
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-10">
+    <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
 
       {/* App Header */}
@@ -91,7 +82,7 @@ export default function RecordScreen() {
           contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 120 }}
         >
           {/* Search Bar */}
-          <View className="flex-row items-center rounded-xl bg-white mb-6 px-4 border border-slate-100 mt-2">
+          <View className="flex-row items-center rounded-xl bg-white mb-6 px-4 border border-gray-200 mt-2">
             <Search size={18} color="#94A3B8" strokeWidth={2.5} />
             <TextInput
               className="flex-1 ml-3 text-slate-700 font-semibold text-md py-4 h-full"
@@ -103,7 +94,7 @@ export default function RecordScreen() {
           </View>
 
           {filteredRecords.length === 0 ? (
-            <View className="py-20 items-center justify-center bg-white rounded-3xl border border-slate-100 border-dashed">
+            <View className="py-20 items-center justify-center bg-white rounded-3xl border border-gray-100 border-dashed">
               <View className="w-16 h-16 bg-slate-50 rounded-full items-center justify-center mb-4 border border-slate-100">
                 <Search size={28} color="#CBD5E1" strokeWidth={1.5} />
               </View>
@@ -115,14 +106,13 @@ export default function RecordScreen() {
             filteredRecords.map((item) => (
               <TouchableOpacity
                 key={item.id}
-                activeOpacity={0.75}
                 onPress={() =>
                   router.push({
                     pathname: "/dashboard/profile",
                     params: { id: item.id, from: "/dashboard/record" },
                   } as any)
                 }
-                className="bg-white rounded-2xl p-5 mb-4 border border-slate-100"
+                className="bg-white rounded-2xl p-5 mb-4 border border-gray-200"
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center flex-1 mr-3">

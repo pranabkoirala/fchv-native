@@ -291,7 +291,7 @@ export default function PregnancyForm({
       <FieldLabel label={t("pregnancy_form.lmp_date")} />
       <Pressable onPress={() => setShowLmpPicker(true)} className="mb-6">
         <View
-          className={`rounded-md px-4 h-14 border flex-row items-center justify-between bg-white ${errors.lmp ? "border-red-300" : "border-gray-300"}`}
+          className={`rounded-xl px-4 h-14 border flex-row items-center justify-between bg-white ${errors.lmp ? "border-red-300" : "border-gray-300"}`}
         >
           <Text
             className={`text-base ${lmp ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}

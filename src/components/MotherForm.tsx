@@ -175,7 +175,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
  
         <FieldLabel label={t("mother_form.dob")} />
         <Pressable onPress={() => setShowDobPicker(true)} className="mb-6">
-          <View className={`rounded-md px-4 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between`}>
+          <View className={`rounded-xl px-4 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between`}>
             <Text className={`text-base ${dobBs ? "text-[#1E293B]" : "text-[#b8bbbeff]"}`}>
               {dobBs || t("mother_form.dob_placeholder")}
             </Text>

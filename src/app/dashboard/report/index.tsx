@@ -3,13 +3,12 @@ import {
   AlertTriangle,
   Baby,
   Calendar,
-  ChevronLeft,
   ChevronRight,
   Heart,
   MapPin,
   Search,
   User,
-  Users,
+  Users
 } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -29,6 +28,7 @@ import Colors from "../../../constants/Colors";
 import { useLanguage } from "../../../context/LanguageContext";
 
 // Database models
+import CustomHeader from "@/components/CustomHeader";
 import { getAllInfantMonitorings } from "../../../hooks/database/models/InfantMonitoringModel";
 import { getAllMaternalDeaths } from "../../../hooks/database/models/MaternalDeathModel";
 import {
@@ -193,9 +193,8 @@ function RecordCard({
   return (
     <AnimatedTouchableOpacity
       entering={FadeInDown.delay(index * 60).duration(400).springify()}
-      activeOpacity={0.8}
       onPress={onPress}
-      className="bg-white rounded-[32px] px-5 py-5 mb-4 flex-row items-center border border-slate-50 shadow-sm shadow-slate-200/50"
+      className="bg-white rounded-2xl px-3 py-5 mb-4 flex-row items-center border border-slate-200"
     >
       {/* Profile Image */}
       {getTypeIcon()}
@@ -456,29 +455,18 @@ export default function ReportScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC]">
+    <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
 
       {/* Header */}
-      <View className="px-6 pt-6 pb-2 flex-row items-center">
-        <TouchableOpacity
-          onPress={() => {
-            router.replace("/dashboard");
-          }}
-          className="mr-3 p-2 bg-white rounded-2xl shadow-sm shadow-slate-200"
-        >
-          <ChevronLeft size={22} color="#1E293B" strokeWidth={2.5} />
-        </TouchableOpacity>
-        <View>
-          <Text className="text-2xl font-bold text-slate-800 leading-tight">
-            {t("reports.title")}
-          </Text>
-        </View>
-      </View>
+      <CustomHeader
+        title={t("reports.title")}
+        onBackPress={() => router.back()}
+      />
 
       {/* Search Bar */}
-      <View className="px-6 mt-4">
-        <View className="flex-row items-center bg-white px-5 h-[64px] rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50">
+      <View className="px-4 mt-4">
+        <View className="flex-row items-center bg-white px-5 py-1 rounded-lg border border-slate-200">
           <Search size={22} color="#94A3B8" />
           <TextInput
             className="flex-1 ml-3 text-[16px] text-slate-800 font-medium"
@@ -495,20 +483,20 @@ export default function ReportScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}>
           <TouchableOpacity
             onPress={() => setSelectedMonth("all")}
-            className={`px-5 py-2.5 rounded-[20px] ${selectedMonth === "all" ? "bg-slate-700" : "bg-slate-200/50"}`}
+            className={`px-5 py-2.5 rounded-xl ${selectedMonth === "all" ? "bg-slate-700" : "bg-slate-200/50"}`}
           >
             <Text className={`text-[14px] font-bold ${selectedMonth === "all" ? "text-white" : "text-slate-600"}`}>
-              सबै महिना
+              {language === "np" ? "सबै महिना" : "All Months"}
             </Text>
           </TouchableOpacity>
           {availableMonths.map((m) => (
             <TouchableOpacity
               key={m}
               onPress={() => setSelectedMonth(m)}
-              className={`px-5 py-2.5 rounded-[20px] ${selectedMonth === m ? "bg-slate-700" : "bg-slate-200/50"}`}
+              className={`px-5 py-2.5 rounded-xl ${selectedMonth === m ? "bg-slate-700" : "bg-slate-200/50"}`}
             >
               <Text className={`text-[14px] font-bold ${selectedMonth === m ? "text-white" : "text-slate-600"}`}>
-                {m} महिना
+                {m} {language === "np" ? "महिना" : "Month"}
               </Text>
             </TouchableOpacity>
           ))}
@@ -528,7 +516,7 @@ export default function ReportScreen() {
                 onLayout={(e) => {
                   tabLayouts.current[tab.key] = { x: e.nativeEvent.layout.x, width: e.nativeEvent.layout.width };
                 }}
-                className={`px-5 py-2.5 rounded-[20px] ${isActive ? "bg-emerald-100" : "bg-slate-200/50"}`}
+                className={`px-5 py-2.5 rounded-xl ${isActive ? "bg-emerald-100" : "bg-slate-200/50"}`}
               >
                 <Text className={`text-[14px] font-bold ${isActive ? "text-emerald-700" : "text-slate-600"}`}>
                   {t(`reports.tabs.${tab.key}`)} ({count})

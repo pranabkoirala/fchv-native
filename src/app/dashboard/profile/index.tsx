@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -12,16 +13,7 @@ import {
   User
 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import CustomHeader from "../../../components/CustomHeader";
 import MaternalDeathModal from "../../../components/forms/MaternalDeathModal";
@@ -196,7 +188,6 @@ export default function HmisRecordProfileScreen() {
   const childEng = children.length > 1 ? "Children" : "Child"
   const childNep = children.length > 1 ? "बच्चाहरू" : "बच्चा"
 
-
   const loadSupplements = async (motherId: string) => {
     try {
       const suppData = await getSupplementByMother(motherId);
@@ -336,7 +327,7 @@ export default function HmisRecordProfileScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC] py-8">
+    <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title={t("profile.title")}

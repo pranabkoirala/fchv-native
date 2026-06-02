@@ -5,18 +5,9 @@ import { createMothersGroupMeeting } from "@/hooks/database/models/MothersGroupM
 import { useRouter } from "expo-router";
 import { Calendar, MapPin, Minus, Plus, X } from "lucide-react-native";
 import { useState } from "react";
-import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MothersGroupMeetingForm() {
     const router = useRouter();
@@ -28,7 +19,6 @@ export default function MothersGroupMeetingForm() {
 
     const [location, setLocation] = useState("");
     const [wardNo, setWardNo] = useState("1");
-    const [fchvName, setFchvName] = useState("");
     const [attendees, setAttendees] = useState(0);
 
     const [topicInput, setTopicInput] = useState("");
@@ -72,7 +62,6 @@ export default function MothersGroupMeetingForm() {
                 meeting_date: meetingDateAD,
                 meeting_location: location,
                 ward_no: wardNo,
-                fchv_name: fchvName,
                 attendees_count: attendees,
                 discussed_topics: topics,
                 decisions: decisions,
@@ -88,7 +77,7 @@ export default function MothersGroupMeetingForm() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white pt-10">
+        <SafeAreaView className="flex-1 bg-white">
             <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
             <CustomHeader title={t("mothers_group_meeting.title")} />
 
@@ -99,19 +88,8 @@ export default function MothersGroupMeetingForm() {
                 <ScrollView className="" contentContainerStyle={{ paddingBottom: 80 }}>
 
                     {/* General Information Card */}
-                    <View className="bg-white p-5 border border-gray-100">
+                    <View className="bg-white p-5">
 
-                        <View className="mb-6">
-                            <Text className="text-gray-700 text-[16px] font-semibold mb-2">{t("mothers_group_meeting.fchv_name")}</Text>
-                            <View className="flex-row items-center bg-white border border-gray-200 h-14 rounded-xl px-4">
-                                <TextInput
-                                    value={fchvName}
-                                    onChangeText={setFchvName}
-                                    placeholder={t("mothers_group_meeting.fchv_name_placeholder")}
-                                    className="flex-1 text-gray-600 text-[16px]"
-                                />
-                            </View>
-                        </View>
 
                         <View className="mb-6">
                             <Text className="text-gray-700 font-semibold mb-2 text-[16px]">{t("mothers_group_meeting.meeting_date")}</Text>
@@ -148,7 +126,7 @@ export default function MothersGroupMeetingForm() {
                             </View>
                         </View>
 
-                        <View className="mb-6">
+                        <View className="mb-7">
                             <Text className="text-gray-700 text-[16px] font-semibold mb-2">{t("mothers_group_meeting.ward_no")}</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
                                 {[...Array(15)].map((_, i) => {
@@ -167,7 +145,7 @@ export default function MothersGroupMeetingForm() {
                             </ScrollView>
                         </View>
 
-                        <View className="mb-4">
+                        <View className="mb-2">
                             <Text className="text-gray-700 font-semibold mb-2 text-[16px]">{t("mothers_group_meeting.attendees_count")}</Text>
                             <View className="flex-row items-center justify-between">
                                 <TouchableOpacity
@@ -197,12 +175,7 @@ export default function MothersGroupMeetingForm() {
                     </View>
 
                     {/* Topics and Decisions Card */}
-                    <View className="bg-white rounded-3xl p-5 mb-5 border border-gray-100">
-                        {/* <View className="flex-row items-center mb-6 border-b border-gray-100 pb-4">
-                            <Users color="#065f46" size={24} className="mr-3" />
-                            <Text className="text-xl font-bold text-gray-900">{t("mothers_group_meeting.card_title_2")}</Text>
-                        </View> */}
-
+                    <View className="bg-white px-5 py-2 mb-5">
                         <View className="mb-6">
                             <Text className="text-gray-700 font-semibold mb-3 text-[16px]">{t("mothers_group_meeting.discussed_topics")}</Text>
                             {topics.map((topic, i) => (
@@ -257,7 +230,6 @@ export default function MothersGroupMeetingForm() {
                             title={t("mothers_group_meeting.save_record")}
                         />
                     </View>
-
 
                 </ScrollView>
             </KeyboardAvoidingView>

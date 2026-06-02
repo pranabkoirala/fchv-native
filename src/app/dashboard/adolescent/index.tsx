@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "@/components/CustomHeader";
 import { getAllAdolescentIfa } from "@/hooks/database/models/AdolescentIfaModel";
 import { AdolescentIfaStoreType } from "@/hooks/database/types/adolescentIfaModal";
@@ -5,14 +6,7 @@ import { router, useFocusEffect } from "expo-router";
 import { ChevronRight, Heart, Plus, Search } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function AdolescentManagementScreen() {
   const { t } = useTranslation();
@@ -60,7 +54,7 @@ export default function AdolescentManagementScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC] pt-10">
+    <SafeAreaView className="flex-1 bg-white">
       <CustomHeader
         title={t("adolescent_page.title", "Adolescent Girls IFA")}
         onBackPress={() => router.back()}
@@ -71,7 +65,7 @@ export default function AdolescentManagementScreen() {
             className="bg-primary/80 px-3 py-2.5 rounded-md items-center justify-center flex-row"
           >
             <Plus size={16} color="#ffffff" strokeWidth={3} />
-            <Text className="text-white font-semibold text-md ml-1.5 uppercase tracking-wider">
+            <Text className="text-white font-semibold text-[15px] ml-1.5 uppercase tracking-wider">
               {t("adolescent_page.add_new", "Add New")}
             </Text>
           </TouchableOpacity>
@@ -85,10 +79,10 @@ export default function AdolescentManagementScreen() {
       >
         {/* Search Section */}
         <View className="px-5 mt-3 flex-row items-center gap-3">
-          <View className="flex-1 flex-row items-center bg-white px-4 h-14 rounded-md border border-gray-100">
+          <View className="flex-1 flex-row items-center bg-white px-4 py-1.5 rounded-md border border-gray-200">
             <Search size={20} color="#94A3B8" />
             <TextInput
-              className="flex-1 ml-3 text-base text-[#1E293B]"
+              className="flex-1 ml-3 text-[15px] text-[#1E293B]"
               placeholder={t(
                 "adolescent_page.search_placeholder",
                 "Search by name...",
@@ -108,7 +102,7 @@ export default function AdolescentManagementScreen() {
                 key={item.id}
                 activeOpacity={0.7}
                 onPress={() => handleEdit(item.id)}
-                className="bg-white p-4 rounded-md flex-row items-center border border-gray-100 shadow-sm"
+                className="bg-white p-4 rounded-xl flex-row items-center border border-gray-200"
               >
                 {/* Avatar */}
                 <View className="w-14 h-14 bg-purple-50 rounded-[18px] items-center justify-center border border-purple-100">
@@ -118,14 +112,14 @@ export default function AdolescentManagementScreen() {
                 {/* Info */}
                 <View className="flex-1 ml-4 justify-center">
                   <Text
-                    className="text-slate-800 text-base font-bold mb-1"
+                    className="text-slate-800 text-[17px] font-bold mb-1"
                     numberOfLines={1}
                   >
                     {item.name}
                   </Text>
 
                   <View className="flex-row items-center mb-1.5">
-                    <Text className="text-slate-500 font-medium text-[13px]">
+                    <Text className="text-slate-500 font-medium text-[15px]">
                       {t("adolescent_page.age_group", "Age Group")}:{" "}
                       <Text className="text-purple-700 font-bold">
                         {item.age_group} {t("adolescent_page.years", "Yrs")}
@@ -138,7 +132,7 @@ export default function AdolescentManagementScreen() {
                       className={`px-2 py-0.5 rounded-full ${item.phase1_completed ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-200"}`}
                     >
                       <Text
-                        className={`text-[10px] font-semibold ${item.phase1_completed ? "text-emerald-700" : "text-slate-500"}`}
+                        className={`text-[11px] font-semibold ${item.phase1_completed ? "text-emerald-700" : "text-slate-500"}`}
                       >
                         {item.phase1_completed
                           ? t(
@@ -155,7 +149,7 @@ export default function AdolescentManagementScreen() {
                       className={`px-2 py-0.5 rounded-full ${item.phase2_completed ? "bg-emerald-50 border border-emerald-200" : "bg-slate-50 border border-slate-200"}`}
                     >
                       <Text
-                        className={`text-[10px] font-semibold ${item.phase2_completed ? "text-emerald-700" : "text-slate-500"}`}
+                        className={`text-[11px] font-semibold ${item.phase2_completed ? "text-emerald-700" : "text-slate-500"}`}
                       >
                         {item.phase2_completed
                           ? t(

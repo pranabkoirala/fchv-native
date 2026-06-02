@@ -1,27 +1,27 @@
-import { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  ImageBackground,
-  InteractionManager,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import CustomHeader from "@/components/CustomHeader";
+import { useLanguage } from "@/context/LanguageContext";
+import { router } from "expo-router";
 import {
   ArrowRight,
-  ShieldCheck,
-  Stethoscope,
-  Salad,
-  Users,
   Baby,
   ChevronRight,
+  Salad,
+  ShieldCheck,
+  Stethoscope,
+  Users,
 } from "lucide-react-native";
-import { router } from "expo-router";
-import { useLanguage } from "@/context/LanguageContext";
-import CustomHeader from "@/components/CustomHeader";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ImageBackground,
+  InteractionManager,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const CATEGORY_CARDS = [
   {
@@ -100,9 +100,8 @@ export default function GuidelinesIndexScreen() {
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title={t("learn_page.header")}
-        subtitle={t("learn_page.hero_subtitle")}
         onBackPress={() => router.replace("/dashboard")}
-        className="pt-10 pb-2 px-5"
+        className="py-4"
       />
 
       {!isReady ? (

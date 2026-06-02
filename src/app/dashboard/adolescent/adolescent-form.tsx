@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/button";
 import CustomHeader from "@/components/CustomHeader";
 import { InputText } from "@/components/InputText";
@@ -10,15 +11,7 @@ import {
 import * as Crypto from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 
 export default function AdolescentRegistrationForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -153,12 +146,11 @@ export default function AdolescentRegistrationForm() {
     <SafeAreaView
       style={{
         flex: 1,
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "#fff",
         paddingBottom: 60,
-        paddingTop: 25,
       }}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <CustomHeader
         title={
           id
@@ -176,7 +168,7 @@ export default function AdolescentRegistrationForm() {
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 60 }}
       >
-        <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
+        <View style={{ paddingHorizontal: 20}}>
           {/* Adolescent Name */}
           <InputText
             label={language === "np" ? "किशोरीको नाम" : "Adolescent's Name"}

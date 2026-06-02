@@ -868,7 +868,7 @@
     "select_date": "मिति छान्नुहोस्",
     "time": "समय",
     "select_time": "समय छान्नुहोस्",
-    "patient_label": "बिरामी (ऐच्छिक)",
+    "patient_label": "बिरामीको नाम",
     "patient_ph": "जस्तै: सुनिता",
     "location": "स्थान",
     "location_ph": "जस्तै: हेटौंडा",
@@ -880,7 +880,10 @@
       "NORMAL": "सामान्य",
       "MEDIUM": "मध्यम",
       "URGENT": "जरुरी"
-    }
+    },
+    "title_required": "कार्यको शीर्षक आवश्यक छ",
+    "date_required": "मिति आवश्यक छ",
+    "location_required": "स्थान आवश्यक छ"
   },
   "record_page": {
     "title": "मातृ रेकर्ड",

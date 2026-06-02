@@ -21,17 +21,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Calendar as CalendarIcon, Save } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Alert,
-  Pressable,
-  SafeAreaView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
+import { Alert, Pressable, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChildRegistrationForm() {
   const { id, motherId, from } = useLocalSearchParams<{ id: string; motherId?: string; from?: string }>();
@@ -68,6 +61,7 @@ export default function ChildRegistrationForm() {
   const [babyWeight, setBabyWeight] = useState("normal");
   const [status, setStatus] = useState("alive");
   const [remarks, setRemarks] = useState("");
+  const [allGiven, setAllGiven] = useState(0);
 
   // Indicators (0 or 1)
   const [fchvPresent, setFchvPresent] = useState(0);
@@ -99,6 +93,7 @@ export default function ChildRegistrationForm() {
             setSkilledBirthAttended(infant.skilled_birth_attended || 0);
             setAsphyxiatedNewborn(infant.asphyxiated_newborn || 0);
             setStatus(infant.status || "alive");
+            setAllGiven(infant.is_all_given || 0);
 
             const care = [];
             if (infant.umbilical_ointment) care.push("umbilical_ointment");
@@ -163,6 +158,7 @@ export default function ChildRegistrationForm() {
           : 0,
         asphyxiated_newborn: asphyxiatedNewborn,
         status: status,
+        is_all_given: allGiven,
         remarks: remarks,
       };
 
@@ -214,7 +210,7 @@ export default function ChildRegistrationForm() {
   const motherOptions = mothers.map((m) => ({ label: m.name, value: m.id }));
 
   return (
-    <SafeAreaView className="flex-1 py-7">
+    <SafeAreaView className="flex-1 pb-7">
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title={

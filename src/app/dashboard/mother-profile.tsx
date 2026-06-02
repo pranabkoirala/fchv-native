@@ -1,15 +1,6 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 // import React, { useState, useCallback } from "react";
-// import {
-//   View,
-//   Text,
-//   ScrollView,
-//   TouchableOpacity,
-//   SafeAreaView,
-//   StatusBar,
-//   Image,
-//   ActivityIndicator,
-//   Alert,
-// } from "react-native";
+// import { //   View, //   Text, //   ScrollView, //   TouchableOpacity, //   SafeAreaView, //   StatusBar, //   Image, //   ActivityIndicator, //   Alert, // } from "react-native";
 // import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 // import {
 //   ChevronLeft,

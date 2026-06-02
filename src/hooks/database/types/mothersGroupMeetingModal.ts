@@ -3,7 +3,6 @@ export interface MothersGroupMeetingStoreType {
     meeting_date: string;
     meeting_location: string;
     ward_no: string | null;
-    fchv_name: string | null;
     attendees_count: number;
     discussed_topics: string | null;
     decisions: string | null;
@@ -20,7 +19,6 @@ export interface CreateMothersGroupMeetingPayload {
     meeting_date: string;
     meeting_location: string;
     ward_no?: string;
-    fchv_name?: string;
     attendees_count: number;
     discussed_topics: string[];
     decisions: string[];

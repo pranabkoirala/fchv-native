@@ -145,7 +145,7 @@ export const BoxInput = ({
       <Text className="text-slate-800 font-medium text-[16px] mb-1.5 ml-1">{label}</Text>
     )}
     <View
-      className={`h-14 flex-row items-center rounded-md px-4 border ${
+      className={`h-14 flex-row items-center rounded-xl px-4 border ${
         error ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"
       }`}
     >

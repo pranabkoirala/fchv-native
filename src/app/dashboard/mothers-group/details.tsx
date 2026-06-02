@@ -16,8 +16,9 @@ import {
     Users
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, StatusBar, Text, View } from "react-native";
+import { ScrollView, StatusBar, Text, View } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MeetingDetails() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -126,17 +127,6 @@ export default function MeetingDetails() {
                                 <Text className="text-gray-800 font-bold text-[15px]">{meeting?.ward_no || "N/A"}</Text>
                             </View>
                         </View>
-
-                        {/* FCHV Name */}
-                        <View className="w-[50%] flex-row items-center">
-                            <View className="bg-gray-50 p-2 rounded-lg mr-2">
-                                <User size={20} color="#64748b" />
-                            </View>
-                            <View className="flex-1">
-                                <Text className="text-gray-600 text-[13px] font-medium mb-1">{t("mothers_group_meeting.fchv_name")}</Text>
-                                <Text className="text-gray-800 font-bold text-[15px]" numberOfLines={1}>{meeting?.fchv_name || "N/A"}</Text>
-                            </View>
-                        </View>
                     </View>
                 </View>
 
@@ -186,6 +176,6 @@ export default function MeetingDetails() {
                     )}
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </SafeAreaView >
     );
 }

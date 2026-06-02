@@ -1,3 +1,4 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import ChildCounselingSection from "@/app/dashboard/child/ChildCounselingSection";
 import CustomHeader from "@/components/CustomHeader";
 import VaccinationSection from "@/components/profile/VaccinationSection";
@@ -8,15 +9,7 @@ import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitori
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Activity, Baby, Edit2, MapPin, Smile } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import {
-    ActivityIndicator,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
 
 const toNepaliNumbers = (num: number | string) => {
@@ -64,7 +57,6 @@ export default function ChildProfileScreen() {
 
     const [record, setRecord] = useState<InfantMonitoringStoreType | null>(null);
     const [loading, setLoading] = useState(true);
-
 
     useFocusEffect(
         useCallback(() => {
@@ -125,7 +117,7 @@ export default function ChildProfileScreen() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-gray-50 py-8">
+        <SafeAreaView className="flex-1 bg-white pb-5">
             <StatusBar barStyle="dark-content" />
             <CustomHeader
                 title={t("child_profile.title")}
