@@ -208,7 +208,9 @@ export default function ChildRegistrationForm() {
     }
   };
 
-  const motherOptions = mothers.map((m) => ({ label: m.name, value: m.id }));
+  const motherOptions = mothers
+    .filter((m) => !m.is_dead)
+    .map((m) => ({ label: m.name, value: m.id }));
 
   return (
     <SafeAreaView className="flex-1 pb-7">

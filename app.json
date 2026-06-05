@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FCHV",
-    "slug": "We aware the pregnat women!",
+    "slug": "fchv-native",
     "version": "1.0.0",
     "scheme": "fchvnative",
     "orientation": "portrait",
@@ -48,7 +48,9 @@
         {
           "cameraPermission": "Allow this app to access the camera to take mother photos."
         }
-      ]
+      ],
+      "expo-router",
+      "expo-font"
     ],
     "owner": "anojbudathoki"
   }
