@@ -1,9 +1,8 @@
 import * as Crypto from "expo-crypto";
 import { useRouter } from "expo-router";
 import { Calendar } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, StatusBar, Text, View } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../context/ToastContext";
@@ -31,11 +30,13 @@ export default function PregnancyForm({
   from,
   mode,
   onSwitchToMother,
+  lockMotherSelection = false,
 }: {
   id?: string;
   from?: string;
   mode?: string;
   onSwitchToMother?: () => void;
+  lockMotherSelection?: boolean;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -59,17 +60,27 @@ export default function PregnancyForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchMothers = async () => {
-      try {
-        const list = await getAllMothersList();
-        setMothers(list);
-      } catch (err) {
-        console.error("Error fetching mothers:", err);
-      }
-    };
-    fetchMothers();
+  const initialMotherId = id && id !== "undefined" ? id : "";
+
+  const fetchMothers = useCallback(async () => {
+    try {
+      const list = await getAllMothersList();
+      setMothers(list);
+    } catch (err) {
+      console.error("Error fetching mothers:", err);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchMothers();
+  }, [fetchMothers, initialMotherId]);
+
+  useEffect(() => {
+    if (!initialMotherId) return;
+
+    setSelectedMotherId(initialMotherId);
+    setErrors((current) => ({ ...current, motherId: "" }));
+  }, [initialMotherId]);
 
   useEffect(() => {
     if (selectedMotherId) {
@@ -153,7 +164,7 @@ export default function PregnancyForm({
       };
       fetchData();
     }
-  }, [selectedMotherId]);
+  }, [mode, selectedMotherId]);
 
   const calcEddFromLmp = (lmpAd: string) => {
     try {
@@ -233,12 +244,7 @@ export default function PregnancyForm({
     .map((m) => ({ label: m.name, value: m.id }));
 
   return (
-    <KeyboardAwareScrollView
-      style={{ flex: 1 }}
-      enableOnAndroid={true}
-      extraScrollHeight={100}
-      keyboardShouldPersistTaps="always"
-      showsVerticalScrollIndicator={false}
+    <View style={{ flex: 1 }}
     >
       <StatusBar barStyle="dark-content" className="bg-white" />
       <View className="pt-3">
@@ -251,7 +257,7 @@ export default function PregnancyForm({
               : t("pregnancy_form.choose_mother")
           }
           selectedValue={selectedMotherId}
-          disabled={Boolean(id && id !== "undefined" && id !== "")}
+          disabled={lockMotherSelection}
           isSearchable={true}
           options={motherOptions}
           onValueChange={(val) => {
@@ -394,6 +400,6 @@ export default function PregnancyForm({
         weekTextStyle={{ fontWeight: "normal" }}
         titleTextStyle={{ fontWeight: "normal" }}
       />
-    </KeyboardAwareScrollView>
+    </View>
   );
 }

@@ -10,6 +10,7 @@ export interface TodoItem {
   description?: string | null;
   task_date?: string | null;
   task_time?: string | null;
+  notification_id?: string | null;
   is_completed: number;
   reg_month?: string | null;
   created_at: string;
@@ -48,6 +49,7 @@ export async function createTodo(
     description: description || null,
     task_date: task_date || null,
     task_time: task_time || null,
+    notification_id: null,
     is_completed: 0,
     reg_month: regMonth,
     created_at: now,

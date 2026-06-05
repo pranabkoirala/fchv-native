@@ -14,13 +14,13 @@ import {
   Edit2,
   MapPin,
   Plus,
-  Save,
   Trash2,
   X
 } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -45,6 +45,10 @@ import {
   TodoItem,
   updateTodo,
 } from "../../../hooks/database/models/TodoModel";
+import {
+  cancelTaskNotificationAsync,
+  scheduleTaskNotificationAsync,
+} from "../../../utils/notificationHelper";
 
 const TodoSkeleton = () => (
   <View className="bg-white rounded-xl p-4 mb-4 border border-slate-200 flex-row items-center">
@@ -143,10 +147,35 @@ export default function TasksScreen() {
   const handleToggleTodo = async (id: string, isCompleted: number) => {
     try {
       const newStatus = isCompleted === 1 ? 0 : 1;
-      await updateTodo(id, { is_completed: newStatus });
+      const todo = todos.find((item) => item.id === id);
+      const parsed = todo ? parseTaskString(todo.task) : null;
+      let notificationId: string | null = todo?.notification_id || null;
+
+      if (newStatus === 1) {
+        await cancelTaskNotificationAsync(notificationId);
+        notificationId = null;
+      } else if (todo && parsed) {
+        notificationId = await scheduleTaskNotificationAsync({
+          id: todo.id,
+          title: parsed.title,
+          taskDate: todo.task_date,
+          taskTime: todo.task_time || parsed.time,
+        });
+      }
+
+      await updateTodo(id, {
+        is_completed: newStatus,
+        notification_id: notificationId,
+      });
       setTodos((prev) =>
         prev.map((todo) =>
-          todo.id === id ? { ...todo, is_completed: newStatus } : todo,
+          todo.id === id
+            ? {
+                ...todo,
+                is_completed: newStatus,
+                notification_id: notificationId,
+              }
+            : todo,
         ),
       );
     } catch (error) {
@@ -163,6 +192,8 @@ export default function TasksScreen() {
     if (!todoToDelete) return;
     try {
       setIsDeleting(true);
+      const todo = todos.find((item) => item.id === todoToDelete);
+      await cancelTaskNotificationAsync(todo?.notification_id);
       await deleteTodo(todoToDelete);
       setTodos((prev) => prev.filter((todo) => todo.id !== todoToDelete));
       setIsDeleteConfirmVisible(false);
@@ -186,6 +217,11 @@ export default function TasksScreen() {
       const formattedHours = hours % 12 || 12;
       const formattedMinutes = minutes.toString().padStart(2, "0");
       setNewTaskTime(`${formattedHours}:${formattedMinutes} ${ampm}`);
+      if (errors.time) {
+        const newErrors = { ...errors };
+        delete newErrors.time;
+        setErrors(newErrors);
+      }
     }
   };
 
@@ -234,6 +270,9 @@ export default function TasksScreen() {
     if (!newTaskDate.trim()) {
       newErrors.date = t("todo_tasks.date_required");
     }
+    if (!newTaskTime.trim()) {
+      newErrors.time = t("todo_tasks.time_required");
+    }
     if (!newTaskLocation.trim()) {
       newErrors.location = t("todo_tasks.location_required");
     }
@@ -253,12 +292,25 @@ export default function TasksScreen() {
 
     try {
       if (editingTodoId) {
+        const existingTodo = todos.find((todo) => todo.id === editingTodoId);
+        await cancelTaskNotificationAsync(existingTodo?.notification_id);
+        const notificationId =
+          existingTodo?.is_completed === 1
+            ? null
+            : await scheduleTaskNotificationAsync({
+                id: editingTodoId,
+                title: payload.title,
+                taskDate: newTaskDate.trim(),
+                taskTime: newTaskTime.trim(),
+              });
+
         // Update database
         await updateTodo(editingTodoId, {
           task: JSON.stringify(payload),
           description: newTaskDescription.trim() || null,
           task_date: newTaskDate.trim() || null,
           task_time: newTaskTime.trim() || null,
+          notification_id: notificationId,
         });
 
         // Update state
@@ -266,13 +318,14 @@ export default function TasksScreen() {
           prev.map((todo) =>
             todo.id === editingTodoId
               ? {
-                ...todo,
-                task: JSON.stringify(payload),
-                description: newTaskDescription.trim() || null,
-                task_date: newTaskDate.trim() || null,
-                task_time: newTaskTime.trim() || null,
-                updated_at: new Date().toISOString(),
-              }
+                  ...todo,
+                  task: JSON.stringify(payload),
+                  description: newTaskDescription.trim() || null,
+                  task_date: newTaskDate.trim() || null,
+                  task_time: newTaskTime.trim() || null,
+                  notification_id: notificationId,
+                  updated_at: new Date().toISOString(),
+                }
               : todo,
           ),
         );
@@ -284,7 +337,18 @@ export default function TasksScreen() {
           newTaskDate.trim() || null,
           newTaskTime.trim() || null,
         );
-        setTodos([newItem, ...todos]);
+        const notificationId = await scheduleTaskNotificationAsync({
+          id: newItem.id,
+          title: payload.title,
+          taskDate: newItem.task_date,
+          taskTime: newItem.task_time,
+        });
+
+        if (notificationId) {
+          await updateTodo(newItem.id, { notification_id: notificationId });
+        }
+
+        setTodos([{ ...newItem, notification_id: notificationId }, ...todos]);
       }
 
       setModalVisible(false);
@@ -612,7 +676,7 @@ export default function TasksScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() => setShowTimePicker(true)}
-                    className="bg-white border border-slate-200 rounded-md px-4 py-3 h-[50px] flex-row items-center justify-between"
+                    className={`bg-white border rounded-md px-4 py-3 h-[50px] flex-row items-center justify-between ${errors.time ? "border-rose-300" : "border-slate-200"}`}
                   >
                     <Text
                       className={`text-[15px] ${newTaskTime ? "text-slate-800" : "text-slate-400"}`}
@@ -621,6 +685,11 @@ export default function TasksScreen() {
                     </Text>
                     <Clock size={18} color="#64748B" />
                   </TouchableOpacity>
+                  {errors.time && (
+                    <Text className="text-rose-500 text-[12px] mt-1 ml-1">
+                      {errors.time}
+                    </Text>
+                  )}
                 </View>
               </View>
 
@@ -662,7 +731,7 @@ export default function TasksScreen() {
                       <TouchableOpacity
                         key={p}
                         onPress={() => setNewTaskPriority(p)}
-                        className={`flex-1 items-center justify-center ${isSelected ? "bg-primary/80" : ""}`}
+                        className={`flex-1 items-center justify-center ${isSelected ? "bg-primary" : ""}`}
                       >
                         <Text
                           className={`text-[14px] font-semibold ${isSelected ? "text-white" : "text-slate-600"}`}
@@ -694,9 +763,8 @@ export default function TasksScreen() {
           <View className="p-5 bg-white border-t border-slate-100 mb-5">
             <TouchableOpacity
               onPress={handleAddTask}
-              className={`w-full py-4 flex-row items-center justify-center rounded-md bg-primary/80`}
+              className={`w-full py-4 flex-row items-center justify-center rounded-md bg-primary`}
             >
-              <Save size={20} color="white" />
               <Text className="text-white font-bold text-[16px] ml-2 tracking-wide">
                 {editingTodoId ? t("todo_tasks.save_changes") : t("todo_tasks.create_task")}
               </Text>
@@ -765,37 +833,45 @@ export default function TasksScreen() {
     </Modal>
   );
 
+  const renderEmptyList = () => (
+    <View className="px-6">
+      {loading ? (
+        <View>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <TodoSkeleton key={i} />
+          ))}
+        </View>
+      ) : (
+        <View className="py-10 items-center justify-center bg-white rounded-3xl border border-slate-100">
+          <CheckSquare size={40} color="#E2E8F0" />
+          <Text className="text-slate-400 font-bold mt-3">
+            {t("todo_tasks.no_tasks")}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+
   return (
     <View className="flex-1 bg-white pt-8">
       <StatusBar barStyle="dark-content" />
 
-      {/* Scrollable Content */}
-      <ScrollView
+      <FlatList
+        data={loading ? [] : todos}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <View className="px-6">{renderTaskCard(item, index)}</View>
+        )}
+        ListHeaderComponent={
+          <>
+            {renderTitleSection()}
+            {renderSummaryCards()}
+          </>
+        }
+        ListEmptyComponent={renderEmptyList}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
-      >
-        {renderTitleSection()}
-        {renderSummaryCards()}
-
-        <View className="px-6">
-          {loading ? (
-            <View>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <TodoSkeleton key={i} />
-              ))}
-            </View>
-          ) : todos.length === 0 ? (
-            <View className="py-10 items-center justify-center bg-white rounded-3xl border border-slate-100">
-              <CheckSquare size={40} color="#E2E8F0" />
-              <Text className="text-slate-400 font-bold mt-3">
-                {t("todo_tasks.no_tasks")}
-              </Text>
-            </View>
-          ) : (
-            todos.map((todo, index) => renderTaskCard(todo, index))
-          )}
-        </View>
-      </ScrollView>
+      />
 
       {/* Floating Action Button */}
       <AnimatedTouchableOpacity

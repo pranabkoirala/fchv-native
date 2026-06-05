@@ -1,9 +1,9 @@
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Baby, User } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "../../../components/CustomHeader";
 import MotherForm from "../../../components/MotherForm";
 import PregnancyForm from "../../../components/PregnancyForm";
@@ -144,12 +144,13 @@ export default function AddMotherScreen() {
               paddingBottom: 120,
               paddingHorizontal: 17,
             }}
-            keyboardShouldPersistTaps="handled"
+            keyboardShouldPersistTaps="always"
           >
             <PregnancyForm
               id={id || createdId || undefined}
               from={from}
               mode={mode}
+              lockMotherSelection={Boolean(id)}
               onSwitchToMother={() => setStep(0)}
             />
           </KeyboardAwareScrollView>

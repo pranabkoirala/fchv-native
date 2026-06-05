@@ -10,8 +10,9 @@ import {
   User,
   Users
 } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  FlatList,
   Image,
   ScrollView,
   StatusBar,
@@ -21,7 +22,6 @@ import {
   View
 } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -70,9 +70,6 @@ const RecordCardSkeleton = () => (
   </View>
 );
 
-const AnimatedTouchableOpacity =
-  Animated.createAnimatedComponent(TouchableOpacity);
-
 interface UnifiedRecord {
   id: string;
   name: string;
@@ -107,7 +104,7 @@ const TAB_KEYS: TabItem[] = [
   { key: "dead_child" },
 ];
 
-function StatusBadge({
+const StatusBadge = memo(function StatusBadge({
   status,
   label,
 }: {
@@ -140,18 +137,14 @@ function StatusBadge({
       <Text className={`text-[12px] font-bold ${s.text}`}>{label}</Text>
     </View>
   );
-}
+});
 
-function RecordCard({
+const RecordCard = memo(function RecordCard({
   record,
-  index,
   onPress,
-  language,
 }: {
   record: UnifiedRecord;
-  index: number;
   onPress: () => void;
-  language: string;
 }) {
   const getTypeIcon = () => {
     if (
@@ -215,8 +208,7 @@ function RecordCard({
   };
 
   return (
-    <AnimatedTouchableOpacity
-      entering={FadeInDown.delay(index * 60).duration(400).springify()}
+    <TouchableOpacity
       onPress={onPress}
       className="bg-white rounded-2xl px-3 py-5 mb-4 flex-row items-center border border-slate-200"
     >
@@ -251,9 +243,9 @@ function RecordCard({
       <View className="ml-2">
         <ChevronRight size={20} color="#94A3B8" strokeWidth={2} />
       </View>
-    </AnimatedTouchableOpacity>
+    </TouchableOpacity>
   );
-}
+});
 
 export default function ReportScreen() {
   const router = useRouter();
@@ -432,7 +424,7 @@ export default function ReportScreen() {
     return Array.from(months).sort().reverse();
   }, [getUnifiedRecords]);
 
-  const filteredRecords = useCallback(() => {
+  const records = useMemo(() => {
     let records = getUnifiedRecords();
     if (selectedMonth !== "all") {
       records = records.filter((r: any) => r.reg_month === selectedMonth);
@@ -444,9 +436,7 @@ export default function ReportScreen() {
     );
   }, [getUnifiedRecords, search, selectedMonth]);
 
-  const records = filteredRecords();
-
-  const handleCardPress = (record: UnifiedRecord) => {
+  const handleCardPress = useCallback((record: UnifiedRecord) => {
     switch (record.type) {
       case "mother":
         router.push({ pathname: "/dashboard/profile", params: { id: record.id, from: "/dashboard/report" } } as any);
@@ -464,7 +454,7 @@ export default function ReportScreen() {
         router.push({ pathname: "/dashboard/report/newborn-death-details", params: { id: record.id } } as any);
         break;
     }
-  };
+  }, [router]);
 
   const getTabCount = (key: TabKey): number => {
     switch (key) {
@@ -477,6 +467,13 @@ export default function ReportScreen() {
       default: return 0;
     }
   };
+
+  const renderRecord = useCallback(({ item }: { item: UnifiedRecord }) => (
+    <RecordCard
+      record={item}
+      onPress={() => handleCardPress(item)}
+    />
+  ), [handleCardPress]);
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -552,32 +549,33 @@ export default function ReportScreen() {
       </View>
 
       {/* Main List */}
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100, paddingTop: 10 }}>
-        {loading ? (
+      <FlatList
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        data={loading ? [] : records}
+        renderItem={renderRecord}
+        keyExtractor={(item) => `${item.type}-${item.id}`}
+        ListEmptyComponent={loading ? (
           <View>
             {[1, 2, 3, 4, 5].map((i) => (
               <RecordCardSkeleton key={i} />
             ))}
           </View>
-        ) : records.length === 0 ? (
+        ) : (
           <View className="py-20 items-center justify-center">
             <View className="w-20 h-20 bg-slate-50 rounded-full items-center justify-center mb-4">
               <User size={40} color="#CBD5E1" strokeWidth={1.5} />
             </View>
             <Text className="text-slate-400 font-bold text-base">{t("reports.no_results")}</Text>
           </View>
-        ) : (
-          records.map((record, index) => (
-            <RecordCard
-              key={`${record.type}-${record.id}`}
-              record={record}
-              index={index}
-              onPress={() => handleCardPress(record)}
-              language={language}
-            />
-          ))
         )}
-      </ScrollView>
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100, paddingTop: 10 }}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+        removeClippedSubviews
+      />
     </SafeAreaView>
   );
 }

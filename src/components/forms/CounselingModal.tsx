@@ -146,7 +146,7 @@ export default function CounselingModal({
           <TouchableOpacity
             onPress={handleSave}
             disabled={loading}
-            className={`w-full py-3 rounded-md flex-row justify-center items-center bg-primary/80`}
+            className={`w-full py-3 rounded-md flex-row justify-center items-center bg-primary`}
           >
             {loading ? (
               <ActivityIndicator color="white" />

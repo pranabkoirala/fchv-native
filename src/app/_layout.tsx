@@ -8,9 +8,10 @@ import { ToastProvider } from "../context/ToastContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { InteractionManager, View } from "react-native";
 import { doSync } from "@/api/services/sync/sync";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { configureNotificationsAsync } from "@/utils/notificationHelper";
 
 export default function RootLayout() {
   // Mounts the network listener for data synchronization
@@ -23,9 +24,16 @@ export default function RootLayout() {
   // }, [isConnected, doSync]);
 
   useEffect(() => {
-    import("@/hooks/database/db").then(({ initDatabase }) => {
-      initDatabase().catch((err) => console.error("DB Init Error:", err));
+    const task = InteractionManager.runAfterInteractions(() => {
+      import("@/hooks/database/db").then(({ initDatabase }) => {
+        initDatabase().catch((err) => console.error("DB Init Error:", err));
+      });
+      configureNotificationsAsync().catch((err) =>
+        console.error("Notification setup error:", err),
+      );
     });
+
+    return () => task.cancel();
   }, []);
 
   return (

@@ -16,7 +16,7 @@ export const Button = ({
     activeOpacity={0.88}
     onPress={onPress}
     disabled={isLoading}
-    className="bg-primary/80 px-5 rounded-lg h-14 flex-row items-center justify-center mb-2"
+    className="bg-primary px-5 rounded-lg h-14 flex-row items-center justify-center mb-2"
   >
     {isLoading ? (
       <ActivityIndicator color="white" size="small" />

@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS todo (
     description TEXT,
     task_date TEXT,
     task_time TEXT,
+    notification_id TEXT,
     is_completed INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     reg_year INTEGER,

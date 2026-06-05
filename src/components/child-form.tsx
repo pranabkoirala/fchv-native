@@ -213,7 +213,7 @@ export default function ChildRegistrationForm() {
     .map((m) => ({ label: m.name, value: m.id }));
 
   return (
-    <SafeAreaView className="flex-1 pb-7">
+    <SafeAreaView className="flex-1 pb-5">
       <StatusBar barStyle="dark-content" className="bg-white" />
       <CustomHeader
         title={

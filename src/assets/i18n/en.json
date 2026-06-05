@@ -898,6 +898,7 @@
     },
     "title_required": "Task title is required",
     "date_required": "Date is required",
+    "time_required": "Time is required",
     "location_required": "Location is required"
   },
   "record_page": {

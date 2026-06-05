@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 43;
+export const SCHEMA_VERSION = 44;
 
 type Migration = {
   version: number;
@@ -965,6 +965,18 @@ export const MIGRATIONS: Migration[] = [
         `);
       } catch (e) {
         console.log("Migration 43 failed or already applied:", e);
+      }
+    }
+  },
+  {
+    version: 44,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE todo ADD COLUMN notification_id TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 44 failed or already applied:", e);
       }
     }
   },

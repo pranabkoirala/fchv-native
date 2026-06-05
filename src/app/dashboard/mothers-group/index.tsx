@@ -6,11 +6,59 @@ import { MothersGroupMeetingStoreType } from "@/hooks/database/types/mothersGrou
 import { formatAdDate } from "@/utils/dateHelper";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Calendar, Plus, Users } from "lucide-react-native";
-import { useCallback, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { memo, useCallback, useState } from "react";
+import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type MeetingListType = Omit<MothersGroupMeetingStoreType, "discussed_topics" | "decisions"> & { discussed_topics: string[]; decisions: string[]; };
+
+const MeetingCard = memo(function MeetingCard({
+    meeting,
+    language,
+    t,
+    onPress,
+}: {
+    meeting: MeetingListType;
+    language: string;
+    t: (key: string) => string;
+    onPress: (meeting: MeetingListType) => void;
+}) {
+    return (
+        <TouchableOpacity
+            className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-2 mx-5"
+            activeOpacity={0.7}
+            onPress={() => onPress(meeting)}
+        >
+            <View className="flex-row justify-between items-start mb-2">
+                <Text className="text-emerald-800 text-xs font-bold uppercase tracking-wider mb-1">
+                    {meeting.discussed_topics[0] || t("mothers_group_meeting.meeting_default_topic")}
+                </Text>
+                <View className="bg-emerald-100 flex-row items-center px-3 py-1 rounded-full">
+                    <Users size={14} color="#065f46" className="mr-1" />
+                    <Text className="text-emerald-800 text-xs font-bold flex-row items-center">
+                        {meeting.attendees_count} {t("mothers_group_meeting.attendees")}
+                    </Text>
+                </View>
+            </View>
+            <Text className="text-xl font-bold text-gray-900 mb-4">{meeting.meeting_location}</Text>
+
+            <View className="flex-row items-center border-t border-gray-100 pt-4 mb-2">
+                <View className="flex-row items-center mr-6">
+                    <Calendar size={16} color="#6b7280" className="mr-2" />
+                    <Text className="text-gray-600">
+                        {formatAdDate(meeting.meeting_date, language)}
+                    </Text>
+                </View>
+            </View>
+
+            {meeting.decisions && meeting.decisions.length > 0 && (
+                <Text className="text-gray-500 italic mt-3" numberOfLines={2}>
+                    "{meeting.decisions.join(", ")}"
+                </Text>
+            )}
+        </TouchableOpacity>
+    );
+});
 
 export default function MothersGroupMeetings() {
     const { t, language } = useLanguage();
@@ -35,6 +83,17 @@ export default function MothersGroupMeetings() {
             setLoading(false);
         }
     };
+
+    const handleMeetingPress = useCallback((meeting: MeetingListType) => {
+        router.push({
+            pathname: "/dashboard/mothers-group/details",
+            params: { id: meeting.id }
+        });
+    }, [router]);
+
+    const renderMeeting = useCallback(({ item }: { item: MeetingListType }) => (
+        <MeetingCard meeting={item} language={language} t={t} onPress={handleMeetingPress} />
+    ), [handleMeetingPress, language, t]);
 
     const MeetingSkeleton = () => (
         <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
@@ -64,55 +123,18 @@ export default function MothersGroupMeetings() {
                     </TouchableOpacity>
                 }
             />
-            <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
-
-                <View className="px-5 mt-4 flex-col gap-4">
-                    {loading ? (
-                        <>
+            <FlatList
+                className="flex-1"
+                data={loading ? [] : meetings}
+                renderItem={renderMeeting}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={loading ? (
+                        <View className="px-5 mt-4">
                             <MeetingSkeleton />
                             <MeetingSkeleton />
                             <MeetingSkeleton />
-                        </>
-                    ) : meetings.length > 0 ? (
-                        meetings.map((meeting) => (
-                            <TouchableOpacity
-                                key={meeting.id}
-                                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-2"
-                                activeOpacity={0.7}
-                                onPress={() => router.push({
-                                    pathname: "/dashboard/mothers-group/details",
-                                    params: { id: meeting.id }
-                                })}
-                            >
-                                <View className="flex-row justify-between items-start mb-2">
-                                    <Text className="text-emerald-800 text-xs font-bold uppercase tracking-wider mb-1">
-                                        {meeting.discussed_topics[0] || t("mothers_group_meeting.meeting_default_topic")}
-                                    </Text>
-                                    <View className="bg-emerald-100 flex-row items-center px-3 py-1 rounded-full">
-                                        <Users size={14} color="#065f46" className="mr-1" />
-                                        <Text className="text-emerald-800 text-xs font-bold flex-row items-center">
-                                            {meeting.attendees_count} {t("mothers_group_meeting.attendees")}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <Text className="text-xl font-bold text-gray-900 mb-4">{meeting.meeting_location}</Text>
-
-                                <View className="flex-row items-center border-t border-gray-100 pt-4 mb-2">
-                                    <View className="flex-row items-center mr-6">
-                                        <Calendar size={16} color="#6b7280" className="mr-2" />
-                                        <Text className="text-gray-600">
-                                            {formatAdDate(meeting.meeting_date, language)}
-                                        </Text>
-                                    </View>
-                                </View>
-
-                                {meeting.decisions && meeting.decisions.length > 0 && (
-                                    <Text className="text-gray-500 italic mt-3" numberOfLines={2}>
-                                        "{meeting.decisions.join(", ")}"
-                                    </Text>
-                                )}
-                            </TouchableOpacity>
-                        ))
+                        </View>
                     ) : (
                         <View className="items-center justify-center mt-10 px-2">
                             <View className="bg-white p-8 rounded-lg border border-gray-200 items-center w-full">
@@ -128,8 +150,12 @@ export default function MothersGroupMeetings() {
                             </View>
                         </View>
                     )}
-                </View>
-            </ScrollView>
+                contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
+                initialNumToRender={6}
+                maxToRenderPerBatch={6}
+                windowSize={7}
+                removeClippedSubviews
+            />
         </SafeAreaView>
     );
 }

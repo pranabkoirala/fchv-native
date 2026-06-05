@@ -6,6 +6,10 @@
     "scheme": "fchvnative",
     "orientation": "portrait",
     "icon": "./src/assets/fchv-logo.png",
+    "notification": {
+      "icon": "./src/assets/fchv-icon.png",
+      "color": "#356169"
+    },
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -50,6 +54,7 @@
         }
       ],
       "expo-router",
+      "expo-notifications",
       "expo-font"
     ],
     "owner": "anojbudathoki"
