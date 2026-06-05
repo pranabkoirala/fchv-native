@@ -18,8 +18,8 @@ export async function createInfantMonitoring(
   await db.runAsync(
     `INSERT INTO child_monitoring 
       (id, mother_id, baby_name, date_of_birth, birth_place, status, fchv_present, skilled_birth_attended,
-       baby_weight, umbilical_ointment, skin_to_skin, early_breastfeeding, asphyxiated_newborn, is_all_given, remarks, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       baby_weight, umbilical_ointment, skin_to_skin, early_breastfeeding, asphyxiated_newborn, is_all_given, gender, remarks, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       mother_id = excluded.mother_id,
       baby_name = excluded.baby_name,
@@ -34,6 +34,7 @@ export async function createInfantMonitoring(
       early_breastfeeding = excluded.early_breastfeeding,
       asphyxiated_newborn = excluded.asphyxiated_newborn,
       is_all_given = excluded.is_all_given,
+      gender = excluded.gender,
       remarks = excluded.remarks,
       updated_at = excluded.updated_at;`,
     [
@@ -51,6 +52,7 @@ export async function createInfantMonitoring(
       payload.early_breastfeeding ?? 0,
       payload.asphyxiated_newborn ?? 0,
       payload.is_all_given ?? 0,
+      payload.gender ?? null,
       payload.remarks ?? null,
       0, // is_synced
       0, // is_deleted

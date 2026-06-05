@@ -1,5 +1,4 @@
 import * as Crypto from "expo-crypto";
-import { getCurrentNepaliMonth } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import { NewbornDeathStoreType } from "../types/newbornDeathModal";
 
@@ -13,19 +12,24 @@ export async function createNewbornDeath(
 
   await db.runAsync(
     `INSERT INTO hmis_newborn_death (
-      id, mother_id, mother_name, baby_name, birth_day, birth_month, birth_year,
+      id, mother_id, child_id, mother_name, baby_name, birth_day, birth_month, birth_year,
+      death_day, death_month, death_year,
       birth_condition, birth_condition_other,
       death_age_days, death_age_unit, cause_of_death, cause_of_death_other, death_place, death_place_other,
-      gender, remarks, reg_month, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      gender, remarks, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       data.mother_id!,
+      data.child_id || null,
       data.mother_name!,
       data.baby_name || "",
       data.birth_day || 0,
       data.birth_month || 0,
       data.birth_year || 0,
+      data.death_day || null,
+      data.death_month || null,
+      data.death_year || null,
       data.birth_condition || "",
       data.birth_condition_other || "",
       data.death_age_days || 0,
@@ -36,7 +40,6 @@ export async function createNewbornDeath(
       data.death_place_other || "",
       data.gender || "",
       data.remarks || "",
-      getCurrentNepaliMonth(),
       now,
       now,
     ],

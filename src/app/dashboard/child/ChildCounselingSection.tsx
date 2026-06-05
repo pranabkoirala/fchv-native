@@ -19,10 +19,12 @@ import { toNepaliNumbers } from "../../../utils/dateHelper";
 
 interface ChildCounselingSectionProps {
   childId: string;
+  disabled?: boolean;
 }
 
 export default function ChildCounselingSection({
   childId,
+  disabled
 }: ChildCounselingSectionProps) {
   const { showToast } = useToast();
   const { language, t } = useLanguage();
@@ -402,10 +404,11 @@ export default function ChildCounselingSection({
               {canDelete && (
                 <TouchableOpacity
                   onPress={() => requestDeleteLatest(questionId)}
-                  className="ml-1.5 bg-white rounded-full p-0.5 border border-blue-100"
+                  disabled={disabled}
+                  className={`ml-1.5 bg-white rounded-full p-0.5 border border-blue-100 ${disabled ? 'opacity-50' : ''}`}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Trash2 size={10} color="#DC2626" />
+                  <Trash2 size={10} color={disabled ? "#94A3B8" : "#DC2626"} />
                 </TouchableOpacity>
               )}
             </View>
@@ -518,10 +521,11 @@ export default function ChildCounselingSection({
                   {canDelete && (
                     <TouchableOpacity
                       onPress={() => requestDeleteLatest(questionId)}
-                      className="w-7 h-7 rounded-full bg-white/90 items-center justify-center shadow-sm"
+                      disabled={disabled}
+                      className={`w-7 h-7 rounded-full bg-white/90 items-center justify-center shadow-sm ${disabled ? 'opacity-50' : ''}`}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                      <Trash2 size={12} color="#EF4444" />
+                      <Trash2 size={12} color={disabled ? "#94A3B8" : "#EF4444"} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -598,27 +602,30 @@ export default function ChildCounselingSection({
           <View className="flex-row gap-x-2 mb-6">
             <TouchableOpacity
               onPress={() => setMuac('green')}
-              className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'green' ? "bg-emerald-500 border-emerald-500" : "bg-white border-slate-200"}`}
+              disabled={disabled}
+              className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'green' ? "bg-emerald-500 border-emerald-500" : (disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201")}`}
             >
-              <Text className={`font-bold text-[15px] ${muac === 'green' ? "text-white" : "text-emerald-700"}`}>
+              <Text className={`font-bold text-[15px] ${muac === 'green' ? "text-white" : (disabled ? "text-slate-300" : "text-emerald-700")}`}>
                 {t("counseling_section.muac_normal")}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => setMuac('yellow')}
-              className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'yellow' ? "bg-yellow-400 border-yellow-400" : "bg-white border-slate-200"}`}
+              disabled={disabled}
+              className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'yellow' ? "bg-yellow-400 border-yellow-400" : (disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201")}`}
             >
-              <Text className={`font-bold text-[15px] ${muac === 'yellow' ? "text-white" : "text-yellow-700"}`}>
+              <Text className={`font-bold text-[15px] ${muac === 'yellow' ? "text-white" : (disabled ? "text-slate-300" : "text-yellow-700")}`}>
                 {t("counseling_section.muac_risk")}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => setMuac('red')}
-              className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'red' ? "bg-rose-500 border-rose-500" : "bg-white border-slate-200"}`}
+              disabled={disabled}
+              className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'red' ? "bg-rose-500 border-rose-500" : (disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201")}`}
             >
-              <Text className={`font-bold text-[15px] ${muac === 'red' ? "text-white" : "text-rose-700"}`}>
+              <Text className={`font-bold text-[15px] ${muac === 'red' ? "text-white" : (disabled ? "text-slate-300" : "text-rose-700")}`}>
                 {t("counseling_section.muac_severe")}
               </Text>
             </TouchableOpacity>
@@ -629,12 +636,13 @@ export default function ChildCounselingSection({
               <Text className="text-slate-600 font-semibold mb-2 text-[15px]">
                 {t("counseling_section.weight_kg")}
               </Text>
-              <View className="bg-slate-50 border border-slate-200 rounded-xl px-4">
+              <View className={`bg-slate-50 border border-slate-200 rounded-xl px-4 ${disabled ? 'opacity-50' : ''}`}>
                 <TextInput
                   placeholder="0.00"
                   value={weight}
                   onChangeText={setWeight}
                   keyboardType="numeric"
+                  editable={!disabled}
                   className="text-slate-800 font-semibold text-lg"
                 />
               </View>
@@ -644,12 +652,13 @@ export default function ChildCounselingSection({
               <Text className="text-slate-600 font-semibold mb-2 text-[15px]">
                 {t("counseling_section.height_cm")}
               </Text>
-              <View className="bg-slate-50 border border-slate-200 rounded-xl px-4">
+              <View className={`bg-slate-50 border border-slate-200 rounded-xl px-4 ${disabled ? 'opacity-50' : ''}`}>
                 <TextInput
                   placeholder="0.0"
                   value={height}
                   onChangeText={setHeight}
                   keyboardType="numeric"
+                  editable={!disabled}
                   className="text-slate-800 font-semibold text-lg"
                 />
               </View>
@@ -672,8 +681,8 @@ export default function ChildCounselingSection({
 
           <TouchableOpacity
             onPress={handleAddMalnutrition}
-            disabled={!muac}
-            className={`w-full py-2.5 rounded-xl items-center justify-center mb-4 ${muac ? "bg-primary" : "bg-slate-300"}`}
+            disabled={!muac || disabled}
+            className={`w-full py-2.5 rounded-xl items-center justify-center mb-4 ${(!muac || disabled) ? "bg-slate-300" : "bg-primary"}`}
           >
             <Text className="text-white font-bold text-lg">
               {t("counseling_section.add")}
@@ -702,9 +711,10 @@ export default function ChildCounselingSection({
                   </View>
                   <TouchableOpacity
                     onPress={() => handleAdd(q.id)}
-                    className="bg-slate-700 p-2 rounded-lg"
+                    disabled={disabled}
+                    className={`${disabled ? 'bg-slate-200' : 'bg-slate-700'} p-2 rounded-lg`}
                   >
-                    <Plus size={20} color="white" />
+                    <Plus size={20} color={disabled ? "#94A3B8" : "white"} />
                   </TouchableOpacity>
                 </View>
                 {renderLogsInline(q.id)}
@@ -735,9 +745,10 @@ export default function ChildCounselingSection({
                 </View>
                 <TouchableOpacity
                   onPress={() => handleAdd(q.id)}
-                  className="bg-[#475569] px-3 py-2 rounded-lg flex-row items-center ml-2"
+                  disabled={disabled}
+                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-3 py-2 rounded-lg flex-row items-center ml-2`}
                 >
-                  <Plus size={19} color="white" />
+                  <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
                 </TouchableOpacity>
               </View>
               {renderLogsInline(q.id)}
@@ -758,9 +769,10 @@ export default function ChildCounselingSection({
                   </View>
                   <TouchableOpacity
                     onPress={() => handleAdd(q.id)}
-                    className="bg-[#475569] px-3 py-2 rounded-lg flex-row items-center ml-2"
+                    disabled={disabled}
+                    className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-3 py-2 rounded-lg flex-row items-center ml-2`}
                   >
-                    <Plus size={19} color="white" />
+                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
                   </TouchableOpacity>
                 </View>
                 {renderLogsInline(q.id)}
@@ -778,9 +790,10 @@ export default function ChildCounselingSection({
                             </View>
                             <TouchableOpacity
                               onPress={() => handleAdd(subQ.id)}
-                              className="bg-[#475569] px-3 py-2 rounded-lg flex-row items-center ml-2"
+                              disabled={disabled}
+                              className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-3 py-2 rounded-lg flex-row items-center ml-2`}
                             >
-                              <Plus size={19} color="white" />
+                              <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
                             </TouchableOpacity>
                           </View>
                           {renderLogsInline(subQ.id)}

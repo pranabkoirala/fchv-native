@@ -70,6 +70,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       setSubmitting(true);
       const payload = {
         mother_id: record.id,
+        serial_no: record.serial_no,
         mother_name: record.mother_name,
         mother_age: record.mother_age,
         death_condition: deathCondition,
@@ -83,7 +84,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
         remarks: remarks,
       } as any;
 
-      await createMaternalDeath(payload);
+      const savedRecord = await createMaternalDeath(payload);
       showToast(t("maternal_death_modal.success"));
 
       // Reset form fields
@@ -104,9 +105,10 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       setErrDeathPlaceOther(false);
       setErrChildCondition(false);
 
-      onSuccess(payload as MaternalDeathStoreType);
+      onSuccess(savedRecord);
       onClose();
     } catch (error) {
+      console.error(error);
       Alert.alert(t("maternal_death_modal.error_title"), t("maternal_death_modal.error"));
     } finally {
       setSubmitting(false);
@@ -128,7 +130,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
       visible={visible}
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-[#F8FAFC]">
+      <SafeAreaView className="flex-1 bg-white">
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100 shadow-sm">
           <View>
@@ -184,7 +186,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
             {/* Condition of Death */}
             <View>
               <FieldLabel label={t("maternal_death_modal.condition_of_death")} hasError={errDeathCondition} />
-              <View className="mt-1 gap-y-2.5">
+              <View className="mt-1 gap-4 flex-row flex-wrap ">
                 {[
                   { value: 'Pregnant', label: t("maternal_death_modal.pregnant") },
                   { value: 'Labor', label: t("maternal_death_modal.labor") },
@@ -193,16 +195,16 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                   <Pressable
                     key={c.value}
                     onPress={() => { setDeathCondition(c.value); setErrDeathCondition(false); }}
-                    className={`w-full p-4 rounded-xl border flex-row items-center ${deathCondition === c.value
-                        ? 'bg-blue-50 border-[#0056D2]'
-                        : errDeathCondition ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
+                    className={`w-[46%] p-4 rounded-xl border flex-row items-center ${deathCondition === c.value
+                      ? 'bg-primary/5 border-[#475569]'
+                      : errDeathCondition ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
                       }`}
                   >
-                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${deathCondition === c.value ? 'border-[#0056D2]' : errDeathCondition ? 'border-red-300' : 'border-slate-300'
+                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${deathCondition === c.value ? 'border-[#475569]' : errDeathCondition ? 'border-red-300' : 'border-slate-300'
                       }`}>
-                      {deathCondition === c.value && <View className="w-2.5 h-2.5 rounded-full bg-[#0056D2]" />}
+                      {deathCondition === c.value && <View className="w-2.5 h-2.5 rounded-full bg-[#475569]" />}
                     </View>
-                    <Text className={`text-[16px] font-medium ${deathCondition === c.value ? 'text-[#0056D2]' : 'text-slate-700'
+                    <Text className={`text-[16px] font-medium ${deathCondition === c.value ? 'text-[#475569]' : 'text-slate-700'
                       }`}>{c.label}</Text>
                   </Pressable>
                 ))}
@@ -212,7 +214,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
             {/* Death Place */}
             <View>
               <FieldLabel label={t("maternal_death_modal.place_of_death")} hasError={errDeathPlace} />
-              <View className="mt-1 gap-y-2.5">
+              <View className="mt-1 gap-4 flex-row flex-wrap ">
                 {[
                   { value: 'Home', label: t("maternal_death_modal.home") },
                   { value: 'Institution', label: t("maternal_death_modal.institution") },
@@ -221,16 +223,16 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                   <Pressable
                     key={c.value}
                     onPress={() => { setDeathPlace(c.value); setErrDeathPlace(false); }}
-                    className={`w-full p-4 rounded-xl border flex-row items-center ${deathPlace === c.value
-                        ? 'bg-blue-50 border-[#0056D2]'
-                        : errDeathPlace ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
+                    className={`w-[46%] p-4 rounded-xl border flex-row items-center ${deathPlace === c.value
+                      ? 'bg-primary/5 border-[#475569]'
+                      : errDeathPlace ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
                       }`}
                   >
-                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${deathPlace === c.value ? 'border-[#0056D2]' : errDeathPlace ? 'border-red-300' : 'border-slate-300'
+                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${deathPlace === c.value ? 'border-[#475569]' : errDeathPlace ? 'border-red-300' : 'border-slate-300'
                       }`}>
-                      {deathPlace === c.value && <View className="w-2.5 h-2.5 rounded-full bg-[#0056D2]" />}
+                      {deathPlace === c.value && <View className="w-2.5 h-2.5 rounded-full bg-[#475569]" />}
                     </View>
-                    <Text className={`text-[16px] font-medium ${deathPlace === c.value ? 'text-[#0056D2]' : 'text-slate-700'
+                    <Text className={`text-[16px] font-medium ${deathPlace === c.value ? 'text-[#475569]' : 'text-slate-700'
                       }`}>{c.label}</Text>
                   </Pressable>
                 ))}
@@ -263,22 +265,18 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
                     key={c.value}
                     onPress={() => { setChildCondition(c.value); setErrChildCondition(false); }}
                     className={`flex-1 p-4 rounded-xl border flex-row items-center justify-center ${childCondition === c.value
-                        ? c.value === 'Alive' ? 'bg-emerald-50 border-emerald-500' : 'bg-red-50 border-red-400'
-                        : errChildCondition ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
+                      ? 'bg-primary/5 border-primary'
+                      : errChildCondition ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
                       }`}
                   >
-                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${childCondition === c.value
-                        ? c.value === 'Alive' ? 'border-emerald-500' : 'border-red-400'
-                        : errChildCondition ? 'border-red-300' : 'border-slate-300'
-                      }`}>
+                    <View className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 border-primary`}>
                       {childCondition === c.value && (
-                        <View className={`w-2.5 h-2.5 rounded-full ${c.value === 'Alive' ? 'bg-emerald-500' : 'bg-red-400'
-                          }`} />
+                        <View className={`w-2.5 h-2.5 rounded-full bg-primary`} />
                       )}
                     </View>
                     <Text className={`text-[16px] font-medium ${childCondition === c.value
-                        ? c.value === 'Alive' ? 'text-emerald-700' : 'text-red-600'
-                        : 'text-slate-700'
+                      ? 'text-primary'
+                      : 'text-slate-700'
                       }`}>{c.label}</Text>
                   </Pressable>
                 ))}

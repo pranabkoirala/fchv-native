@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: SCREEN_HEIGHT / 2 - 24,
     alignSelf: "center",
-    backgroundColor: "#69a5ffff",
+    backgroundColor: "#475569",
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 24,

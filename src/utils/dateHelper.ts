@@ -4,15 +4,16 @@ import NepaliDate from "nepali-date-converter";
  * Returns the current Nepali year and month as integers.
  * Month is 1-indexed (Baisakh=1, Chaitra=12).
  */
-export const getCurrentNepaliDate = (): { year: number; month: number } => {
+export const getCurrentNepaliDate = (): { year: number; month: number; day: number } => {
     return adToBs(new Date());
 };
 
-export const adToBs = (date: Date): { year: number; month: number } => {
-    const nd = new NepaliDate(date);
+export const adToBs = (date: Date | string): { year: number; month: number; day: number } => {
+    const nd = new NepaliDate(typeof date === 'string' ? new Date(date) : date);
     return {
         year: nd.getYear(),
         month: nd.getMonth() + 1,
+        day: nd.getDate(),
     };
 };
 

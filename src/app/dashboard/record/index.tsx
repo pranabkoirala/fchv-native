@@ -147,6 +147,9 @@ export default function RecordScreen() {
                       numberOfLines={1}
                     >
                       {item.name}
+                      {item.is_dead && (
+                        <Text className="text-rose-600 ml-2"> ({t("reports.status.deceased")})</Text>
+                      )}
                     </Text>
                     <View className="flex-row items-center">
                       <Text className="text-slate-600 font-semibold text-[14px] uppercase tracking-wide">

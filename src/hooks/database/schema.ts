@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS hmis_maternal_death (
     death_year INTEGER,
     death_place TEXT, -- 'Home', 'Institution', 'Other'
     death_place_other TEXT,
+    child_condition TEXT, -- 'Alive', 'Dead'
     remarks TEXT,
     reg_year INTEGER,
     reg_month INTEGER,
@@ -123,11 +124,15 @@ CREATE TABLE IF NOT EXISTS hmis_maternal_death (
 CREATE TABLE IF NOT EXISTS hmis_newborn_death (
     id TEXT PRIMARY KEY,
     mother_id TEXT,
+    child_id TEXT,
     mother_name TEXT,
     baby_name TEXT,
     birth_day INTEGER,
     birth_month INTEGER,
     birth_year INTEGER,
+    death_day INTEGER,
+    death_month INTEGER,
+    death_year INTEGER,
     birth_condition TEXT, -- 'Preterm', 'LowWeight', 'Normal', 'Other'
     birth_condition_other TEXT,
     death_age_days INTEGER,
@@ -144,7 +149,8 @@ CREATE TABLE IF NOT EXISTS hmis_newborn_death (
     is_deleted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    FOREIGN KEY(mother_id) REFERENCES mother(id)
+    FOREIGN KEY(mother_id) REFERENCES mother(id),
+    FOREIGN KEY(child_id) REFERENCES child_monitoring(id)
 );
 
 CREATE TABLE IF NOT EXISTS child_monitoring (
@@ -162,6 +168,7 @@ CREATE TABLE IF NOT EXISTS child_monitoring (
     early_breastfeeding INTEGER DEFAULT 0,
     asphyxiated_newborn INTEGER DEFAULT 0,
     is_all_given INTEGER DEFAULT 0,
+    gender TEXT, -- 'Male', 'Female'
     remarks TEXT,
     reg_year INTEGER,
     reg_month INTEGER,
@@ -179,13 +186,15 @@ CREATE TABLE IF NOT EXISTS supplements (
     iron_post_delivery INTEGER DEFAULT 0,
     vitamin_a_post_delivery INTEGER DEFAULT 0,
     calcium INTEGER DEFAULT 0,
+    pregnancy_id TEXT,
     reg_year INTEGER,
     reg_month INTEGER,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    FOREIGN KEY(mother_id) REFERENCES mother(id)
+    FOREIGN KEY(mother_id) REFERENCES mother(id),
+    FOREIGN KEY(pregnancy_id) REFERENCES pregnancy(id)
 );
 
 CREATE TABLE IF NOT EXISTS family_planning (
@@ -195,13 +204,15 @@ CREATE TABLE IF NOT EXISTS family_planning (
     ocp_qty INTEGER DEFAULT 0,
     ecp_qty INTEGER DEFAULT 0,
     condom_qty INTEGER DEFAULT 0,
+    pregnancy_id TEXT,
     reg_year INTEGER,
     reg_month INTEGER,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    FOREIGN KEY(mother_id) REFERENCES mother(id)
+    FOREIGN KEY(mother_id) REFERENCES mother(id),
+    FOREIGN KEY(pregnancy_id) REFERENCES pregnancy(id)
 );
 
 CREATE TABLE IF NOT EXISTS counseling (

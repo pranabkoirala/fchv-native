@@ -12,16 +12,19 @@ import VaccinationModal from "./VaccinationModal";
 interface VaccinationSectionProps {
     childId: string;
     childName: string;
+    disabled?: boolean;
 }
 
-export default function VaccinationSection({ childId, childName }: VaccinationSectionProps) {
+export default function VaccinationSection({ childId, childName, disabled }: VaccinationSectionProps) {
     const { language } = useLanguage();
     const [modalVisible, setModalVisible] = useState(false);
     const [takenVaccines, setTakenVaccines] = useState<any[]>([]);
 
     const takenCount = takenVaccines.length;
-
     const totalVaccines = VACCINE_SCHEDULE.reduce((acc, slot) => acc + slot.vaccines.length, 0);
+
+    const isFullyVaccinated = takenCount === totalVaccines && totalVaccines > 0;
+    const isEntryDisabled = isFullyVaccinated || disabled;
 
     const loadTakenData = async () => {
         try {
@@ -134,12 +137,12 @@ export default function VaccinationSection({ childId, childName }: VaccinationSe
                 <TouchableOpacity
                     onPress={() => setModalVisible(true)}
                     activeOpacity={0.8}
-                    disabled={takenCount === totalVaccines && totalVaccines > 0}
-                    className={`${takenCount === totalVaccines && totalVaccines > 0 ? "bg-slate-200" : "bg-[#475569]"} px-6 py-3 rounded-full flex-row items-center justify-center`}
+                    disabled={isEntryDisabled}
+                    className={`${isEntryDisabled ? "bg-slate-200" : "bg-[#475569]"} px-6 py-3 rounded-full flex-row items-center justify-center`}
                 >
-                    <Syringe size={18} color={takenCount === totalVaccines && totalVaccines > 0 ? "#94a3b8" : "white"} strokeWidth={2.5} />
-                    <Text className={`${takenCount === totalVaccines && totalVaccines > 0 ? "text-slate-400" : "text-white"} font-bold ml-2 text-[15px]`}>
-                        {takenCount === totalVaccines && totalVaccines > 0
+                    <Syringe size={18} color={isEntryDisabled ? "#94a3b8" : "white"} strokeWidth={2.5} />
+                    <Text className={`${isEntryDisabled ? "text-slate-400" : "text-white"} font-bold ml-2 text-[15px]`}>
+                        {isFullyVaccinated
                             ? (language === "np" ? "सबै खोप पुरा भयो" : "All Vaccines Taken")
                             : (language === "np" ? "खोप थप्नुहोस्" : "Add Vaccination")
                         }

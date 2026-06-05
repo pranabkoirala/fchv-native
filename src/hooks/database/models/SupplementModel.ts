@@ -5,6 +5,7 @@ import { getDb } from "../db";
 export interface SupplementStoreType {
   id: string;
   mother_id: string;
+  pregnancy_id: string | null;
   iron_pregnancy: number;
   iron_post_delivery: number;
   vitamin_a_post_delivery: number;
@@ -18,17 +19,26 @@ export interface SupplementStoreType {
 
 export async function getSupplementByMother(
   mother_id: string,
+  pregnancy_id?: string | null,
 ): Promise<SupplementStoreType | null> {
   const db = await getDb();
-  const result = await db.getFirstAsync<SupplementStoreType>(
-    `SELECT * FROM supplements WHERE mother_id = ? AND is_deleted = 0`,
-    [mother_id],
-  );
+  let query = `SELECT * FROM supplements WHERE mother_id = ? AND is_deleted = 0`;
+  const params: any[] = [mother_id];
+
+  if (pregnancy_id) {
+    query += ` AND pregnancy_id = ?`;
+    params.push(pregnancy_id);
+  } else {
+    query += ` AND pregnancy_id IS NULL`;
+  }
+
+  const result = await db.getFirstAsync<SupplementStoreType>(query, params);
   return result || null;
 }
 
 export async function saveSupplement(payload: {
   mother_id: string;
+  pregnancy_id?: string | null;
   iron_pregnancy?: number;
   iron_post_delivery?: number;
   vitamin_a_post_delivery?: number;
@@ -38,8 +48,8 @@ export async function saveSupplement(payload: {
   const now = new Date().toISOString();
   const id = Crypto.randomUUID();
 
-  // First check if it exists
-  const existing = await getSupplementByMother(payload.mother_id);
+  // First check if it exists in this specific context (mother + pregnancy)
+  const existing = await getSupplementByMother(payload.mother_id, payload.pregnancy_id);
 
   if (existing) {
     // Update
@@ -83,12 +93,13 @@ export async function saveSupplement(payload: {
     // Insert
     await db.runAsync(
       `INSERT INTO supplements (
-        id, mother_id, iron_pregnancy, iron_post_delivery, vitamin_a_post_delivery, calcium,
+        id, mother_id, pregnancy_id, iron_pregnancy, iron_post_delivery, vitamin_a_post_delivery, calcium,
         is_synced, is_deleted, reg_month, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`,
       [
         id,
         payload.mother_id,
+        payload.pregnancy_id || null,
         payload.iron_pregnancy || 0,
         payload.iron_post_delivery || 0,
         payload.vitamin_a_post_delivery || 0,
@@ -102,6 +113,7 @@ export async function saveSupplement(payload: {
     return {
       id,
       mother_id: payload.mother_id,
+      pregnancy_id: payload.pregnancy_id || null,
       iron_pregnancy: payload.iron_pregnancy || 0,
       iron_post_delivery: payload.iron_post_delivery || 0,
       vitamin_a_post_delivery: payload.vitamin_a_post_delivery || 0,

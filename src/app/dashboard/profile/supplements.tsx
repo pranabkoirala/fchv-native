@@ -5,6 +5,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import SupplementModal from "../../../components/forms/SupplementModal";
 import { useToast } from "../../../context/ToastContext";
 import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
+import { getPregnancyByMotherId } from "../../../hooks/database/models/PregnantWomenModal";
 import {
   getSupplementByMother,
   SupplementStoreType,
@@ -21,12 +22,13 @@ const SectionTitle = ({ title, icon: Icon, colorClass }: any) => (
   </View>
 );
 
-export default function SupplementsScreen({ motherId }: { motherId?: string }) {
+export default function SupplementsScreen({ motherId, disabled }: { motherId?: string; disabled?: boolean }) {
   const { t } = useTranslation();
   const id = motherId;
   const { showToast } = useToast();
 
   const [motherName, setMotherName] = useState("");
+  const [currentPregnancyId, setCurrentPregnancyId] = useState<string | null>(null);
   const [supplementsRecord, setSupplementsRecord] =
     useState<SupplementStoreType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +48,12 @@ export default function SupplementsScreen({ motherId }: { motherId?: string }) {
       if (mother) {
         setMotherName(mother.name);
       }
-      const suppData = await getSupplementByMother(motherId);
+
+      const pregnancy = await getPregnancyByMotherId(motherId);
+      const pregId = pregnancy?.id || null;
+      setCurrentPregnancyId(pregId);
+
+      const suppData = await getSupplementByMother(motherId, pregId);
       setSupplementsRecord(suppData);
     } catch (e) {
       console.error(e);
@@ -62,17 +69,6 @@ export default function SupplementsScreen({ motherId }: { motherId?: string }) {
       setLoading(false);
     }
   }, [id]);
-
-  // if (loading) {
-  //   return (
-  //     <View className="bg-white p-10 rounded-xl border border-slate-100 items-center justify-center">
-  //       <ActivityIndicator size="small" color={Colors.primary} />
-  //       <Text className="mt-2 text-slate-400 text-xs font-medium">
-  //         {t("profile.states.loading")}
-  //       </Text>
-  //     </View>
-  //   );
-  // }
 
   return (
     <>
@@ -128,7 +124,7 @@ export default function SupplementsScreen({ motherId }: { motherId?: string }) {
               {item.val ? (
                 <View className="px-3 py-1 bg-emerald-50 rounded-full flex-row items-center">
                   <Text className="text-[12px] font-semibold uppercase tracking-wider text-emerald-600">
-                    {t("profile.supplements.done") || "Given"}
+                    {t("profile.supplements.done")}
                   </Text>
                 </View>
               ) : (
@@ -138,12 +134,10 @@ export default function SupplementsScreen({ motherId }: { motherId?: string }) {
                     setSelectedSupplementName(item.label);
                     setSupplementModalVisible(true);
                   }}
-                  className="px-2 py-1.5 rounded-lg bg-[#475569]"
+                  disabled={disabled}
+                  className={`px-2 py-1.5 rounded-lg ${disabled ? "bg-slate-100" : "bg-[#475569]"}`}
                 >
-                  {/* <Text className="text-white text-[12px] font-bold">
-                    {t("profile.supplements.add_btn")}
-                  </Text> */}
-                  <Plus size={18} color="white" strokeWidth={3} />
+                  <Plus size={18} color={disabled ? "#CBD5E1" : "white"} strokeWidth={3} />
                 </TouchableOpacity>
               )}
             </View>
@@ -157,6 +151,7 @@ export default function SupplementsScreen({ motherId }: { motherId?: string }) {
           onClose={() => setSupplementModalVisible(false)}
           motherId={id}
           motherName={motherName}
+          pregnancyId={currentPregnancyId}
           supplementKey={selectedSupplementKey}
           supplementName={selectedSupplementName}
           onSuccess={() => loadData(id)}

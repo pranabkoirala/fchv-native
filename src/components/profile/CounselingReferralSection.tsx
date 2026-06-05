@@ -19,10 +19,12 @@ import { toNepaliNumbers } from "../../utils/dateHelper";
 
 interface CounselingReferralSectionProps {
   motherId: string;
+  disabled?: boolean;
 }
 
 export default function CounselingReferralSection({
   motherId,
+  disabled
 }: CounselingReferralSectionProps) {
   const { showToast } = useToast();
   const { language, t } = useLanguage();
@@ -105,11 +107,11 @@ export default function CounselingReferralSection({
         pregnancy_id: currentPregnancyId,
         answers: JSON.stringify(newAnswers),
       });
-      showToast(t("counseling_section.added_successfully") || "Recorded successfully");
+      showToast(t("counseling_section.added_successfully"));
       loadData(); // Refresh history
     } catch (e) {
       console.error("Failed to save answer", e);
-      showToast("Failed to save");
+      showToast(t("counseling_section.failed_to_save"));
       setAnswers(answers);
     }
   };
@@ -142,11 +144,11 @@ export default function CounselingReferralSection({
         pregnancy_id: currentPregnancyId,
         answers: JSON.stringify(newAnswers),
       });
-      showToast(t("counseling_section.deleted_successfully") || "Deleted successfully");
+      showToast(t("counseling_section.deleted_successfully"));
       loadData(); // Refresh history
     } catch (e) {
       console.error("Failed to delete", e);
-      showToast("Failed to delete");
+      showToast(t("counseling_section.failed_to_delete"));
       setAnswers(answers);
     } finally {
       setDeleteModal(false);
@@ -168,12 +170,12 @@ export default function CounselingReferralSection({
               <Trash2 size={22} color="#DC2626" />
             </View>
             <Text className="text-slate-800 text-xl font-semibold text-center">
-              {t("counseling_section.delete_confirm_title") || "Confirm Delete"}
+              {t("counseling_section.delete_confirm_title")}
             </Text>
           </View>
           <View className="px-5 py-4">
             <Text className="text-slate-600 text-[15px] text-center leading-relaxed">
-              {t("counseling_section.delete_confirm_message") || "Are you sure you want to delete the latest record?"}
+              {t("counseling_section.delete_confirm_message")}
             </Text>
           </View>
           <View className="flex-row border-t pb-5 border-slate-100">
@@ -182,7 +184,7 @@ export default function CounselingReferralSection({
               className="flex-1 py-3.5 items-center"
             >
               <Text className="text-slate-500 font-medium text-[15px]">
-                {t("counseling_section.delete_confirm_no") || "No"}
+                {t("counseling_section.delete_confirm_no")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -190,7 +192,7 @@ export default function CounselingReferralSection({
               className="flex-1 py-3.5 items-center"
             >
               <Text className="text-red-600 font-medium text-[15px]">
-                {t("counseling_section.delete_confirm_yes") || "Yes"}
+                {t("counseling_section.delete_confirm_yes")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -221,14 +223,15 @@ export default function CounselingReferralSection({
           return (
             <View key={index} className={`flex-row items-center ${canDelete ? "bg-red-50 border border-red-100" : "bg-slate-50 border border-slate-100"} px-2 py-1 rounded-md`}>
               <Text className={`text-[13px] font-medium ${canDelete ? "text-red-700" : "text-slate-500"}`}>
-                #{language === "np" ? toNepaliNumbers(index + 1) : index + 1}: {dateStr}
+                {t("counseling_section.log_prefix", { index: language === "np" ? toNepaliNumbers(index + 1) : index + 1, date: dateStr })}
               </Text>
               {canDelete && (
                 <TouchableOpacity
                   onPress={() => requestDeleteLatest(questionId)}
+                  disabled={disabled}
                   className="ml-1.5"
                 >
-                  <Trash2 size={10} color="#DC2626" />
+                  <Trash2 size={10} color={disabled ? "#94A3B8" : "#DC2626"} />
                 </TouchableOpacity>
               )}
             </View>
@@ -254,15 +257,15 @@ export default function CounselingReferralSection({
               <Text
                 className={"text-slate-800 font-semibold text-[16px] leading-relaxed"}
               >
-                {language === "np" ? question.ne : question.en}
+                {t(`counseling_section.questions.${question.id}`)}
               </Text>
             </View>
             <TouchableOpacity
-              disabled={disableAdd}
+              disabled={disableAdd || disabled}
               onPress={() => handleAdd(question.id)}
-              className={`flex-row items-center px-2 py-1.5 rounded-lg ${disableAdd ? "bg-slate-100" : "bg-[#475569]"}`}
+              className={`flex-row items-center px-2 py-1.5 rounded-lg ${(disableAdd || disabled) ? "bg-slate-100" : "bg-[#475569]"}`}
             >
-              <Plus size={19} color={disableAdd ? "#94a3b8" : "white"} strokeWidth={3} />
+              <Plus size={19} color={(disableAdd || disabled) ? "#94a3b8" : "white"} strokeWidth={3} />
             </TouchableOpacity>
           </View>
           {isRecordedEver && renderLogs(question.id)}
@@ -284,7 +287,7 @@ export default function CounselingReferralSection({
             <ClipboardList size={18} color="#64748B" />
           </View>
           <Text className="text-xl font-medium text-slate-800">
-            {language === 'np' ? 'परामर्श र सेवा विवरण' : 'General Counseling Details'}
+            {t("counseling_section.general_details")}
           </Text>
         </View>
         <View>
@@ -301,7 +304,7 @@ export default function CounselingReferralSection({
               <ClipboardList size={18} color="#64748B" />
             </View>
             <Text className="text-xl font-semibold text-gray-800">
-              {language === 'np' ? 'गर्भवती भए पछिको परामर्श' : 'Counseling After Pregnancy'}
+              {t("counseling_section.after_pregnancy")}
             </Text>
           </View>
           <View>
@@ -319,7 +322,7 @@ export default function CounselingReferralSection({
               <ClipboardList size={18} color="#64748B" />
             </View>
             <Text className="text-xl font-semibold text-gray-800">
-              {language === 'np' ? 'सुत्केरी र बच्चाको हेरचाह परामर्श' : 'Counseling After Child Birth'}
+              {t("counseling_section.after_child_birth")}
             </Text>
           </View>
           <View>

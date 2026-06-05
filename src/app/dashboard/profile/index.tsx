@@ -13,7 +13,7 @@ import {
   User
 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "../../../components/CustomHeader";
@@ -426,22 +426,33 @@ export default function HmisRecordProfileScreen() {
                     </Text>
                   </View>
                 </View>
-                <Text className="text-[#1E293B] text-2xl font-normal leading-tight">
-                  {record.mother_name}
-                </Text>
+                <View className="flex-row items-center">
+                  <Text className="text-[#1E293B] text-2xl font-normal leading-tight">
+                    {record.mother_name}
+                  </Text>
+                  {
+                    !!existingDeathRecord && (
+                      <Text className="text-rose-600 text-[15px] font-semibold"> ({t("reports.status.deceased")})</Text>
+                    )
+                  }
+                </View>
                 <Text className="text-[#64748B] font-medium text-[15px] mt-1">
                   {toDisplayNumber(record.mother_age ?? 0, language)} {t("profile.identity.years")} •{" "}
                   {t("profile.identity.maternal_health")}
                 </Text>
               </View>
               <View>
-                <TouchableOpacity className="ml-2 p-3 bg-gray-50 rounded-full" onPress={() =>
-                  router.push({
-                    pathname: "/dashboard/profile/complete-profile",
-                    params: { id: record.id, from: "profile" },
-                  } as any)
-                }>
-                  <Pencil size={16} color="#64748B" strokeWidth={2} />
+                <TouchableOpacity
+                  className={`ml-2 p-3 rounded-full ${!!existingDeathRecord ? 'bg-slate-50 opacity-50' : 'bg-gray-50'}`}
+                  disabled={!!existingDeathRecord}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/dashboard/profile/complete-profile",
+                      params: { id: record.id, from: "profile" },
+                    } as any)
+                  }
+                >
+                  <Pencil size={16} color={!!existingDeathRecord ? "#CBD5E1" : "#64748B"} strokeWidth={2} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -471,6 +482,9 @@ export default function HmisRecordProfileScreen() {
                         <Baby size={16} color="#64748B" />
                         <Text className="text-slate-600 text-[15px] pl-1">
                           {child.baby_name || (language === 'np' ? 'नाम नखुलेको' : 'Unnamed')}
+                          {child.status === 'dead' && (
+                            <Text className="text-rose-600 ml-1"> ({t("reports.status.deceased")})</Text>
+                          )}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -487,10 +501,11 @@ export default function HmisRecordProfileScreen() {
                     params: { id: record.id, step: "1", from: "profile", mode: "new" },
                   } as any)
                 }
-                className="flex-row items-center justify-end px-2"
+                disabled={!!existingDeathRecord}
+                className={`flex-row items-center justify-end px-2 ${!!existingDeathRecord ? 'opacity-50' : ''}`}
               >
-                <Plus size={17} color="#64748B" strokeWidth={3} />
-                <Text className="text-gray-600 font-semibold ml-2 text-[15px]">
+                <Plus size={17} color={!!existingDeathRecord ? "#CBD5E1" : "#64748B"} strokeWidth={3} />
+                <Text className={`font-semibold ml-2 text-[15px] ${!!existingDeathRecord ? 'text-slate-300' : 'text-gray-600'}`}>
                   {language === "np"
                     ? "गर्भावस्था थप्नुहोस्"
                     : "Add Pregnancy"}
@@ -504,10 +519,11 @@ export default function HmisRecordProfileScreen() {
                     params: { motherId: record.id, from: "profile" }
                   } as any)
                 }
-                className="flex-row items-center justify-end px-2"
+                disabled={!!existingDeathRecord}
+                className={`flex-row items-center justify-end px-2 ${!!existingDeathRecord ? 'opacity-50' : ''}`}
               >
-                <Plus size={17} color="#64748B" strokeWidth={3} />
-                <Text className="text-[#475569] font-semibold ml-2 text-[15px]">
+                <Plus size={17} color={!!existingDeathRecord ? "#CBD5E1" : "#64748B"} strokeWidth={3} />
+                <Text className={`font-semibold ml-2 text-[15px] ${!!existingDeathRecord ? 'text-slate-300' : 'text-gray-600'}`}>
                   {language === "np" ? "बच्चा थप्नुहोस्" : "Add Child"}
                 </Text>
               </TouchableOpacity>
@@ -656,8 +672,8 @@ export default function HmisRecordProfileScreen() {
             )}
           </View>
 
-          <CounselingReferralSection motherId={record.id} />
-          <SupplementsScreen motherId={record.id} />
+          <CounselingReferralSection motherId={record.id} disabled={!!existingDeathRecord} />
+          <SupplementsScreen motherId={record.id} disabled={!!existingDeathRecord} />
 
           <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm shadow-slate-200">
             <SectionTitle
@@ -666,7 +682,7 @@ export default function HmisRecordProfileScreen() {
               colorClass="bg-indigo-600"
             />
             <View className="p-4">
-              <FamilyPlanningSection motherId={record.id} />
+              <FamilyPlanningSection motherId={record.id} disabled={!!existingDeathRecord} />
             </View>
           </View>
 
@@ -760,29 +776,23 @@ export default function HmisRecordProfileScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    activeOpacity={0.7}
                     onPress={() => {
-                      if (item.key === "maternal") {
-                        if (existingDeathRecord) {
-                          Alert.alert(
-                            t("profile.alerts.already_reported"),
-                            t("profile.alerts.maternal_exists"),
-                          );
-                        } else {
-                          setMaternalDeathModalVisible(true);
-                        }
-                      } else if (item.key === "newborn") {
+                      if (item.key === "newborn") {
                         setNewbornDeathModalVisible(true);
                       }
+                      else {
+                        setMaternalDeathModalVisible(true);
+                      }
                     }}
-                    className={`flex-row items-center justify-center py-2.5 rounded-lg ${item.exists ? "bg-rose-500" : "bg-white border border-slate-200"}`}
+                    disabled={item.exists}
+                    className={`flex-row items-center justify-center py-2.5 rounded-lg ${item.exists ? "bg-rose-100 border border-rose-200" : "bg-white border border-slate-200"}`}
                   >
                     <Text
-                      className={`text-[15px] font-semibold ${item.exists ? "text-white" : "text-slate-600"}`}
+                      className={`text-[15px] font-semibold ${item.exists ? "text-rose-400" : "text-slate-600"}`}
                     >
                       {item.key === "newborn"
                         ? item.exists
-                          ? t("profile.mortality.add_more")
+                          ? t("profile.mortality.submitted")
                           : t("profile.mortality.add")
                         : item.exists
                           ? t("profile.mortality.submitted")

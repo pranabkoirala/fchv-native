@@ -25,7 +25,8 @@
     "welcome": "Welcome",
     "update": "Update",
     "add": "Add",
-    "delete": "Delete"
+    "delete": "Delete",
+    "save": "Save"
   },
   "dashboard": {
     "title": "FCHV Dashboard",
@@ -414,7 +415,7 @@
       "pending": "Pending",
       "add_title": "Add Supplement",
       "confirm_q": "Did you give {{name}} to {{mother}}?",
-      "give_btn": "Yes, Given",
+      "give_btn": "Given",
       "add_btn": "Add"
     },
     "birth_pnc": {
@@ -649,6 +650,7 @@
   },
   "newborn_death_modal": {
     "title": "Newborn / Child Death Record",
+    "after_added": "Submitted",
     "subtitle": "Newborn & Child Death (0–59 months)",
     "baby_name": "Child's Name",
     "baby_name_placeholder": "Enter child's name...",
@@ -852,7 +854,14 @@
       "enter_custom": "Please enter the custom method"
     },
     "remove_confirm_title": "Remove Method",
-    "remove_confirm_msg": "Are you sure you want to remove this family planning method?"
+    "remove_confirm_msg": "Are you sure you want to remove this family planning method?",
+    "add_title": "Add Family Planning Method",
+    "pills": "Pills",
+    "ocp_label": "OCP (Regular Pills)",
+    "ecp_label": "ECP (Emergency Pills)",
+    "condoms_label": "Condoms",
+    "condom_label": "Condom",
+    "cancel": "Cancel"
   },
   "todo_tasks": {
     "title": "Tasks",
@@ -1014,6 +1023,7 @@
     "identity": {
       "birth_place": "Birth Location",
       "status": "Birth Status",
+      "gender": "Gender",
       "baby_weight": "Baby Weight",
       "date_of_birth": "Date of Birth",
       "years": "Years",
@@ -1030,7 +1040,9 @@
       "alive": "Alive",
       "dead": "Dead",
       "normal": "Normal",
-      "low_weight": "Low Weight"
+      "low_weight": "Low Weight",
+      "male": "Male",
+      "female": "Female"
     },
     "counseling": {
       "vaccination": "Vaccination",
@@ -1063,7 +1075,8 @@
     "select_mother_placeholder": "Select Mother",
     "baby_name": "Baby's Name",
     "baby_name_placeholder": "Enter baby's name",
-    "date_of_birth": "Date of Birth (B.S.)",
+    "date_of_birth": "Date of Birth",
+    "gender": "Gender",
     "select_date": "Select Date",
     "birth_place": "Birth Place",
     "select_birth_place": "Select Birth Place",
@@ -1096,7 +1109,9 @@
       "dead": "Dead",
       "normal": "Normal Weight",
       "low": "Low Weight",
-      "very_low": "Very Low Weight",
+      "very_low": "Very Low (<1.5kg)",
+      "male": "Male",
+      "female": "Female",
       "umbilical_ointment": "Umbilical Ointment",
       "skin_to_skin": "Skin to Skin",
       "early_breastfeeding": "Early Breastfeeding"
@@ -1123,14 +1138,34 @@
     "counseling": "Counseling",
     "added_successfully": "Counseling added!",
     "record": "Record",
-    "delete_confirm_title": "Delete Counseling?",
+    "delete_confirm_title": "Confirm Delete",
     "delete_confirm_msg": "Are you sure you want to delete the latest entry?",
     "delete": "Delete",
     "cancel": "Cancel",
-    "deleted_successfully": "Counseling entry deleted!",
-    "delete_confirm_message": "Are you sure you want to remove the latest counseling entry?",
-    "delete_confirm_yes": "Yes, Delete",
-    "delete_confirm_no": "Cancel"
+    "deleted_successfully": "Deleted successfully",
+    "delete_confirm_message": "Are you sure you want to delete the latest record?",
+    "delete_confirm_yes": "Yes",
+    "delete_confirm_no": "No",
+    "general_details": "General Counseling Details",
+    "after_pregnancy": "Counseling After Pregnancy",
+    "after_child_birth": "Counseling After Child Birth",
+    "failed_to_save": "Failed to save",
+    "failed_to_delete": "Failed to delete",
+    "log_prefix": "#{{index}}: {{date}}",
+    "questions": {
+      "pregnancy_test_referral": "Was the client referred to a health facility for a pregnancy test?",
+      "labor_starts_advice": "Was the client advised to go to a health facility as soon as labor pains start?",
+      "delivery_transport_arranged": "Has transportation been arranged to take the client to a health facility for delivery?",
+      "early_breastfeeding_advice": "Was the client advised to start breastfeeding within the first hour of birth?",
+      "skin_to_skin_advice": "Was the client advised to keep the baby skin-to-skin immediately after birth?",
+      "bathed_after_24_hours": "Did you bathe the baby only after 24 hours of birth?",
+      "danger_signs_pregnancy_advice": "Was the client advised to go to a health facility immediately if danger signs like bleeding or severe lower abdominal pain appear?",
+      "danger_signs_postpartum_advice": "Was the client advised to go to a health facility immediately if any danger signs appear in the mother or newborn?",
+      "problem_referral": "Was the mother or baby referred to a health facility immediately if a problem arose?",
+      "exclusive_breastfeeding_advice": "Was the client advised to exclusively breastfeed the baby for the first 6 months?",
+      "postnatal_family_care": "Are family members taking good care of the postnatal mother?",
+      "family_planning_advice": "Was counseling provided on family planning methods?"
+    }
   },
   "mothers_group_meeting": {
     "title": "Mothers' Group Meeting",
@@ -1162,5 +1197,47 @@
     "no_topics_recorded": "No topics recorded.",
     "no_decisions_recorded": "No decisions recorded.",
     "loading": "Loading..."
+  },
+  "newborn_death": {
+    "title": "Newborn Death Record",
+    "birth_condition": "Death Condition",
+    "birth_condition_placeholder": "Select condition",
+    "death_date": "Death Date",
+    "death_age": "Death Age",
+    "death_age_unit": "Age Unit",
+    "days": "Days",
+    "months": "Months",
+    "cause_of_death": "Cause of Death",
+    "cause_of_death_placeholder": "Select cause",
+    "death_place": "Death Place",
+    "death_place_placeholder": "Select place",
+    "other_placeholder": "Please specify...",
+    "gender": "Gender",
+    "gender_placeholder": "Select gender",
+    "remarks": "Remarks",
+    "remarks_placeholder": "Any additional comments...",
+    "save_success": "Death record saved successfully",
+    "save_error": "Failed to save death record",
+    "conditions": {
+      "preterm": "Preterm",
+      "low_weight": "Low Weight",
+      "normal": "Normal Weight",
+      "other": "Other"
+    },
+    "causes": {
+      "asphyxia": "Asphyxia",
+      "hypothermia": "Hypothermia",
+      "infection": "Infection",
+      "other": "Other"
+    },
+    "places": {
+      "home": "Home",
+      "institution": "Institution",
+      "other": "Other"
+    },
+    "genders": {
+      "male": "Male",
+      "female": "Female"
+    }
   }
 }

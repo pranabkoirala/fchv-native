@@ -1,18 +1,19 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Text } from "react-native";
 import { saveSupplement } from "../../hooks/database/models/SupplementModel";
-import { useTranslation } from "react-i18next";
 import ConfirmActionModal from "../common/ConfirmActionModal";
 
 interface SupplementModalProps {
   visible: boolean;
   onClose: () => void;
   motherId: string;
+  pregnancyId: string | null;
   supplementKey:
-    | "iron_pregnancy"
-    | "iron_post_delivery"
-    | "vitamin_a_post_delivery"
-    | "calcium";
+  | "iron_pregnancy"
+  | "iron_post_delivery"
+  | "vitamin_a_post_delivery"
+  | "calcium";
   supplementName: string;
   onSuccess: () => void;
   showToast: (msg: string) => void;
@@ -24,6 +25,7 @@ export default function SupplementModal({
   onClose,
   motherId,
   motherName,
+  pregnancyId,
   supplementKey,
   supplementName,
   onSuccess,
@@ -35,7 +37,7 @@ export default function SupplementModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      const payload = { mother_id: motherId } as any;
+      const payload = { mother_id: motherId, pregnancy_id: pregnancyId } as any;
       payload[supplementKey] = 1;
 
       await saveSupplement(payload);

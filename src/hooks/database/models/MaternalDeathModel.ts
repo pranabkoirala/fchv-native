@@ -1,5 +1,5 @@
 import * as Crypto from "expo-crypto";
-import { getCurrentNepaliMonth } from "../../../utils/dateHelper";
+import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import {
   CreateMaternalDeathPayload,
@@ -11,29 +11,15 @@ export async function createMaternalDeath(
 ): Promise<MaternalDeathStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
+  const { year: currentYear, month: currentMonth } = getCurrentNepaliDate();
 
   const id = Crypto.randomUUID();
 
   await db.runAsync(
     `INSERT INTO hmis_maternal_death 
       (id, mother_id, serial_no, mother_name, mother_age, death_condition, death_condition_other,
-       death_day, death_month, death_year, death_place, death_place_other, child_condition, remarks, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      mother_id = excluded.mother_id,
-      serial_no = excluded.serial_no,
-      mother_name = excluded.mother_name,
-      mother_age = excluded.mother_age,
-      death_condition = excluded.death_condition,
-      death_condition_other = excluded.death_condition_other,
-      death_day = excluded.death_day,
-      death_month = excluded.death_month,
-      death_year = excluded.death_year,
-      death_place = excluded.death_place,
-      death_place_other = excluded.death_place_other,
-      child_condition = excluded.child_condition,
-      remarks = excluded.remarks,
-      updated_at = excluded.updated_at;`,
+       death_day, death_month, death_year, death_place, death_place_other, child_condition, remarks, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       payload.mother_id ?? null,
@@ -49,7 +35,8 @@ export async function createMaternalDeath(
       payload.death_place_other ?? "",
       payload.child_condition ?? null,
       payload.remarks ?? null,
-      getCurrentNepaliMonth(),
+      currentYear,
+      currentMonth,
       now,
       now,
     ],
@@ -57,7 +44,8 @@ export async function createMaternalDeath(
 
   return {
     ...payload,
-    reg_month: getCurrentNepaliMonth(),
+    id,
+    reg_month: `${currentYear}-${String(currentMonth).padStart(2, '0')}`,
     created_at: now,
     updated_at: now,
   };

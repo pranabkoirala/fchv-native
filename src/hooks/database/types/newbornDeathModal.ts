@@ -6,6 +6,9 @@ export interface NewbornDeathStoreType {
   birth_day: number;
   birth_month: number;
   birth_year: number;
+  death_day?: number;
+  death_month?: number;
+  death_year?: number;
   birth_condition: string; // 'Preterm', 'LowWeight', 'Normal', 'Other'
   birth_condition_other?: string;
   death_age_days: number;

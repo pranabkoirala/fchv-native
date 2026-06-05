@@ -14,6 +14,7 @@ export interface InfantMonitoringStoreType {
   early_breastfeeding: number;
   asphyxiated_newborn: number;
   is_all_given: number;
+  gender?: 'Male' | 'Female';
   remarks?: string;
   reg_year?: number;
   reg_month?: number;

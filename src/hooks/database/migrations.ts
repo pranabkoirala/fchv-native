@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 38;
+export const SCHEMA_VERSION = 43;
 
 type Migration = {
   version: number;
@@ -905,5 +905,67 @@ export const MIGRATIONS: Migration[] = [
       }
     }
   },
+  {
+    version: 39,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE supplements ADD COLUMN pregnancy_id TEXT;
+          ALTER TABLE family_planning ADD COLUMN pregnancy_id TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 39 failed or already applied:", e);
+      }
+    }
+  },
+  {
+    version: 40,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE hmis_newborn_death ADD COLUMN child_id TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 40 failed or already applied:", e);
+      }
+    }
+  },
+  {
+    version: 41,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE child_monitoring ADD COLUMN gender TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 41 failed or already applied:", e);
+      }
+    }
+  },
+  {
+    version: 42,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE hmis_newborn_death ADD COLUMN death_day INTEGER;
+          ALTER TABLE hmis_newborn_death ADD COLUMN death_month INTEGER;
+          ALTER TABLE hmis_newborn_death ADD COLUMN death_year INTEGER;
+        `);
+      } catch (e) {
+        console.log("Migration 42 failed or already applied:", e);
+      }
+    }
+  },
+  {
+    version: 43,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE hmis_maternal_death ADD COLUMN child_condition TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 43 failed or already applied:", e);
+      }
+    }
+  },
 ];
-

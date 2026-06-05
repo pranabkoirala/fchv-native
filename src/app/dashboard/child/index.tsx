@@ -123,6 +123,9 @@ export default function ChildManagementScreen() {
                 <View className="flex-1 ml-4 justify-center">
                   <Text className="text-slate-800 text-xl font-bold mb-1" numberOfLines={1}>
                     {item.baby_name || t("child_page.unnamed_baby")}
+                    {item.status === "dead" && (
+                      <Text className="text-rose-600 ml-2"> ({t("reports.status.deceased")})</Text>
+                    )}
                   </Text>
 
                   <View className="flex-row items-center mb-1">

@@ -1,8 +1,10 @@
 import ChildCounselingSection from "@/app/dashboard/child/ChildCounselingSection";
 import { Skeleton } from "@/components/common/Skeleton";
 import CustomHeader from "@/components/CustomHeader";
+import NewbornDeathModal from "@/components/forms/NewbornDeathModal";
 import VaccinationSection from "@/components/profile/VaccinationSection";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/context/ToastContext";
 import { getInfantMonitoringById } from "@/hooks/database/models/InfantMonitoringModel";
 import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -120,6 +122,8 @@ export default function ChildProfileScreen() {
 
     const [record, setRecord] = useState<InfantMonitoringStoreType | null>(null);
     const [loading, setLoading] = useState(true);
+    const [deathModalVisible, setDeathModalVisible] = useState(false);
+    const { showToast } = useToast();
 
     useFocusEffect(
         useCallback(() => {
@@ -183,7 +187,7 @@ export default function ChildProfileScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-white pb-5">
-            <StatusBar barStyle="dark-content" />
+            <StatusBar barStyle="dark-content" className="bg-white" />
             <CustomHeader
                 title={t("child_profile.title")}
                 onBackPress={() => {
@@ -213,9 +217,16 @@ export default function ChildProfileScreen() {
                             </View>
                             <View className="flex-1">
                                 <View className="flex-row items-center justify-between">
-                                    <Text className="text-slate-800 text-[17px] font-bold">
-                                        {record.baby_name || t("child_page.unnamed_baby")}
-                                    </Text>
+                                    <View className="flex-row items-center">
+                                        <Text className="text-slate-800 text-[17px] font-bold">
+                                            {record.baby_name || t("child_page.unnamed_baby")}
+                                        </Text>
+                                        {
+                                            record.status === 'dead' && (
+                                                <Text className="text-rose-600 text-[15px] font-semibold"> ({t("reports.status.deceased")})</Text>
+                                            )
+                                        }
+                                    </View>
                                     <TouchableOpacity
                                         onPress={() =>
                                             router.push({
@@ -223,9 +234,10 @@ export default function ChildProfileScreen() {
                                                 params: { id: record.id, from },
                                             })
                                         }
-                                        className="ml-2 p-3 bg-gray-50 rounded-full"
+                                        disabled={record.status === 'dead'}
+                                        className={`ml-2 p-3 rounded-full ${record.status === 'dead' ? 'bg-slate-50 opacity-50' : 'bg-gray-50'}`}
                                     >
-                                        <Edit2 size={16} color="#899bb4ff" />
+                                        <Edit2 size={16} color={record.status === 'dead' ? "#CBD5E1" : "#64748B"} />
                                     </TouchableOpacity>
                                 </View>
                                 <Text className="text-[#64748B] text-[15px] mt-1 font-medium">
@@ -234,17 +246,19 @@ export default function ChildProfileScreen() {
                                 <TouchableOpacity onPress={() => router.push({
                                     pathname: "/dashboard/profile",
                                     params: { id: record.mother_id, from: `/dashboard/child/child-profile?id=${id}${from ? `&from=${from}` : ""}` },
-                                })} className="flex-row items-center mb-1">
+                                })} className="flex-row items-center mt-2">
                                     <Text className="text-slate-500 font-medium text-[15px]" numberOfLines={1}>
-                                        {t("child_page.mother")}: <Text className="text-slate-700">{record.mother_name || t("child_page.unknown")}</Text>
+                                        {t("child_page.mother")}: <Text className="text-slate-700 font-semibold">{record.mother_name || t("child_page.unknown")}</Text>
                                     </Text>
                                 </TouchableOpacity>
+
+
                             </View>
                         </View>
 
-                        <View className="flex-row gap-3 mt-5">
+                        <View className="flex-row gap-3 mt-6">
                             <View className="flex-1 bg-[#F8FAFC] py-3 rounded-xl items-center border border-slate-100">
-                                <Text className="text-[13px] text-slate-600 font-medium mb-1">
+                                <Text className="text-[13px] text-slate-600 font-medium mb-1 uppercase tracking-tight">
                                     {t("child_profile.age")}
                                 </Text>
                                 <Text className="text-[15px] font-bold text-[#334155]">
@@ -252,7 +266,7 @@ export default function ChildProfileScreen() {
                                 </Text>
                             </View>
                             <View className="flex-1 bg-[#F8FAFC] py-3 rounded-xl items-center border border-slate-100">
-                                <Text className="text-[13px] text-slate-600 font-medium mb-1">
+                                <Text className="text-[13px] text-slate-600 font-medium mb-1 uppercase tracking-tight">
                                     {t("child_profile.reg_date")}
                                 </Text>
                                 <Text className="text-[15px] font-bold text-[#334155]">
@@ -268,7 +282,7 @@ export default function ChildProfileScreen() {
                             <View className="w-10 h-10 rounded-full bg-blue-50 items-center justify-center mr-3">
                                 <MapPin size={20} color="#3B82F6" />
                             </View>
-                            <View>
+                            <View className="flex-1">
                                 <Text className="text-[13px] text-slate-500 font-medium uppercase tracking-tight">
                                     {t("child_profile.identity.birth_place")}
                                 </Text>
@@ -278,27 +292,101 @@ export default function ChildProfileScreen() {
                             </View>
                         </View>
                         <View className="flex-1 bg-white p-4 rounded-2xl border border-slate-100 flex-row items-center">
-                            <View className="w-10 h-10 rounded-full bg-emerald-50 items-center justify-center mr-3">
-                                <Activity size={20} color="#10B981" />
+                            <View className={`w-10 h-10 rounded-full ${record.status === 'dead' ? 'bg-rose-50' : 'bg-emerald-50'} items-center justify-center mr-3`}>
+                                <Activity size={20} color={record.status === 'dead' ? '#EF4444' : '#10B981'} />
                             </View>
-                            <View>
+                            <View className="flex-1">
                                 <Text className="text-[13px] text-slate-500 font-medium uppercase tracking-tight">
                                     {t("child_profile.identity.status")}
                                 </Text>
-                                <Text className="text-[15px] font-bold text-slate-700 capitalize">
+                                <Text className={`text-[15px] font-bold ${record.status === 'dead' ? 'text-rose-600' : 'text-emerald-600'} capitalize`}>
                                     {record.status ? t(`child_profile.values.${record.status}`, { defaultValue: record.status }) : t("child_profile.values.alive")}
                                 </Text>
                             </View>
                         </View>
                     </View>
 
-                    <View className="mt-2">
-                        <VaccinationSection childId={record.id} childName={record.baby_name || ""} />
-                        <ChildCounselingSection childId={record.id} />
+                    <View className="flex-row gap-3 mb-2">
+                        <View className="flex-1 bg-white p-4 rounded-2xl border border-slate-100 flex-row items-center">
+                            <View className="w-10 h-10 rounded-full bg-violet-50 items-center justify-center mr-3">
+                                <Baby size={20} color="#8B5CF6" />
+                            </View>
+                            <View className="flex-1">
+                                <Text className="text-[13px] text-slate-500 font-medium uppercase tracking-tight">
+                                    {t("child_profile.identity.gender")}
+                                </Text>
+                                <Text className="text-[15px] font-bold text-slate-700 capitalize">
+                                    {record.gender ? t(`child_profile.values.${record.gender.toLowerCase()}`, { defaultValue: record.gender }) : "---"}
+                                </Text>
+                            </View>
+                        </View>
+                        <View className="flex-1 bg-white p-4 rounded-2xl border border-slate-100 flex-row items-center">
+                            <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center mr-3">
+                                <Activity size={20} color="#F59E0B" />
+                            </View>
+                            <View className="flex-1">
+                                <Text className="text-[13px] text-slate-500 font-medium uppercase tracking-tight">
+                                    {t("child_profile.identity.baby_weight")}
+                                </Text>
+                                <Text className="text-[15px] font-bold text-slate-700 capitalize">
+                                    {record.baby_weight ? t(`child_profile.values.${record.baby_weight}`, { defaultValue: record.baby_weight.replace("_", " ") }) : "---"}
+                                </Text>
+                            </View>
+                        </View>
                     </View>
 
+                    <View className="mt-1">
+                        <VaccinationSection
+                            childId={record.id}
+                            childName={record.baby_name || ""}
+                            disabled={record.status === 'dead'}
+                        />
+                        <ChildCounselingSection
+                            childId={record.id}
+                            disabled={record.status === 'dead'}
+                        />
+                    </View>
                 </View>
+
+                <View className="px-4 pb-4 pt-2 bg-white border-t border-slate-50">
+                    <TouchableOpacity
+                        onPress={() => setDeathModalVisible(true)}
+                        disabled={record.status === 'dead'}
+                        className={`h-14 rounded-xl flex-row items-center justify-center border ${record.status === 'dead'
+                            ? 'bg-rose-50 border-rose-200'
+                            : 'bg-slate-50 border-slate-400'
+                            }`}
+                    >
+                        <Activity
+                            size={20}
+                            color={record.status === 'dead' ? "#EF4444" : "#94A3B8"}
+                            className="mr-2"
+                        />
+                        <Text className={`font-bold text-[16px] uppercase tracking-wide ${record.status === 'dead' ? 'text-rose-600' : 'text-slate-500'
+                            }`}>
+                            {record.status === 'dead' ? t("newborn_death_modal.after_added") : t("newborn_death_modal.title")}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
             </ScrollView>
+
+
+            <NewbornDeathModal
+                visible={deathModalVisible}
+                onClose={() => setDeathModalVisible(false)}
+                record={{
+                    id: record.mother_id,
+                    mother_name: record.mother_name,
+                } as any}
+                initialChildId={record.id}
+                initialChildName={record.baby_name || ""}
+                onSuccess={async () => {
+                    const updated = await getInfantMonitoringById(id!);
+                    setRecord(updated);
+                }}
+                showToast={showToast}
+            />
         </SafeAreaView>
     );
 }

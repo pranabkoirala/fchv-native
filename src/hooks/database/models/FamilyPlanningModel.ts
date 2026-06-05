@@ -5,6 +5,7 @@ import { getDb } from "../db";
 export interface FamilyPlanningStoreType {
   id: string;
   mother_id: string;
+  pregnancy_id: string | null;
   family_planning: string;
   ocp_qty: number;
   ecp_qty: number;
@@ -18,18 +19,27 @@ export interface FamilyPlanningStoreType {
 
 export async function getFamilyPlanningByMother(
   mother_id: string,
+  pregnancy_id?: string | null,
 ): Promise<FamilyPlanningStoreType | null> {
   const db = await getDb();
-  const result = await db.getFirstAsync<FamilyPlanningStoreType>(
-    `SELECT * FROM family_planning WHERE mother_id = ? AND is_deleted = 0`,
-    [mother_id],
-  );
+  let query = `SELECT * FROM family_planning WHERE mother_id = ? AND is_deleted = 0`;
+  const params: any[] = [mother_id];
+
+  if (pregnancy_id) {
+    query += ` AND pregnancy_id = ?`;
+    params.push(pregnancy_id);
+  } else {
+    query += ` AND pregnancy_id IS NULL`;
+  }
+
+  const result = await db.getFirstAsync<FamilyPlanningStoreType>(query, params);
   return result || null;
 }
 
 export async function saveFamilyPlanning(payload: {
   id?: string;
   mother_id: string;
+  pregnancy_id?: string | null;
   family_planning: string;
   ocp_qty?: number;
   ecp_qty?: number;
@@ -43,14 +53,14 @@ export async function saveFamilyPlanning(payload: {
   const ecp_qty = payload.ecp_qty || 0;
   const condom_qty = payload.condom_qty || 0;
 
-  const existing = await getFamilyPlanningByMother(payload.mother_id);
+  const existing = await getFamilyPlanningByMother(payload.mother_id, payload.pregnancy_id);
 
   if (existing) {
     await db.runAsync(
       `UPDATE family_planning 
        SET family_planning = ?, ocp_qty = ?, ecp_qty = ?, condom_qty = ?, updated_at = ?, is_synced = 0 
-       WHERE mother_id = ?`,
-      [payload.family_planning, ocp_qty, ecp_qty, condom_qty, now, payload.mother_id],
+       WHERE id = ?`,
+      [payload.family_planning, ocp_qty, ecp_qty, condom_qty, now, existing.id],
     );
     return {
       ...existing,
@@ -62,13 +72,14 @@ export async function saveFamilyPlanning(payload: {
     };
   } else {
     await db.runAsync(
-      `INSERT INTO family_planning (id, mother_id, family_planning, ocp_qty, ecp_qty, condom_qty, reg_month, created_at, updated_at, is_synced, is_deleted) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
-      [id, payload.mother_id, payload.family_planning, ocp_qty, ecp_qty, condom_qty, getCurrentNepaliMonth(), now, now],
+      `INSERT INTO family_planning (id, mother_id, pregnancy_id, family_planning, ocp_qty, ecp_qty, condom_qty, reg_month, created_at, updated_at, is_synced, is_deleted) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
+      [id, payload.mother_id, payload.pregnancy_id || null, payload.family_planning, ocp_qty, ecp_qty, condom_qty, getCurrentNepaliMonth(), now, now],
     );
     return {
       id,
       mother_id: payload.mother_id,
+      pregnancy_id: payload.pregnancy_id || null,
       family_planning: payload.family_planning,
       ocp_qty,
       ecp_qty,

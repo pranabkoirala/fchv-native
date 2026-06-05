@@ -225,6 +225,7 @@ export interface MotherListDbItem {
   reg_year?: number;
   reg_month?: number;
   createdAt: string;
+  is_dead: boolean;
 }
 
 export async function getAllMothersList(): Promise<MotherListDbItem[]> {
@@ -238,7 +239,8 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       (SELECT COUNT(*) FROM pregnancy WHERE mother_id = m.id AND is_deleted = 0) as pregnancy_count,
       cm.birth_place,
       cm.status as baby_status,
-      cm.remarks as baby_remarks
+      cm.remarks as baby_remarks,
+      (SELECT COUNT(*) FROM hmis_maternal_death hmd WHERE hmd.mother_id = m.id) > 0 as is_dead
     FROM mother m
     LEFT JOIN pregnancy p ON p.id = (
       SELECT id FROM pregnancy 
@@ -315,6 +317,7 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       reg_year: row.reg_year,
       reg_month: row.reg_month,
       createdAt: row.created_at || "",
+      is_dead: !!row.is_dead,
     };
   });
 }
@@ -380,7 +383,8 @@ export async function getMotherProfile(
       p.expected_delivery_date as edd,
       COALESCE(p.gravida, m.gravida) as gravida,
       COALESCE(p.parity, m.parity) as parity,
-      (SELECT COUNT(*) FROM pregnancy WHERE mother_id = m.id AND is_deleted = 0) as pregnancy_count
+      (SELECT COUNT(*) FROM pregnancy WHERE mother_id = m.id AND is_deleted = 0) as pregnancy_count,
+      (SELECT COUNT(*) FROM hmis_maternal_death hmd WHERE hmd.mother_id = m.id) > 0 as is_dead
     FROM mother m
     LEFT JOIN pregnancy p ON p.id = (
       SELECT id FROM pregnancy 
@@ -472,6 +476,7 @@ export async function getMotherProfile(
     regDate: row.regDate || "N/A",
     createdAt: row.regDate || "",
     pregnancy_count: row.pregnancy_count || 0,
+    is_dead: !!row.is_dead,
     date_of_birth: row.date_of_birth || "",
     age: age,
     children: children || [],

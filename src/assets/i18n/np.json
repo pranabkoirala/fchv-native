@@ -25,7 +25,8 @@
     "welcome": "स्वागत छ",
     "update": "अपडेट",
     "add": "थप्नुहोस्",
-    "delete": "हटाउनुहोस्"
+    "delete": "हटाउनुहोस्",
+    "save": "सुरक्षित गर्नुहोस्"
   },
   "dashboard": {
     "title": "FCHV डैशबोर्ड",
@@ -412,7 +413,7 @@
       "pending": "बाँकी",
       "add_title": "पूरक थप्नुहोस्",
       "confirm_q": "के तपाईंले {{mother}} लाई {{name}} दिनुभयो?",
-      "give_btn": "हो, दिएँ",
+      "give_btn": "दिएँ",
       "add_btn": "थप्नुहोस्"
     },
     "birth_pnc": {
@@ -438,7 +439,7 @@
       "child_sub": "(बालबालिका मृत्यु विवरण)",
       "add_more": "थप थप्नुहोस् +",
       "add": "थप्नुहोस् +",
-      "submitted": "बुझाइयो"
+      "submitted": "दर्ता भइसक्यो"
     },
     "countdown": {
       "title": "सुत्केरी फलो-अप",
@@ -590,7 +591,7 @@
       "death_place": "मृत्युस्थान*",
       "cause_of_death": "मृत्युको सम्भाव्य कारण*",
       "asphyxia": "निसासिएको",
-      "hypothermia": "शितलहर",
+      "hypothermia": "हाइपोथर्मिया",
       "infection": "संक्रमण",
       "home": "घर",
       "facility": "संस्था",
@@ -647,6 +648,7 @@
   },
   "newborn_death_modal": {
     "title": "नवजात / बाल मृत्यु विवरण",
+    "after_added": "दर्ता भइसक्यो",
     "subtitle": "नवजात तथा बाल मृत्यु (०–५९ महिना)",
     "baby_name": "बच्चाको नाम",
     "baby_name_placeholder": "बच्चाको नाम लेख्नुहोस्...",
@@ -674,7 +676,7 @@
     "child_note": "बालबालिका (२८ दिन देखि ५९ महिना)।",
     "cause_of_death": "सम्भावित कारण",
     "asphyxia": "निसासिएको",
-    "hypothermia": "शितलहर",
+    "hypothermia": "हाइपोथर्मिया",
     "infection": "संक्रमण",
     "pneumonia": "न्युमोनिया",
     "diarrhea": "पखाला",
@@ -716,7 +718,7 @@
       "select_district": "जिल्ला छान्नुहोस्",
       "select_municipality": "पालिका छान्नुहोस्",
       "select_ward": "वडा छान्नुहोस्",
-      "select_province_first": "पहिले प्रदेश छान्नुहोस्",
+      "select_province_first": "पहिले प्रदेश छान्नुहोस्", 
       "select_district_first": "पहिले जिल्ला छान्नुहोस्",
       "select_municipality_first": "पहिले पालिका छान्नुहोस्"
     },
@@ -850,7 +852,14 @@
       "enter_custom": "कृपया साधनको नाम लेख्नुहोस्"
     },
     "remove_confirm_title": "विधि हटाउनुहोस्",
-    "remove_confirm_msg": "के तपाईं यो परिवार नियोजनको विधि हटाउन निश्चित हुनुहुन्छ?"
+    "remove_confirm_msg": "के तपाईं यो परिवार नियोजनको विधि हटाउन निश्चित हुनुहुन्छ?",
+    "add_title": "परिवार नियोजन साधन थप्नुहोस्",
+    "pills": "चक्कीहरू (Pills)",
+    "ocp_label": "OCP (नियमित पिल्स)",
+    "ecp_label": "ECP (आकस्मिक पिल्स)",
+    "condoms_label": "कण्डोम (Condoms)",
+    "condom_label": "कण्डोम",
+    "cancel": "रद्द गर्नुहोस्"
   },
   "todo_tasks": {
     "title": "कार्यहरू",
@@ -1011,8 +1020,9 @@
     "title": "बालबालिका विवरण",
     "identity": {
       "birth_place": "जन्म स्थान",
-      "status": "जन्म मिति अवस्था",
-      "baby_weight": "शिशुको तौल",
+      "status": "बाल स्वास्थ्य अवस्था",
+      "gender": "लिङ्ग",
+      "baby_weight": "जन्म तौल",
       "date_of_birth": "जन्म मिति",
       "years": "वर्ष",
       "months": "महिना",
@@ -1028,7 +1038,9 @@
       "alive": "जीवित",
       "dead": "मृत्यु",
       "normal": "सामान्य",
-      "low_weight": "कम तौल"
+      "low_weight": "कम तौल",
+      "male": "छोरा (पुरुष)",
+      "female": "छोरी (महिला)"
     },
     "counseling": {
       "vaccination": "खोप",
@@ -1061,8 +1073,9 @@
     "select_mother_placeholder": "आमा छान्नुहोस्",
     "baby_name": "शिशुको नाम",
     "baby_name_placeholder": "शिशुको नाम लेख्नुहोस्",
-    "date_of_birth": "जन्म मिति (वि.सं.)",
-    "select_date": "मिति छान्नुहोस्",
+    "date_of_birth": "जन्म मिति",
+    "gender": "लिङ्ग",
+    "select_date": "मिति चयन गर्नुहोस्",
     "birth_place": "शिशु जन्म स्थान",
     "select_birth_place": "जन्म स्थान छान्नुहोस्",
     "skilled_birth_attended": "दक्ष स्वास्थ्यकर्मीद्वारा प्रसूति गराएको",
@@ -1094,7 +1107,9 @@
       "dead": "मृत",
       "normal": "सामान्य तौल",
       "low": "कम तौल",
-      "very_low": "धेरै कम तौल",
+      "very_low": "अति कम तौल (< १.५ केजी)",
+      "male": "छोरा",
+      "female": "छोरी",
       "umbilical_ointment": "नाभी मलम लगाएको",
       "skin_to_skin": "जन्मने बित्तिकै छातीमा टाँसेर राखेको",
       "early_breastfeeding": "१ घण्टा भित्र स्तनपान गराएको"
@@ -1121,14 +1136,34 @@
     "counseling": "परामर्श",
     "added_successfully": "काउन्सिलिङ थपियो!",
     "record": "रेकर्ड",
-    "delete_confirm_title": "काउन्सिलिङ हटाउने?",
+    "delete_confirm_title": "हटाउने पुष्टि गर्नुहोस्",
     "delete_confirm_msg": "के तपाईं पछिल्लो रेकर्ड हटाउन चाहनुहुन्छ?",
     "delete": "हटाउनुहोस्",
     "cancel": "रद्द गर्नुहोस्",
-    "deleted_successfully": "काउन्सिलिङ हटाइयो!",
-    "delete_confirm_message": "के तपाईं पक्का हुनुहुन्छ कि भर्खरैको काउन्सिलिङ हटाउन चाहनुहुन्छ?",
-    "delete_confirm_yes": "हो, हटाउनुहोस्",
-    "delete_confirm_no": "रद्द गर्नुहोस्"
+    "deleted_successfully": "सफलतापूर्वक हटाइयो",
+    "delete_confirm_message": "के तपाईं पछिल्लो रेकर्ड हटाउन चाहनुहुन्छ?",
+    "delete_confirm_yes": "हो",
+    "delete_confirm_no": "होइन",
+    "general_details": "परामर्श र सेवा विवरण",
+    "after_pregnancy": "गर्भवती भए पछिको परामर्श",
+    "after_child_birth": "सुत्केरी र बच्चाको हेरचाह परामर्श",
+    "failed_to_save": "बचत गर्न असफल भयो",
+    "failed_to_delete": "हटाउन असफल भयो",
+    "log_prefix": "#{{index}}: {{date}}",
+    "questions": {
+      "pregnancy_test_referral": "गर्भ जाँचको लागि स्वास्थ्य संस्थामा पठाउनुभयो (रेफर गर्नुभयो)?",
+      "labor_starts_advice": "सुत्केरी व्यथा लाग्ने बित्तिकै स्वास्थ्य संस्था जान सल्लाह दिनुभयो?",
+      "delivery_transport_arranged": "सुत्केरी हुन स्वास्थ्य संस्था जानका लागि गाडी वा यातायातको व्यवस्था मिलाइएको छ?",
+      "early_breastfeeding_advice": "बच्चा जन्मेको एक घण्टाभित्रै आमाको दूध खुवाउन सुरु गर्न सल्लाह दिनुभयो?",
+      "skin_to_skin_advice": "बच्चा जन्मने बित्तिकै आमाको नाङ्गो छातीमा टाँसेर (न्यानो पारेर) राख्न सल्लाह दिनुभयो?",
+      "bathed_after_24_hours": "बच्चा जन्मिएको २४ घण्टा पूरा भएपछि मात्र नुहाउनुभएको थियो?",
+      "danger_signs_pregnancy_advice": "रगत बग्ने वा तल्लो पेट धेरै दुख्ने जस्ता खतराका लक्षण देखिएमा तुरुन्तै स्वास्थ्य संस्था जान सल्लाह दिनुभयो?",
+      "danger_signs_postpartum_advice": "सुत्केरी आमा वा नवजात शिशुमा कुनै खतराका लक्षण देखिएमा तुरुन्तै स्वास्थ्य संस्था जान सल्लाह दिनुभयो?",
+      "problem_referral": "आमा वा बच्चामा कुनै समस्या देखिएमा तुरुन्तै स्वास्थ्य संस्थामा पठाउनुभयो (रेफर गर्नुभयो)?",
+      "exclusive_breastfeeding_advice": "बच्चा ६ महिना पुगुन्जेल आमाको दूध मात्र खुवाउन (पानी पनि नदिई) सल्लाह दिनुभयो?",
+      "postnatal_family_care": "परिवारका सदस्यहरूले सुत्केरी आमाको राम्रोसँग हेरचाह गरिरहेका छन्?",
+      "family_planning_advice": "परिवार नियोजनका साधनहरूका बारेमा सल्लाह दिनुभयो?"
+    }
   },
   "mothers_group_meeting": {
     "title": "आमा समूहको बैठक",
@@ -1160,5 +1195,47 @@
     "no_topics_recorded": "कुनै विषय रेकर्ड गरिएको छैन।",
     "no_decisions_recorded": "कुनै निर्णय रेकर्ड गरिएको छैन।",
     "loading": "लोड हुँदैछ..."
+  },
+  "newborn_death": {
+    "title": "नवजात शिशुको मृत्यु दर्ता",
+    "birth_condition": "मृत्युको अवस्था",
+    "birth_condition_placeholder": "अवस्था छान्नुहोस्",
+    "death_date": "मृत्यु मिति",
+    "death_age": "मृत्युको उमेर",
+    "death_age_unit": "उमेर इकाई",
+    "days": "दिन",
+    "months": "महिना",
+    "cause_of_death": "मृत्युको कारण",
+    "cause_of_death_placeholder": "कारण छान्नुहोस्",
+    "death_place": "मृत्यु भएको स्थान",
+    "death_place_placeholder": "स्थान छान्नुहोस्",
+    "other_placeholder": "कृपया खुलाउनुहोस्...",
+    "gender": "लिङ्ग",
+    "gender_placeholder": "लिङ्ग छान्नुहोस्",
+    "remarks": "कैफियत",
+    "remarks_placeholder": "थप टिप्पणीहरू...",
+    "save_success": "मृत्यु रेकर्ड सफलतापूर्वक सुरक्षित गरियो",
+    "save_error": "मृत्यु रेकर्ड सुरक्षित गर्न असफल भयो",
+    "conditions": {
+      "preterm": "समय नपुगी जन्मिएको",
+      "low_weight": "कम तौल",
+      "normal": "सामान्य तौल",
+      "other": "अन्य"
+    },
+    "causes": {
+      "asphyxia": "निसासिएर",
+      "hypothermia": "हाइपोथर्मिया",
+      "infection": "संक्रमण",
+      "other": "अन्य"
+    },
+    "places": {
+      "home": "घर",
+      "institution": "स्वास्थ्य संस्था",
+      "other": "अन्य"
+    },
+    "genders": {
+      "male": "छोरा",
+      "female": "छोरी"
+    }
   }
 }

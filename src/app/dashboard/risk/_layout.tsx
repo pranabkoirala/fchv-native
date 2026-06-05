@@ -6,5 +6,5 @@ export default function RiskLayout() {
             <Stack.Screen name="index" />
             <Stack.Screen name="pregnancy-details" />
         </Stack>
-      );
+    );
 }

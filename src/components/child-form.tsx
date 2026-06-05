@@ -59,6 +59,7 @@ export default function ChildRegistrationForm() {
   const [status, setStatus] = useState("alive");
   const [remarks, setRemarks] = useState("");
   const [allGiven, setAllGiven] = useState(0);
+  const [gender, setGender] = useState<"Male" | "Female" | "">("");
 
   // Indicators (0 or 1)
   const [fchvPresent, setFchvPresent] = useState(0);
@@ -91,6 +92,7 @@ export default function ChildRegistrationForm() {
             setAsphyxiatedNewborn(infant.asphyxiated_newborn || 0);
             setStatus(infant.status || "alive");
             setAllGiven(infant.is_all_given || 0);
+            setGender(infant.gender || "");
 
             const care = [];
             if (infant.umbilical_ointment) care.push("umbilical_ointment");
@@ -123,6 +125,8 @@ export default function ChildRegistrationForm() {
       e.babyName = t("child_form.validation.baby_name_required", "Baby name is required");
     if (!birthDateAd)
       e.birthDate = t("child_form.validation.birth_date_required", "Birth date is required");
+    if (!gender)
+      e.gender = t("child_form.validation.gender_required", "Gender is required");
     return e;
   };
 
@@ -156,11 +160,12 @@ export default function ChildRegistrationForm() {
         asphyxiated_newborn: asphyxiatedNewborn,
         status: status,
         is_all_given: allGiven,
+        gender: gender || undefined,
         remarks: remarks,
       };
       await createInfantMonitoring(payload);
       showToast(t("child_form.messages.save_success", "Record saved successfully"));
-      if (from === "profile" && selectedMotherId) {
+      if (!id && from === "profile" && selectedMotherId) {
         router.replace({
           pathname: "/dashboard/profile",
           params: { id: selectedMotherId }
@@ -215,7 +220,7 @@ export default function ChildRegistrationForm() {
             : t("child_form.new_child", "New Child Monitoring")
         }
         onBackPress={() => {
-          if (from === "profile" && selectedMotherId) {
+          if (!id && from === "profile" && selectedMotherId) {
             router.replace({
               pathname: "/dashboard/profile",
               params: { id: selectedMotherId }
@@ -308,6 +313,47 @@ export default function ChildRegistrationForm() {
                 titleTextStyle={{ fontWeight: "normal" }}
               />
             </View>
+
+            {/* Gender Selection */}
+            <View className="mb-4">
+              <Text className="text-slate-800 text-[16px] mb-3 ml-1">
+                {t("child_form.gender")}
+              </Text>
+              <View className="flex-row gap-x-4">
+                {[
+                  { value: "Male", label: t("child_form.options.male") },
+                  { value: "Female", label: t("child_form.options.female") },
+                ].map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setGender(opt.value as any);
+                      if (errors.gender) setErrors({ ...errors, gender: "" });
+                    }}
+                    className={`flex-1 flex-row items-center p-4 rounded-xl border ${gender === opt.value ? "bg-primary/5 border-primary" : "bg-white border-slate-200"}`}
+                  >
+                    <View
+                      className={`w-5 h-5 rounded-full border items-center justify-center mr-2 ${gender === opt.value ? "border-primary" : "border-slate-300"}`}
+                    >
+                      {gender === opt.value && (
+                        <View className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      )}
+                    </View>
+                    <Text
+                      className={`text-[16px] font-medium ${gender === opt.value ? "text-primary-800" : "text-slate-800"}`}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {errors.gender ? (
+                <Text className="text-rose-500 text-xs mt-1.5 ml-1 font-medium">
+                  {errors.gender}
+                </Text>
+              ) : null}
+            </View>
           </View>
 
           {/* Birth Details */}
@@ -334,7 +380,7 @@ export default function ChildRegistrationForm() {
                 className={`w-6 h-6 rounded-md border mr-3 items-center justify-center ${skilledBirthAttended ? "bg-primary/5 border-primary" : "border-slate-300 bg-white"}`}
               >
                 {skilledBirthAttended ? (
-                  <Text className="text-white text-xs"><Check color="#555" strokeWidth={3} size={15} /></Text>
+                  <Check color="#555" strokeWidth={3} size={15} />
                 ) : null}
               </View>
               <Text
@@ -355,7 +401,7 @@ export default function ChildRegistrationForm() {
                 className={`w-6 h-6 rounded-md border mr-3 items-center justify-center ${fchvPresent ? "bg-primary/5 border-primary" : "border-slate-300 bg-white"}`}
               >
                 {fchvPresent ? (
-                  <Text className="text-white text-xs"><Check color="#555" strokeWidth={3} size={15} /></Text>
+                  <Check color="#555" strokeWidth={3} size={15} />
                 ) : null}
               </View>
               <Text
@@ -385,7 +431,7 @@ export default function ChildRegistrationForm() {
                     className={`w-5 h-5 rounded-full border items-center justify-center mr-2 ${status === opt.value ? "border-primary" : "border-slate-300"}`}
                   >
                     {status === opt.value && (
-                      <View className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      <View className="w-2 h-2 rounded-full bg-primary" />
                     )}
                   </View>
                   <Text
@@ -422,7 +468,7 @@ export default function ChildRegistrationForm() {
                 className={`w-6 h-6 rounded-md border mr-3 items-center justify-center ${asphyxiatedNewborn ? "bg-rose-500 border-rose-500" : "border-slate-300 bg-white"}`}
               >
                 {asphyxiatedNewborn ? (
-                  <Text className="text-white text-xs"><Check color="#fff" strokeWidth={3} size={15} /></Text>
+                  <Check color="#fff" strokeWidth={3} size={15} />
                 ) : null}
               </View>
               <Text
@@ -452,7 +498,7 @@ export default function ChildRegistrationForm() {
                       className={`w-6 h-6 rounded-md border mr-3 items-center justify-center ${isSelected ? "bg-primary/5 border-primary" : "border-slate-300 bg-white"}`}
                     >
                       {isSelected ? (
-                        <Text className="text-white text-xs"><Check color="#555" strokeWidth={3} size={15} /></Text>
+                        <Check color="#555" strokeWidth={3} size={15} />
                       ) : null}
                     </View>
                     <Text
