@@ -1,7 +1,7 @@
 import { useLanguage } from "@/context/LanguageContext";
 import { ClipboardList, Plus, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Modal, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, Text, TouchableOpacity, View } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
 import {
   COUNCELING_QUESTION_AFTER_PREGNANT,
@@ -38,6 +38,7 @@ export default function CounselingReferralSection({
   const [isPregnant, setIsPregnant] = useState(false);
   const [hasChild, setHasChild] = useState(false);
   const [currentPregnancyId, setCurrentPregnancyId] = useState<string | null>(null);
+  const [addingQuestionId, setAddingQuestionId] = useState<string | null>(null);
 
   // Delete confirmation modal state
   const [deleteModal, setDeleteModal] = useState(false);
@@ -85,6 +86,8 @@ export default function CounselingReferralSection({
   }, [motherId]);
 
   const handleAdd = async (questionId: string) => {
+    if (addingQuestionId) return;
+
     const currentTime = new Date().toISOString();
 
     let existingLogs = [];
@@ -99,6 +102,7 @@ export default function CounselingReferralSection({
     const newAnswers = { ...answers, [questionId]: [...existingLogs, newLog] };
 
     setAnswers(newAnswers);
+    setAddingQuestionId(questionId);
 
     try {
       await saveCounselingReferral({
@@ -108,11 +112,13 @@ export default function CounselingReferralSection({
         answers: JSON.stringify(newAnswers),
       });
       showToast(t("counseling_section.added_successfully"));
-      loadData(); // Refresh history
+      await loadData(); // Refresh history
     } catch (e) {
       console.error("Failed to save answer", e);
       showToast(t("counseling_section.failed_to_save"));
       setAnswers(answers);
+    } finally {
+      setAddingQuestionId(null);
     }
   };
 
@@ -246,6 +252,9 @@ export default function CounselingReferralSection({
       const logs = Array.isArray(historyAnswers[question.id]) ? historyAnswers[question.id] : [];
       const isRecordedEver = logs.length > 0;
       const disableAdd = isOneTime && isRecordedEver;
+      const isAdding = addingQuestionId === question.id;
+      const isAddDisabled = disableAdd || disabled || isAdding;
+      const isUnavailable = disableAdd || disabled;
 
       return (
         <View
@@ -261,11 +270,17 @@ export default function CounselingReferralSection({
               </Text>
             </View>
             <TouchableOpacity
-              disabled={disableAdd || disabled}
+              disabled={isAddDisabled}
               onPress={() => handleAdd(question.id)}
-              className={`flex-row items-center px-2 py-1.5 rounded-lg ${(disableAdd || disabled) ? "bg-slate-100" : "bg-[#475569]"}`}
+              activeOpacity={0.75}
+              style={{ opacity: 1, width: 32, height: 32, minWidth: 32, flexShrink: 0 }}
+              className={`items-center justify-center rounded-lg ${isUnavailable && !isAdding ? "bg-slate-100" : "bg-[#475569]"}`}
             >
-              <Plus size={19} color={(disableAdd || disabled) ? "#94a3b8" : "white"} strokeWidth={3} />
+              {isAdding ? (
+                <ActivityIndicator size={15} color="white" />
+              ) : (
+                <Plus size={19} color={isUnavailable ? "#94a3b8" : "white"} strokeWidth={3} />
+              )}
             </TouchableOpacity>
           </View>
           {isRecordedEver && renderLogs(question.id)}

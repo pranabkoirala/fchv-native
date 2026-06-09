@@ -881,7 +881,7 @@
     "description_ph": "Add details about this task...",
     "date": "Date",
     "select_date": "Select Date",
-    "time": "Time",
+    "time": "Reminder Time",
     "select_time": "Select Time",
     "patient_label": "Patient Name",
     "patient_ph": "e.g. Sunita",

@@ -1,12 +1,10 @@
 import ConfirmActionModal from "@/components/common/ConfirmActionModal";
 import { Skeleton } from "@/components/common/Skeleton";
+import TaskModal, { TaskModalData } from "@/components/common/TaskModal";
 import CustomHeader from "@/components/CustomHeader";
-import { InputText } from "@/components/InputText";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
   AlertCircle,
-  Calendar,
   CheckCircle,
   CheckSquare,
   ClipboardList,
@@ -14,29 +12,21 @@ import {
   Edit2,
   MapPin,
   Plus,
-  Trash2,
-  X
+  Trash2
 } from "lucide-react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FlatList,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
   StatusBar,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import { CalendarPicker } from "react-native-nepali-picker";
 import Animated, {
   FadeInDown,
-  Layout
+  Layout,
 } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 import {
   createTodo,
@@ -47,7 +37,9 @@ import {
 } from "../../../hooks/database/models/TodoModel";
 import {
   cancelTaskNotificationAsync,
+  getScheduledTaskNotificationIdsAsync,
   scheduleTaskNotificationAsync,
+  shouldRepairMissingTaskNotification,
 } from "../../../utils/notificationHelper";
 
 const TodoSkeleton = () => (
@@ -107,20 +99,9 @@ export default function TasksScreen() {
   const [loading, setLoading] = useState(true);
 
   // Modal State
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
-  const [newTaskDate, setNewTaskDate] = useState("");
-  const [newTaskPatient, setNewTaskPatient] = useState("");
-  const [newTaskTime, setNewTaskTime] = useState("");
-  const [newTaskLocation, setNewTaskLocation] = useState("");
-  const [newTaskPriority, setNewTaskPriority] = useState<Priority>("NORMAL");
-
-  // Time Picker State
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [selectedTime, setSelectedTime] = useState<Date>(new Date());
+  const [isTaskModalVisible, setTaskModalVisible] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
+  const [isTaskSubmitting, setIsTaskSubmitting] = useState(false);
 
   // Delete Confirmation State
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
@@ -132,15 +113,80 @@ export default function TasksScreen() {
     loadTodos();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadTodos();
+    }, []),
+  );
+
   const loadTodos = async () => {
     try {
       setLoading(true);
       const data = await getAllTodos();
       setTodos(data);
+      await scheduleMissingTaskNotifications(data);
     } catch (error) {
       console.error("Failed to load todos:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const scheduleMissingTaskNotifications = async (items: TodoItem[]) => {
+    const nextTodos = [...items];
+    let didUpdate = false;
+    const scheduledNotificationIds = await getScheduledTaskNotificationIdsAsync();
+
+    for (const todo of items) {
+      if (todo.is_completed === 1 || !todo.task_date) {
+        continue;
+      }
+
+      if (
+        todo.notification_id &&
+        scheduledNotificationIds.has(todo.notification_id)
+      ) {
+        continue;
+      }
+
+      const parsed = parseTaskString(todo.task);
+      const taskTime = todo.task_time || parsed.time;
+
+      if (
+        todo.notification_id &&
+        !shouldRepairMissingTaskNotification(
+          todo.task_date,
+          taskTime,
+          todo.updated_at,
+        )
+      ) {
+        continue;
+      }
+
+      const notificationId = await scheduleTaskNotificationAsync({
+        id: todo.id,
+        title: parsed.title,
+        taskDate: todo.task_date,
+        taskTime,
+      });
+
+      if (!notificationId) {
+        continue;
+      }
+
+      await updateTodo(todo.id, { notification_id: notificationId });
+      const index = nextTodos.findIndex((item) => item.id === todo.id);
+      if (index >= 0) {
+        nextTodos[index] = {
+          ...nextTodos[index],
+          notification_id: notificationId,
+        };
+        didUpdate = true;
+      }
+    }
+
+    if (didUpdate) {
+      setTodos(nextTodos);
     }
   };
 
@@ -205,124 +251,56 @@ export default function TasksScreen() {
     }
   };
 
-  const onTimeChange = (event: any, date?: Date) => {
-    if (Platform.OS === "android") {
-      setShowTimePicker(false);
-    }
-    if (date) {
-      setSelectedTime(date);
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      const ampm = hours >= 12 ? "PM" : "AM";
-      const formattedHours = hours % 12 || 12;
-      const formattedMinutes = minutes.toString().padStart(2, "0");
-      setNewTaskTime(`${formattedHours}:${formattedMinutes} ${ampm}`);
-      if (errors.time) {
-        const newErrors = { ...errors };
-        delete newErrors.time;
-        setErrors(newErrors);
-      }
-    }
-  };
-
   const handleEditPress = (todo: TodoItem) => {
-    const parsed = parseTaskString(todo.task);
-    setEditingTodoId(todo.id);
-    setNewTaskTitle(parsed.title || "");
-    setNewTaskDescription(todo.description || "");
-    setNewTaskDate(todo.task_date || "");
-    setNewTaskPatient(parsed.patient || "");
-    setNewTaskTime(todo.task_time || parsed.time || "");
-    setNewTaskLocation(parsed.location || "");
-    setNewTaskPriority(parsed.priority || "NORMAL");
-    setErrors({});
-
-    // Parse time if it exists
-    if (todo.task_time || parsed.time) {
-      try {
-        const timeStr = todo.task_time || parsed.time || "";
-        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-        if (match) {
-          let hours = parseInt(match[1]);
-          const minutes = parseInt(match[2]);
-          const ampm = match[3].toUpperCase();
-          if (ampm === "PM" && hours < 12) hours += 12;
-          if (ampm === "AM" && hours === 12) hours = 0;
-          const d = new Date();
-          d.setHours(hours, minutes, 0, 0);
-          setSelectedTime(d);
-        }
-      } catch (e) {
-        // ignore parsing error
-      }
-    } else {
-      setSelectedTime(new Date());
-    }
-
-    setModalVisible(true);
+    setEditingTodo(todo);
+    setTaskModalVisible(true);
   };
 
-  const handleAddTask = async () => {
-    const newErrors: Record<string, string> = {};
-    if (!newTaskTitle.trim()) {
-      newErrors.title = t("todo_tasks.title_required");
-    }
-    if (!newTaskDate.trim()) {
-      newErrors.date = t("todo_tasks.date_required");
-    }
-    if (!newTaskTime.trim()) {
-      newErrors.time = t("todo_tasks.time_required");
-    }
-    if (!newTaskLocation.trim()) {
-      newErrors.location = t("todo_tasks.location_required");
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    const payload: RichTaskData = {
-      title: newTaskTitle.trim(),
-      patient: newTaskPatient.trim() || undefined,
-      time: newTaskTime.trim() || undefined,
-      location: newTaskLocation.trim() || undefined,
-      priority: newTaskPriority,
-    };
-
+  const handleTaskModalSubmit = async (data: TaskModalData) => {
+    setIsTaskSubmitting(true);
     try {
-      if (editingTodoId) {
-        const existingTodo = todos.find((todo) => todo.id === editingTodoId);
-        await cancelTaskNotificationAsync(existingTodo?.notification_id);
+      if (editingTodo) {
+        const existingTodo = editingTodo;
+        await cancelTaskNotificationAsync(existingTodo.notification_id);
         const notificationId =
-          existingTodo?.is_completed === 1
+          existingTodo.is_completed === 1
             ? null
             : await scheduleTaskNotificationAsync({
-                id: editingTodoId,
-                title: payload.title,
-                taskDate: newTaskDate.trim(),
-                taskTime: newTaskTime.trim(),
+                id: existingTodo.id,
+                title: data.title,
+                taskDate: data.task_date,
+                taskTime: data.task_time,
               });
 
-        // Update database
-        await updateTodo(editingTodoId, {
-          task: JSON.stringify(payload),
-          description: newTaskDescription.trim() || null,
-          task_date: newTaskDate.trim() || null,
-          task_time: newTaskTime.trim() || null,
+        await updateTodo(existingTodo.id, {
+          task: JSON.stringify({
+            title: data.title,
+            patient: data.patient || undefined,
+            time: data.task_time,
+            location: data.location,
+            priority: data.priority,
+          }),
+          description: data.description || null,
+          task_date: data.task_date,
+          task_time: data.task_time,
           notification_id: notificationId,
         });
 
-        // Update state
         setTodos((prev) =>
           prev.map((todo) =>
-            todo.id === editingTodoId
+            todo.id === existingTodo.id
               ? {
                   ...todo,
-                  task: JSON.stringify(payload),
-                  description: newTaskDescription.trim() || null,
-                  task_date: newTaskDate.trim() || null,
-                  task_time: newTaskTime.trim() || null,
+                  task: JSON.stringify({
+                    title: data.title,
+                    patient: data.patient || undefined,
+                    time: data.task_time,
+                    location: data.location,
+                    priority: data.priority,
+                  }),
+                  description: data.description || null,
+                  task_date: data.task_date,
+                  task_time: data.task_time,
                   notification_id: notificationId,
                   updated_at: new Date().toISOString(),
                 }
@@ -330,16 +308,22 @@ export default function TasksScreen() {
           ),
         );
       } else {
-        // Create todo with new DB schema fields
         const newItem = await createTodo(
-          JSON.stringify(payload),
-          newTaskDescription.trim() || null,
-          newTaskDate.trim() || null,
-          newTaskTime.trim() || null,
+          JSON.stringify({
+            title: data.title,
+            patient: data.patient || undefined,
+            time: data.task_time,
+            location: data.location,
+            priority: data.priority,
+          }),
+          data.description || null,
+          data.task_date,
+          data.task_time,
         );
+
         const notificationId = await scheduleTaskNotificationAsync({
           id: newItem.id,
-          title: payload.title,
+          title: data.title,
           taskDate: newItem.task_date,
           taskTime: newItem.task_time,
         });
@@ -348,23 +332,15 @@ export default function TasksScreen() {
           await updateTodo(newItem.id, { notification_id: notificationId });
         }
 
-        setTodos([{ ...newItem, notification_id: notificationId }, ...todos]);
+        setTodos((prev) => [{ ...newItem, notification_id: notificationId }, ...prev]);
       }
 
-      setModalVisible(false);
-
-      // Reset form
-      setEditingTodoId(null);
-      setNewTaskTitle("");
-      setNewTaskDescription("");
-      setNewTaskDate("");
-      setNewTaskPatient("");
-      setNewTaskTime("");
-      setNewTaskLocation("");
-      setNewTaskPriority("NORMAL");
-      setSelectedTime(new Date());
+      setTaskModalVisible(false);
+      setEditingTodo(null);
     } catch (error) {
-      console.error("Failed to add or update todo:", error);
+      console.error("Failed to save todo task:", error);
+    } finally {
+      setIsTaskSubmitting(false);
     }
   };
 
@@ -603,235 +579,6 @@ export default function TasksScreen() {
     );
   };
 
-  const renderAddTaskModal = () => (
-    <Modal
-      visible={isModalVisible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setModalVisible(false)}
-    >
-      <SafeAreaView className="flex-1 bg-white">
-        {/* Header */}
-        <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100">
-          <View>
-            <Text className="text-slate-900 text-[19px] font-bold">
-              {editingTodoId ? t("todo_tasks.edit_task") : t("todo_tasks.add_task")}
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => setModalVisible(false)}
-            className="bg-slate-50 p-2 rounded-full border border-slate-100"
-          >
-            <X size={20} color="#64748B" />
-          </Pressable>
-        </View>
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
-        >
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            className="px-5 flex-1 mt-5"
-            contentContainerStyle={{ paddingBottom: 20 }}
-          >
-            <View className="gap-y-1 pb-8">
-              {/* Title Input */}
-              <InputText
-                label={t("todo_tasks.task_title") + " *"}
-                placeholder={t("todo_tasks.task_title_ph")}
-                value={newTaskTitle}
-                onChangeText={setNewTaskTitle}
-                errors={errors}
-                setErrors={setErrors}
-                errorKey="title"
-              />
-
-              {/* Date & Time Row */}
-              <View className="flex-row gap-x-4 mb-4">
-                <View className="flex-1">
-                  <Text className="text-[16px] text-slate-700 font-semibold mb-2.5">
-                    {t("todo_tasks.date")} *
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowDatePicker(true)}
-                    className={`bg-white border rounded-md px-4 py-3 h-[50px] flex-row items-center justify-between ${errors.date ? "border-rose-300" : "border-slate-200"}`}
-                  >
-                    <Text
-                      className={`text-[15px] ${newTaskDate ? "text-slate-800" : "text-slate-400"}`}
-                    >
-                      {newTaskDate || t("todo_tasks.select_date")}
-                    </Text>
-                    <Calendar size={18} color="#64748B" />
-                  </TouchableOpacity>
-                  {errors.date && (
-                    <Text className="text-rose-500 text-[12px] mt-1 ml-1">
-                      {errors.date}
-                    </Text>
-                  )}
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[16px] text-slate-700 font-semibold mb-2.5">
-                    {t("todo_tasks.time")}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setShowTimePicker(true)}
-                    className={`bg-white border rounded-md px-4 py-3 h-[50px] flex-row items-center justify-between ${errors.time ? "border-rose-300" : "border-slate-200"}`}
-                  >
-                    <Text
-                      className={`text-[15px] ${newTaskTime ? "text-slate-800" : "text-slate-400"}`}
-                    >
-                      {newTaskTime || t("todo_tasks.select_time")}
-                    </Text>
-                    <Clock size={18} color="#64748B" />
-                  </TouchableOpacity>
-                  {errors.time && (
-                    <Text className="text-rose-500 text-[12px] mt-1 ml-1">
-                      {errors.time}
-                    </Text>
-                  )}
-                </View>
-              </View>
-
-              {/* Patient & Location Row */}
-              <View className="flex-row gap-x-4">
-                <View className="flex-1">
-                  <InputText
-                    label={t("todo_tasks.patient_label")}
-                    placeholder={t("todo_tasks.patient_ph")}
-                    value={newTaskPatient}
-                    onChangeText={setNewTaskPatient}
-                    errors={errors}
-                    setErrors={setErrors}
-                    errorKey="patient"
-                  />
-                </View>
-                <View className="flex-1">
-                  <InputText
-                    label={t("todo_tasks.location") + " *"}
-                    placeholder={t("todo_tasks.location_ph")}
-                    value={newTaskLocation}
-                    onChangeText={setNewTaskLocation}
-                    errors={errors}
-                    setErrors={setErrors}
-                    errorKey="location"
-                  />
-                </View>
-              </View>
-
-              {/* Priority */}
-              <View className="mb-4">
-                <Text className="text-[14px] text-slate-700 font-semibold mb-2.5">
-                  {t("todo_tasks.priority")}
-                </Text>
-                <View className="flex-row bg-white border border-slate-200 rounded-md overflow-hidden h-[48px]">
-                  {(["NORMAL", "MEDIUM", "URGENT"] as Priority[]).map((p) => {
-                    const isSelected = newTaskPriority === p;
-                    return (
-                      <TouchableOpacity
-                        key={p}
-                        onPress={() => setNewTaskPriority(p)}
-                        className={`flex-1 items-center justify-center ${isSelected ? "bg-primary" : ""}`}
-                      >
-                        <Text
-                          className={`text-[14px] font-semibold ${isSelected ? "text-white" : "text-slate-600"}`}
-                        >
-                          {t(`todo_tasks.priority_levels.${p}`)}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Description Input */}
-              <InputText
-                label={t("todo_tasks.description")}
-                placeholder={t("todo_tasks.description_ph")}
-                value={newTaskDescription}
-                onChangeText={setNewTaskDescription}
-                errors={errors}
-                setErrors={setErrors}
-                errorKey="description"
-                multiline
-                numberOfLines={4}
-              />
-            </View>
-          </ScrollView>
-
-          {/* Footer Submit Button */}
-          <View className="p-5 bg-white border-t border-slate-100 mb-5">
-            <TouchableOpacity
-              onPress={handleAddTask}
-              className={`w-full py-4 flex-row items-center justify-center rounded-md bg-primary`}
-            >
-              <Text className="text-white font-bold text-[16px] ml-2 tracking-wide">
-                {editingTodoId ? t("todo_tasks.save_changes") : t("todo_tasks.create_task")}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-
-        <CalendarPicker
-          visible={showDatePicker}
-          onClose={() => setShowDatePicker(false)}
-          onDateSelect={(bsDate) => {
-            setNewTaskDate(bsDate);
-            if (errors.date) {
-              const newErrors = { ...errors };
-              delete newErrors.date;
-              setErrors(newErrors);
-            }
-            setShowDatePicker(false);
-          }}
-          language={language === "np" ? "np" : "en"}
-          theme="light"
-          brandColor="#0056D2"
-          date={newTaskDate || undefined}
-          dayTextStyle={{ fontWeight: "normal" }}
-          weekTextStyle={{ fontWeight: "normal" }}
-          titleTextStyle={{ fontWeight: "normal" }}
-        />
-
-        {showTimePicker && Platform.OS === "android" && (
-          <DateTimePicker
-            value={selectedTime}
-            mode="time"
-            is24Hour={false}
-            display="default"
-            onChange={onTimeChange}
-          />
-        )}
-
-        {showTimePicker && Platform.OS === "ios" && (
-          <Modal transparent visible={showTimePicker} animationType="slide">
-            <View className="flex-1 justify-end bg-black/30">
-              <View className="bg-white p-4 rounded-t-2xl pb-8">
-                <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-lg font-bold text-slate-800">
-                    {t("todo_tasks.select_time")}
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                    <Text className="text-[#0056D2] font-bold text-base">
-                      {t("todo_tasks.done")}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={selectedTime}
-                  mode="time"
-                  is24Hour={false}
-                  display="spinner"
-                  onChange={onTimeChange}
-                  style={{ alignSelf: "center", width: "100%" }}
-                />
-              </View>
-            </View>
-          </Modal>
-        )}
-      </SafeAreaView>
-    </Modal>
-  );
 
   const renderEmptyList = () => (
     <View className="px-6">
@@ -878,25 +625,34 @@ export default function TasksScreen() {
         entering={FadeInDown.delay(500).springify()}
         activeOpacity={0.8}
         onPress={() => {
-          setEditingTodoId(null);
-          setNewTaskTitle("");
-          setNewTaskDescription("");
-          setNewTaskDate("");
-          setNewTaskPatient("");
-          setNewTaskTime("");
-          setNewTaskLocation("");
-          setNewTaskPriority("NORMAL");
-          setSelectedTime(new Date());
-          setErrors({});
-          setModalVisible(true);
+          setEditingTodo(null);
+          setTaskModalVisible(true);
         }}
-        className="absolute bottom-32 right-6 w-[60px] h-[60px] rounded-full bg-[#356169] items-center justify-center"
+        className="absolute bottom-44 right-6 w-[60px] h-[60px] rounded-full bg-[#356169] items-center justify-center"
       >
         <Plus size={30} color="#FFFFFF" />
       </AnimatedTouchableOpacity>
 
-      {/* Add Task Modal */}
-      {renderAddTaskModal()}
+      <TaskModal
+        visible={isTaskModalVisible}
+        onClose={() => {
+          setTaskModalVisible(false);
+          setEditingTodo(null);
+        }}
+        onSubmit={handleTaskModalSubmit}
+        initialData={editingTodo ? {
+          title: parseTaskString(editingTodo.task).title || "",
+          description: editingTodo.description || null,
+          task_date: editingTodo.task_date || "",
+          task_time: editingTodo.task_time || parseTaskString(editingTodo.task).time || "",
+          patient: parseTaskString(editingTodo.task).patient || null,
+          location: parseTaskString(editingTodo.task).location || "",
+          priority: parseTaskString(editingTodo.task).priority || "NORMAL",
+        } : undefined}
+        submitLabel={editingTodo ? t("todo_tasks.save_changes") : t("todo_tasks.create_task")}
+        headerTitle={editingTodo ? t("todo_tasks.edit_task") : t("todo_tasks.add_task")}
+        submitting={isTaskSubmitting}
+      />
 
       {/* Delete Confirmation Modal */}
       <ConfirmActionModal

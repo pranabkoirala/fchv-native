@@ -1,4 +1,8 @@
+import ConfirmActionModal from "@/components/common/ConfirmActionModal";
+import TaskModal, { TaskModalData } from "@/components/common/TaskModal";
 import TopHeader from "@/components/layout/TopHeader";
+import { createTodo, updateTodo } from "@/hooks/database/models/TodoModel";
+import { scheduleTaskNotificationAsync } from "@/utils/notificationHelper";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
   Activity,
@@ -8,6 +12,7 @@ import {
   Clock,
   Heart,
   Smile,
+  Trash2,
   UserPlus,
   Users
 } from "lucide-react-native";
@@ -84,6 +89,11 @@ export default function DashboardScreen() {
   const [days29To59Months, setDays29To59Months] = useState(0);
   const [highRiskPregnancyCount, setHighRiskPregnancyCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isTaskModalVisible, setTaskModalVisible] = useState(false);
+  const [isTaskSubmitting, setIsTaskSubmitting] = useState(false);
+  const [isDeleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
+  
   // Initial 3-month BS placeholder
   const initialTrend = Array.from({ length: 3 }, () => {
     return { label: "", value: 0 };
@@ -98,7 +108,7 @@ export default function DashboardScreen() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   const scrollRef = useRef<ScrollView>(null);
-  const { todos, fetchTodos, toggleTodo } = useTodo();
+  const { todos, fetchTodos, toggleTodo, removeTodo } = useTodo();
 
   const todayBsDate = (() => {
     try {
@@ -109,6 +119,42 @@ export default function DashboardScreen() {
   })();
 
   const todaysTasks = todos.filter((t) => t.task_date === todayBsDate);
+
+  const handleDashboardTaskSubmit = async (data: TaskModalData) => {
+    setIsTaskSubmitting(true);
+    try {
+      const newItem = await createTodo(
+        JSON.stringify({
+          title: data.title,
+          patient: data.patient || undefined,
+          time: data.task_time,
+          location: data.location,
+          priority: data.priority,
+        }),
+        data.description || null,
+        data.task_date,
+        data.task_time,
+      );
+
+      const notificationId = await scheduleTaskNotificationAsync({
+        id: newItem.id,
+        title: data.title,
+        taskDate: newItem.task_date,
+        taskTime: newItem.task_time,
+      });
+
+      if (notificationId) {
+        await updateTodo(newItem.id, { notification_id: notificationId });
+      }
+
+      await fetchTodos();
+      setTaskModalVisible(false);
+    } catch (error) {
+      console.error("Failed to add dashboard task:", error);
+    } finally {
+      setIsTaskSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (isConnected) doSync();
@@ -162,7 +208,6 @@ export default function DashboardScreen() {
             });
           });
           pregnancies.forEach((p: any) => {
-            // Pregnancy doesn't have its own address — find the mother
             const mother = mothers.find((m: any) => m.id === p.mother_id);
             const muniName = mother
               ? getMunicipalityById(mother.municipality)
@@ -203,6 +248,7 @@ export default function DashboardScreen() {
             });
           });
 
+          await fetchTodos();
           activities.sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
           );
@@ -210,7 +256,6 @@ export default function DashboardScreen() {
 
           setMotherCount(mCount);
           setPregnancyCount(pregnancies.length);
-          setChildCount(children.length);
           setAdolescentCount(adolCount);
           setMaternalDeathCount(mDeaths);
           setChildDeathCount(cDeaths);
@@ -241,7 +286,6 @@ export default function DashboardScreen() {
                     m--;
                   }
                   if (m < 60) {
-                    // Up to 59 months
                     u59m++;
                   }
                 }
@@ -254,7 +298,6 @@ export default function DashboardScreen() {
           setPregnancyTrend(buildDashboardTrend(pTrend, isNepali));
           setChildTrend(buildDashboardTrend(cTrend, isNepali));
           setMotherTrend(buildDashboardTrend(mTrend, isNepali));
-          await fetchTodos();
         } catch (err) {
           console.error("Dashboard fetch error:", err);
         } finally {
@@ -806,20 +849,28 @@ export default function DashboardScreen() {
                       const time = todo.task_time || parsed.time || "";
 
                       return (
-                        <TouchableOpacity
+                        <View
                           key={todo.id}
-                          onPress={() => toggleTodo(todo.id, todo.is_completed)}
                           style={{
                             flexDirection: "row",
                             alignItems: "center",
-                            paddingVertical: 16,
-                            paddingHorizontal: 16,
                             backgroundColor: "white",
                             borderRadius: 20,
-                            opacity: isDone ? 0.6 : 1,
+                            overflow: "hidden",
                           }}
                         >
-                          <View
+                          <TouchableOpacity
+                            onPress={() => toggleTodo(todo.id, todo.is_completed)}
+                            style={{
+                              flex: 1,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              paddingVertical: 16,
+                              paddingHorizontal: 16,
+                              opacity: isDone ? 0.6 : 1,
+                            }}
+                          >
+                            <View
                             style={{
                               width: 24,
                               height: 24,
@@ -902,15 +953,73 @@ export default function DashboardScreen() {
                               </View>
                             ) : null}
                           </View>
-                        </TouchableOpacity>
+                          </TouchableOpacity>
+                          {isDone && (
+                            <TouchableOpacity
+                              onPress={() => {
+                                setTaskToDeleteId(todo.id);
+                                setDeleteConfirmVisible(true);
+                              }}
+                              style={{
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "#FEE2E2",
+                                marginRight: 10,
+                              }}
+                            >
+                              <Trash2 size={15} color="#DC2626" />
+                            </TouchableOpacity>
+                          )}
+                        </View>
                       );
                     })}
                   </View>
+
+                  <TouchableOpacity
+                    onPress={() => setTaskModalVisible(true)}
+                    style={{
+                      marginTop: 20,
+                      paddingVertical: 14,
+                      borderRadius: 16,
+                      backgroundColor: "#356169",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>
+                      {t("todo_tasks.add_task")}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <TaskModal
+        visible={isTaskModalVisible}
+        onClose={() => setTaskModalVisible(false)}
+        onSubmit={handleDashboardTaskSubmit}
+        submitLabel={t("todo_tasks.create_task")}
+        headerTitle={t("todo_tasks.add_task")}
+        submitting={isTaskSubmitting}
+      />
+
+      <ConfirmActionModal
+        visible={isDeleteConfirmVisible}
+        onClose={() => {
+          setDeleteConfirmVisible(false);
+          setTaskToDeleteId(null);
+        }}
+        title={t("reports.common.delete_confirm_title")}
+        description={t("reports.common.delete_confirm_msg")}
+        actionLabel={t("common.delete")}
+        onAction={async () => {
+          if (!taskToDeleteId) return;
+          await removeTodo(taskToDeleteId);
+          setDeleteConfirmVisible(false);
+          setTaskToDeleteId(null);
+        }}
+      />
     </View>
   );
 }
