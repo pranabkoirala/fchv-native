@@ -129,7 +129,7 @@ export default function NewbornDeathReportScreen() {
                       params: { id: item.id },
                     })
                   }
-                  className="bg-white rounded-2xl p-4 mb-3 border border-slate-100 shadow-sm shadow-slate-200/50"
+                  className="bg-white rounded-2xl p-4 mb-3 border border-slate-100"
                 >
                   {/* Top Row: Baby info + Gender badge */}
                   <View className="flex-row items-center justify-between mb-3">

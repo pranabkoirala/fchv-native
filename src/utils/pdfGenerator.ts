@@ -9,7 +9,6 @@ import * as Share from "expo-sharing";
 import { Platform } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
 import { getAllAdolescentIfa } from "../hooks/database/models/AdolescentIfaModel";
-import { getCounselingByMother } from "../hooks/database/models/CounselingModel";
 import { getAllInfantMonitorings } from "../hooks/database/models/InfantMonitoringModel";
 import { getAllMaternalDeaths } from "../hooks/database/models/MaternalDeathModel";
 import { getAllNewbornDeaths } from "../hooks/database/models/NewbornDeathModel";
@@ -115,15 +114,6 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
     const lmp = parseDateToNepali(item.lmp_date);
     const edd = parseDateToNepali(item.edd);
 
-    // Look up counseling status for this mother
-    let isCounseled = false;
-    try {
-      const counseling = await getCounselingByMother(item.mother_id);
-      isCounseled = counseling?.is_counseled === 1;
-    } catch (e) {
-      console.log("Error fetching counseling for mother:", item.mother_id, e);
-    }
-
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
@@ -131,8 +121,7 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
         <td>${item.name}</td><td>${convertToNepaliNumber(item.age)}</td>
         <td>${lmp.day}</td><td>${lmp.month}</td><td>${lmp.year}</td>
         <td>${edd.day}</td><td>${edd.month}</td><td>${edd.year}</td>
-        <td>${isCounseled ? "✔️" : ""}</td>
-        <td>${!isCounseled ? "✔️" : ""}</td>
+        <td></td><td></td>
         <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
       </tr>
     `;

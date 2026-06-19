@@ -25,7 +25,7 @@ const MeetingCard = memo(function MeetingCard({
 }) {
     return (
         <TouchableOpacity
-            className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-2 mx-5"
+            className="bg-white p-5 rounded-2xl border border-gray-100 mb-2 mx-5"
             activeOpacity={0.7}
             onPress={() => onPress(meeting)}
         >
@@ -96,7 +96,7 @@ export default function MothersGroupMeetings() {
     ), [handleMeetingPress, language, t]);
 
     const MeetingSkeleton = () => (
-        <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+        <View className="bg-white p-5 rounded-2xl border border-gray-100 mb-4">
             <View className="flex-row justify-between items-center mb-4">
                 <Skeleton width={120} height={16} />
                 <Skeleton width={80} height={24} borderRadius={12} />

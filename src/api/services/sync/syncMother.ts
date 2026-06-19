@@ -1,19 +1,18 @@
-import { markAsSynced } from "./helper";
 import { unSyncedMothers } from "@/hooks/database/models/MotherModel";
-import { postMother } from "../mother/mutation";
+import { postBulkMother } from "../mother/mutation";
+import { fetchMothersFromServer } from "../mother/queries";
+import { sendUnsyncedToServer } from "./helper";
 
 export async function sendUnsyncedMothersToServer() {
-  const unsynced = await unSyncedMothers();
-  if (!unsynced.length) return;
+  await sendUnsyncedToServer(
+    unSyncedMothers,
+    postBulkMother,
+    "mother"
+  );
+}
 
-  for (const item of unsynced) {
-    try {
-      const response = await postMother(item);
-      if (response && response.id) {
-        await markAsSynced("mother", response.id, true);
-      }
-    } catch (error) {
-      console.error(`Failed to sync mother with ID ${item.id}:`, error);
-    }
-  }
+export async function getUnsyncedMothersFromServer(
+  last_synced_at: string | null,
+) {
+  await fetchMothersFromServer({ sync_timestamp: last_synced_at });
 }

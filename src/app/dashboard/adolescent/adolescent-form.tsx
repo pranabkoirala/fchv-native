@@ -10,7 +10,7 @@ import {
 import * as Crypto from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdolescentRegistrationForm() {
@@ -65,8 +65,9 @@ export default function AdolescentRegistrationForm() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!name.trim())
+    if (!name.trim()) {
       e.name = t("adolescent_page.errors.name_required");
+    }
     return e;
   };
 
@@ -76,6 +77,7 @@ export default function AdolescentRegistrationForm() {
       setErrors(vErrors);
       return;
     }
+    setErrors({});
 
     setIsLoading(true);
     try {
@@ -105,10 +107,7 @@ export default function AdolescentRegistrationForm() {
       router.back();
     } catch (error) {
       console.error(error);
-      Alert.alert(
-        t("adolescent_page.form.validation.error"),
-        t("adolescent_page.form.messages.save_error"),
-      );
+      showToast(t("adolescent_page.form.messages.save_error"));
     } finally {
       setIsLoading(false);
     }

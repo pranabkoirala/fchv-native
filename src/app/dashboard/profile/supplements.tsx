@@ -72,7 +72,7 @@ export default function SupplementsScreen({ motherId, disabled }: { motherId?: s
 
   return (
     <>
-      <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm shadow-slate-200">
+      <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
         <SectionTitle
           title={t("profile.supplements.title")}
           icon={Pill}

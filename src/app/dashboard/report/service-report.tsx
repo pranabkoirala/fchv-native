@@ -194,7 +194,7 @@ export default function ServiceReportScreen() {
       >
         <View className="p-4">
           {loading ? (
-            <View className="border border-slate-100 rounded-lg overflow-hidden bg-white shadow-sm p-4 h-[500px]">
+            <View className="border border-slate-100 rounded-lg overflow-hidden bg-white p-4 h-[500px]">
               <Skeleton width="100%" height="20%" borderRadius={8} style={{ marginBottom: 12 }} />
               <Skeleton width="100%" height="20%" borderRadius={8} style={{ marginBottom: 12 }} />
               <Skeleton width="100%" height="20%" borderRadius={8} style={{ marginBottom: 12 }} />
@@ -202,7 +202,7 @@ export default function ServiceReportScreen() {
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm">
+              <View className="border border-slate-300 rounded-lg overflow-hidden bg-white">
                 <View className="flex-row">
                   {monthsGroup.map((group, groupIdx) => (
                     <View

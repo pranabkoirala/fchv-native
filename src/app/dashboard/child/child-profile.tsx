@@ -153,6 +153,7 @@ export default function ChildProfileScreen() {
         }, [id]),
     );
 
+
     if (loading) {
         return (
             <SafeAreaView className="flex-1 bg-white">
@@ -191,10 +192,10 @@ export default function ChildProfileScreen() {
             <CustomHeader
                 title={t("child_profile.title")}
                 onBackPress={() => {
-                    if (from === "profile" && record?.mother_id) {
+                    if (from === "profile" && record?.mother) {
                         router.replace({
                             pathname: "/dashboard/profile",
-                            params: { id: record.mother_id },
+                            params: { id: record.mother },
                         } as any);
                     } else if (router.canGoBack()) {
                         router.back();
@@ -217,15 +218,37 @@ export default function ChildProfileScreen() {
                             </View>
                             <View className="flex-1">
                                 <View className="flex-row items-center justify-between">
-                                    <View className="flex-row items-center">
-                                        <Text className="text-slate-800 text-[17px] font-bold">
-                                            {record.baby_name || t("child_page.unnamed_baby")}
-                                        </Text>
-                                        {
-                                            record.status === 'dead' && (
+                                    {
+                                        record.baby_name && (
+
+                                            <Text className="text-slate-800 text-[17px] font-bold">
+                                                {record.baby_name}
+                                            </Text>
+                                        )
+                                    }
+                                    {
+                                        record.status === 'dead' && (
+                                            <View className="flex-row items-center">
                                                 <Text className="text-rose-600 text-[15px] font-semibold"> ({t("reports.status.deceased")})</Text>
-                                            )
-                                        }
+                                            </View>
+                                        )
+                                    }
+
+                                </View>
+                                <View className="flex flex-row justify-between">
+
+                                    <View>
+                                        <Text className="text-[#64748B] text-[15px] mt-1 font-medium">
+                                            {t("child_profile.dob_label")}: {language === 'en' ? record.date_of_birth : record.date_of_birth ? toNepaliNumbers(AdToBs(record.date_of_birth)) : "---"}
+                                        </Text>
+                                        <TouchableOpacity onPress={() => router.push({
+                                            pathname: "/dashboard/profile",
+                                            params: { id: record.mother, from: `/dashboard/child/child-profile?id=${id}${from ? `&from=${from}` : ""}` },
+                                        })} className="flex-row items-center mt-2">
+                                            <Text className="text-slate-500 font-medium text-[15px]" numberOfLines={1}>
+                                                {t("child_page.mother")}: <Text className="text-slate-700 font-semibold">{record.mother_name || t("child_page.unknown")}</Text>
+                                            </Text>
+                                        </TouchableOpacity>
                                     </View>
                                     <TouchableOpacity
                                         onPress={() =>
@@ -240,17 +263,6 @@ export default function ChildProfileScreen() {
                                         <Edit2 size={16} color={record.status === 'dead' ? "#CBD5E1" : "#64748B"} />
                                     </TouchableOpacity>
                                 </View>
-                                <Text className="text-[#64748B] text-[15px] mt-1 font-medium">
-                                    {t("child_profile.dob_label")}: {language === 'en' ? record.date_of_birth : record.date_of_birth ? toNepaliNumbers(AdToBs(record.date_of_birth)) : "---"}
-                                </Text>
-                                <TouchableOpacity onPress={() => router.push({
-                                    pathname: "/dashboard/profile",
-                                    params: { id: record.mother_id, from: `/dashboard/child/child-profile?id=${id}${from ? `&from=${from}` : ""}` },
-                                })} className="flex-row items-center mt-2">
-                                    <Text className="text-slate-500 font-medium text-[15px]" numberOfLines={1}>
-                                        {t("child_page.mother")}: <Text className="text-slate-700 font-semibold">{record.mother_name || t("child_page.unknown")}</Text>
-                                    </Text>
-                                </TouchableOpacity>
 
 
                             </View>
@@ -376,7 +388,7 @@ export default function ChildProfileScreen() {
                 visible={deathModalVisible}
                 onClose={() => setDeathModalVisible(false)}
                 record={{
-                    id: record.mother_id,
+                    id: record.mother,
                     mother_name: record.mother_name,
                 } as any}
                 initialChildId={record.id}

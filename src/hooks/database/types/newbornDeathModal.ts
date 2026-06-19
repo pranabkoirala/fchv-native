@@ -1,6 +1,7 @@
 export interface NewbornDeathStoreType {
   id: string;
-  mother_id: string;
+  mother: string;
+  child_id?: string | null;
   mother_name: string;
   baby_name?: string;
   birth_day: number;
@@ -19,7 +20,8 @@ export interface NewbornDeathStoreType {
   death_place_other?: string;
   gender?: 'Male' | 'Female';
   remarks: string;
-  reg_month?: string;
+  reg_year?: number | null;
+  reg_month?: number | string | null;
   is_synced: number;
   is_deleted: number;
   created_at: string;

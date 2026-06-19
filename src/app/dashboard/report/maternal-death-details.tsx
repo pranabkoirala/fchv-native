@@ -46,8 +46,8 @@ export default function MaternalDeathDetailsScreen() {
         const record = records.find((r) => r.id === id);
         if (record) {
           setData(record);
-          if (record.mother_id) {
-            const mother = await getMotherProfile(record.mother_id);
+          if (record.mother) {
+            const mother = await getMotherProfile(record.mother);
             setMotherData(mother);
           }
         }
@@ -195,7 +195,7 @@ export default function MaternalDeathDetailsScreen() {
         contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
       >
         {/* Profile Header Card */}
-        <View className="mx-4 bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6 flex-row items-center">
+        <View className="mx-4 bg-white p-5 rounded-3xl border border-slate-100 mb-6 flex-row items-center">
           <View className="w-16 h-16 bg-red-50 rounded-full items-center justify-center mr-4 border border-red-100">
             <User size={28} color="#EF4444" />
           </View>
@@ -218,7 +218,7 @@ export default function MaternalDeathDetailsScreen() {
         </View>
 
         {/* Core Details Card */}
-        <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+        <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
           <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
             <Activity size={16} color="#64748B" className="mr-2" />
             <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
@@ -245,7 +245,7 @@ export default function MaternalDeathDetailsScreen() {
         </View>
 
         {/* Location Details Card */}
-        <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+        <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
           <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
             <Navigation size={16} color="#64748B" className="mr-2" />
             <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
@@ -270,7 +270,7 @@ export default function MaternalDeathDetailsScreen() {
 
         {/* Family & Contact Card */}
         {motherData && (
-          <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+          <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
             <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
               <User size={16} color="#64748B" className="mr-2" />
               <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
@@ -303,7 +303,7 @@ export default function MaternalDeathDetailsScreen() {
 
         {/* Remarks Card */}
         {!!data.remarks && (
-          <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          <View className="mx-4 bg-white rounded-3xl border border-slate-100 overflow-hidden">
             <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
               <Info size={16} color="#64748B" className="mr-2" />
               <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">

@@ -60,7 +60,7 @@ export default function FamilyPlanningModal({
       const finalMethods = finalMethodsArr.length > 0 ? finalMethodsArr.join(', ') : 'None';
 
       await saveFamilyPlanning({
-        mother_id: motherId,
+        mother: motherId,
         pregnancy_id: pregnancyId,
         family_planning: finalMethods,
         ocp_qty: ocpQty,
@@ -86,7 +86,7 @@ export default function FamilyPlanningModal({
         onPress={onClose}
         className="flex-1 bg-black/50 justify-end"
       >
-        <Pressable onPress={(e) => e.stopPropagation()} className="bg-white w-full rounded-t-3xl p-6 shadow-xl pb-10">
+        <Pressable onPress={(e) => e.stopPropagation()} className="bg-white w-full rounded-t-3xl p-6 pb-10">
 
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-xl font-semibold text-slate-800">

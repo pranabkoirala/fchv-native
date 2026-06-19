@@ -4,6 +4,8 @@ import {
 } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import { CreateMotherPayload, MotherStoreType } from "../types/motherModal";
+import { bulkInsertToTempTable } from "./CommonModal";
+import { setSyncTimestamp } from "./SyncModel";
 
 export async function createMother(
   payload: Omit<CreateMotherPayload, "created_at" | "updated_at">,
@@ -142,7 +144,7 @@ export async function updateMother(
       payload.partner_name ?? null,
       payload.partner_mobile ?? null,
       payload.partner_age ?? null,
-      payload.is_synced ? 1 : 0,
+      0,
       now,
       payload.id,
     ],
@@ -197,6 +199,28 @@ export async function deleteMother(id: string): Promise<void> {
   );
 }
 
+export function checkHasHealthProblem(riskLevel: string | null | undefined, counselingAnswersJson: string | null | undefined): boolean {
+  if (riskLevel === "high" || riskLevel === "moderate") {
+    return true;
+  }
+  if (counselingAnswersJson) {
+    try {
+      const answers = JSON.parse(counselingAnswersJson);
+      for (const key in answers) {
+        const logs = answers[key];
+        if (Array.isArray(logs) && logs.length > 0) {
+          return true;
+        } else if (logs === true) {
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing counseling answers", e);
+    }
+  }
+  return false;
+}
+
 export interface MotherListDbItem {
   id: string;
   code?: string;
@@ -226,6 +250,7 @@ export interface MotherListDbItem {
   reg_month?: number;
   createdAt: string;
   is_dead: boolean;
+  hasHealthProblem?: boolean;
 }
 
 export async function getAllMothersList(): Promise<MotherListDbItem[]> {
@@ -236,20 +261,24 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       m.*,
       COALESCE(p.lmp_date, m.lmp_date) as lmp,
       p.expected_delivery_date as edd,
-      (SELECT COUNT(*) FROM pregnancy WHERE mother_id = m.id AND is_deleted = 0) as pregnancy_count,
+      p.risk_level,
+      (SELECT COUNT(*) FROM pregnancy WHERE mother = m.id AND is_deleted = 0) as pregnancy_count,
       cm.birth_place,
       cm.status as baby_status,
       cm.remarks as baby_remarks,
-      (SELECT COUNT(*) FROM hmis_maternal_death hmd WHERE hmd.mother_id = m.id) > 0 as is_dead
+      (SELECT COUNT(*) FROM hmis_maternal_death hmd WHERE hmd.mother = m.id AND hmd.is_deleted = 0) > 0 as is_dead,
+      (SELECT answers FROM counseling_referral cr 
+       WHERE cr.mother = m.id AND cr.is_deleted = 0 
+       ORDER BY cr.created_at DESC LIMIT 1) as counseling_answers
     FROM mother m
     LEFT JOIN pregnancy p ON p.id = (
       SELECT id FROM pregnancy 
-      WHERE mother_id = m.id AND is_deleted = 0 
+      WHERE mother = m.id AND is_deleted = 0 
       ORDER BY created_at DESC LIMIT 1
     )
     LEFT JOIN child_monitoring cm ON cm.id = (
       SELECT id FROM child_monitoring
-      WHERE mother_id = m.id AND is_deleted = 0
+      WHERE mother = m.id AND is_deleted = 0
       ORDER BY created_at DESC LIMIT 1
     )
     WHERE m.is_deleted = 0 
@@ -288,6 +317,8 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       } catch (e) { }
     }
 
+    const hasHealthProblem = checkHasHealthProblem(row.risk_level, row.counseling_answers);
+
     return {
       id: row.id,
       code: row.code || "",
@@ -307,7 +338,7 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       edd: eddCalculated,
       anc: 0,
       status: "active",
-      risk: "low",
+      risk: row.risk_level || "low",
       pregnancy_count: row.pregnancy_count || 0,
       date_of_birth: dob,
       age: age,
@@ -318,6 +349,7 @@ export async function getAllMothersList(): Promise<MotherListDbItem[]> {
       reg_month: row.reg_month,
       createdAt: row.created_at || "",
       is_dead: !!row.is_dead,
+      hasHealthProblem,
     };
   });
 }
@@ -379,16 +411,20 @@ export async function getMotherProfile(
       m.address_house_number,
       m.created_at as regDate,
       p.id as pregnancyId,
+      p.risk_level,
       COALESCE(p.lmp_date, m.lmp_date) as lmp,
       p.expected_delivery_date as edd,
       COALESCE(p.gravida, m.gravida) as gravida,
       COALESCE(p.parity, m.parity) as parity,
-      (SELECT COUNT(*) FROM pregnancy WHERE mother_id = m.id AND is_deleted = 0) as pregnancy_count,
-      (SELECT COUNT(*) FROM hmis_maternal_death hmd WHERE hmd.mother_id = m.id) > 0 as is_dead
+      (SELECT COUNT(*) FROM pregnancy WHERE mother = m.id AND is_deleted = 0) as pregnancy_count,
+      (SELECT COUNT(*) FROM hmis_maternal_death hmd WHERE hmd.mother = m.id AND hmd.is_deleted = 0) > 0 as is_dead,
+      (SELECT answers FROM counseling_referral cr 
+       WHERE cr.mother = m.id AND cr.is_deleted = 0 
+       ORDER BY cr.created_at DESC LIMIT 1) as counseling_answers
     FROM mother m
     LEFT JOIN pregnancy p ON p.id = (
       SELECT id FROM pregnancy 
-      WHERE mother_id = m.id AND is_deleted = 0 
+      WHERE mother = m.id AND is_deleted = 0 
       ORDER BY created_at DESC LIMIT 1
     )
     WHERE m.id = ? AND m.is_deleted = 0
@@ -397,7 +433,7 @@ export async function getMotherProfile(
   if (!row) return null;
 
   // Fetch child monitoring data
-  const childQuery = `SELECT * FROM child_monitoring WHERE mother_id = ? AND is_deleted = 0 ORDER BY created_at DESC`;
+  const childQuery = `SELECT * FROM child_monitoring WHERE mother = ? AND is_deleted = 0 ORDER BY created_at DESC`;
   const children = await db.getAllAsync<any>(childQuery, [id]);
 
   const firstName = row.first_name || "";
@@ -428,6 +464,8 @@ export async function getMotherProfile(
       }
     } catch (e) { }
   }
+
+  const hasHealthProblem = checkHasHealthProblem(row.risk_level, row.counseling_answers);
 
   return {
     id: row.id,
@@ -472,7 +510,7 @@ export async function getMotherProfile(
     edd: eddCalculated || "N/A",
     anc: 0,
     status: "active",
-    risk: "low",
+    risk: row.risk_level || "low",
     regDate: row.regDate || "N/A",
     createdAt: row.regDate || "",
     pregnancy_count: row.pregnancy_count || 0,
@@ -480,6 +518,7 @@ export async function getMotherProfile(
     date_of_birth: row.date_of_birth || "",
     age: age,
     children: children || [],
+    hasHealthProblem,
   };
 }
 
@@ -525,4 +564,187 @@ export async function getMotherTrend(): Promise<
   });
 
   return Array.from(counts.values());
+}
+
+export async function insertToTempMotherTable(apiRes: any[]) {
+  if (!apiRes.length) return;
+
+  const db = await getDb();
+  const columns = [
+    "id",
+    "code",
+    "husband_name",
+    "ethnicity",
+    "education",
+    "photo",
+    "first_name",
+    "last_name",
+    "phone_number",
+    "date_of_birth",
+    "address_locality",
+    "address_house_number",
+    "address_province",
+    "address_district",
+    "address_municipality",
+    "address_ward",
+    "income",
+    "occupation",
+    "blood_group",
+    "jati_code",
+    "lmp_date",
+    "parity",
+    "gravida",
+    "cover_photo",
+    "emergency_contact_number",
+    "partner_name",
+    "partner_mobile",
+    "partner_age",
+    "is_synced",
+    "is_deleted",
+    "created_at",
+    "updated_at",
+  ];
+
+  await bulkInsertToTempTable<any>(
+    {
+      db,
+      table: "mother_staging",
+      columns,
+      onConflict: "replace",
+      rows: (item) => {
+        const createdAt = item.created_at ?? new Date().toISOString();
+        const updatedAt = item.updated_at ?? createdAt;
+        const deleted = (item as { deleted?: boolean | number }).deleted ?? item.is_deleted ?? false;
+        const address = item.address ?? {};
+
+        return [
+          item.id,
+          item.code ?? null,
+          item.husband_name ?? null,
+          item.ethnicity ?? null,
+          item.education ?? null,
+          item.photo ?? null,
+          item.first_name ?? null,
+          item.last_name ?? null,
+          item.phone_number ?? null,
+          item.date_of_birth ?? null,
+          item.address_locality ?? address.locality ?? null,
+          item.address_house_number ?? address.house_number ?? null,
+          item.address_province ?? address.province ?? null,
+          item.address_district ?? address.district ?? null,
+          item.address_municipality ?? address.municipality ?? null,
+          item.address_ward ?? address.ward ?? null,
+          item.income ?? null,
+          item.occupation ?? null,
+          item.blood_group ?? null,
+          item.jati_code ?? null,
+          item.lmp_date ?? null,
+          item.parity ?? null,
+          item.gravida ?? null,
+          item.cover_photo ?? null,
+          item.emergency_contact_number ?? null,
+          item.partner_name ?? null,
+          item.partner_mobile ?? null,
+          item.partner_age ?? null,
+          1,
+          deleted ? 1 : 0,
+          createdAt,
+          updatedAt,
+        ];
+      },
+    },
+    apiRes,
+  );
+}
+
+export async function moveTempToRealMotherTable() {
+  const db = await getDb();
+
+  const staged = await db.getAllAsync<any>(`SELECT * FROM mother_staging`);
+  if (!staged.length) return;
+
+  for (const item of staged) {
+    await db.runAsync(
+      `
+      INSERT INTO mother
+        (id, code, husband_name, ethnicity, education, photo, first_name, last_name, phone_number, date_of_birth,
+         address_locality, address_house_number, address_province, address_district, address_municipality, address_ward,
+         income, occupation, blood_group, jati_code, lmp_date, parity, gravida, cover_photo,
+         emergency_contact_number, partner_name, partner_mobile, partner_age, is_synced, is_deleted, created_at, updated_at)
+      VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        code = excluded.code,
+        husband_name = excluded.husband_name,
+        ethnicity = excluded.ethnicity,
+        education = excluded.education,
+        photo = excluded.photo,
+        first_name = excluded.first_name,
+        last_name = excluded.last_name,
+        phone_number = excluded.phone_number,
+        date_of_birth = excluded.date_of_birth,
+        address_locality = excluded.address_locality,
+        address_house_number = excluded.address_house_number,
+        address_province = excluded.address_province,
+        address_district = excluded.address_district,
+        address_municipality = excluded.address_municipality,
+        address_ward = excluded.address_ward,
+        income = excluded.income,
+        occupation = excluded.occupation,
+        blood_group = excluded.blood_group,
+        jati_code = excluded.jati_code,
+        lmp_date = excluded.lmp_date,
+        parity = excluded.parity,
+        gravida = excluded.gravida,
+        cover_photo = excluded.cover_photo,
+        emergency_contact_number = excluded.emergency_contact_number,
+        partner_name = excluded.partner_name,
+        partner_mobile = excluded.partner_mobile,
+        partner_age = excluded.partner_age,
+        is_synced = excluded.is_synced,
+        is_deleted = excluded.is_deleted,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+      WHERE datetime(excluded.updated_at) > datetime(mother.updated_at)
+         OR mother.updated_at IS NULL;
+      `,
+      [
+        item.id,
+        item.code,
+        item.husband_name,
+        item.ethnicity,
+        item.education,
+        item.photo,
+        item.first_name,
+        item.last_name,
+        item.phone_number,
+        item.date_of_birth,
+        item.address_locality,
+        item.address_house_number,
+        item.address_province,
+        item.address_district,
+        item.address_municipality,
+        item.address_ward,
+        item.income,
+        item.occupation,
+        item.blood_group,
+        item.jati_code,
+        item.lmp_date,
+        item.parity,
+        item.gravida,
+        item.cover_photo,
+        item.emergency_contact_number,
+        item.partner_name,
+        item.partner_mobile,
+        item.partner_age,
+        1,
+        item.is_deleted ? 1 : 0,
+        item.created_at,
+        item.updated_at,
+      ],
+    );
+  }
+
+  const now = new Date().toISOString();
+  await setSyncTimestamp("mother", now);
 }

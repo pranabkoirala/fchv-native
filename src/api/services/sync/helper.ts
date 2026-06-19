@@ -13,9 +13,9 @@ export async function markAsSynced(
   ]);
 }
 
-export async function sendUnsyncedToServer<T extends { id: string }>(
-  fetchFn: () => Promise<T[]>,
-  postFn: (payload: T[]) => Promise<T[]>,
+export async function sendUnsyncedToServer<Local extends { id: string }, Server extends { id: string }>(
+  fetchFn: () => Promise<Local[]>,
+  postFn: (payload: Local[]) => Promise<Server[]>,
   tableName: TableType
 ) {
   // Fetch local data that are unsynced i.e is_synced being 0 :)
@@ -23,7 +23,7 @@ export async function sendUnsyncedToServer<T extends { id: string }>(
   if (!unsynced.length) return; // assume it's synced
 
   // Then sending those data to server
-  const response: T[] = await postFn(unsynced);
+  const response: Server[] = await postFn(unsynced);
 
   // Creating local map so we can compare the response from server and the payload we sent. Basically double checking if server has sent us back the data we sent for syncing
   const localMap = new Map<string, { id: string }>();

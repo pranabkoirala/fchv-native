@@ -1,6 +1,6 @@
 export interface InfantMonitoringStoreType {
   id: string;
-  mother_id?: string;
+  mother?: string;
   mother_name?: string;
   baby_name?: string;
   date_of_birth?: string;
@@ -22,6 +22,9 @@ export interface InfantMonitoringStoreType {
   is_deleted: number;
   created_at: string;
   updated_at: string;
+  // Pregnancy linkage
+  pregnancy_id?: string | null;
+  registration_source?: 'PREGNANCY' | 'DIRECT_CHILD_REGISTRATION';
 }
 
 export type CreateInfantMonitoringPayload = Omit<

@@ -13,6 +13,7 @@ import { Province } from "../types/profile";
 import municipalitiesData from "../assets/json/municipalities.json";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../context/LanguageContext";
+import { toNepaliNumbers } from "../utils/dateHelper";
 
 const provinces: Province[] = municipalitiesData as Province[];
 
@@ -31,6 +32,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
   const [lastName, setLastName] = useState("");
   const [dobAd, setDobAd] = useState("");
   const [dobBs, setDobBs] = useState("");
+  const [age, setAge] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [codeState, setCodeState] = useState<string | null>(null);
 
@@ -64,6 +66,72 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
     try { return AdToBs(adDate); } catch { return adDate; }
   };
 
+  const getTodayNepaliDate = () => {
+    try {
+      const todayAd = new Date().toISOString().split("T")[0];
+      const bsDate = AdToBs(todayAd);
+      const parts = bsDate.split("-");
+      return {
+        year: parseInt(parts[0], 10),
+        month: parseInt(parts[1], 10),
+        day: parseInt(parts[2], 10),
+      };
+    } catch (e) {
+      console.error("Error getting today's Nepali date:", e);
+      return { year: 2083, month: 3, day: 1 };
+    }
+  };
+
+  const calculateAgeFromBs = (bsDateStr: string): number => {
+    if (!bsDateStr) return 0;
+    const parts = bsDateStr.split("-");
+    if (parts.length !== 3) return 0;
+    const birthYear = parseInt(parts[0], 10);
+    const birthMonth = parseInt(parts[1], 10);
+    const birthDay = parseInt(parts[2], 10);
+    
+    const today = getTodayNepaliDate();
+    let ageVal = today.year - birthYear;
+    if (
+      today.month < birthMonth ||
+      (today.month === birthMonth && today.day < birthDay)
+    ) {
+      ageVal--;
+    }
+    return ageVal < 0 ? 0 : ageVal;
+  };
+
+  const calculateBsFromAge = (ageNum: number): string => {
+    const today = getTodayNepaliDate();
+    const birthYear = today.year - ageNum;
+    const monthStr = today.month.toString().padStart(2, "0");
+    const dayStr = today.day.toString().padStart(2, "0");
+    return `${birthYear}-${monthStr}-${dayStr}`;
+  };
+
+  const handleAgeChange = (val: string) => {
+    const cleanVal = val.replace(/\D/g, "");
+    setAge(cleanVal);
+    setErrors({ ...errors, age: "", dob: "" });
+    
+    if (cleanVal) {
+      const ageNum = parseInt(cleanVal, 10);
+      if (ageNum >= 0 && ageNum <= 120) {
+        const calculatedDobBs = calculateBsFromAge(ageNum);
+        setDobBs(calculatedDobBs);
+        try {
+          const adDate = BsToAd(calculatedDobBs);
+          setDobAd(adDate);
+        } catch (e) {
+          console.error("BS to AD conversion error:", e);
+        }
+      }
+    } else {
+      setDobBs("");
+      setDobAd("");
+    }
+  };
+
   useEffect(() => {
     if (id) {
       const fetchEditData = async () => {
@@ -74,7 +142,24 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
             const nameParts = data.first_name ? data.first_name.split(" ") : [];
             setFirstName(nameParts[0] || "");
             setLastName(nameParts.slice(1).join(" ") || "");
+            
+            const dob = data.date_of_birth || "";
+            setDobAd(dob);
+            if (dob) {
+              const nepaliDob = toNepaliDate(dob);
+              setDobBs(nepaliDob);
+              const calculatedAge = calculateAgeFromBs(nepaliDob);
+              setAge(calculatedAge.toString());
+            } else {
+              setDobBs("");
+              setAge("");
+            }
+            
             setPhoneNumber(data.phone_number || "");
+            setSelectedProvince(data.addressProvince || "");
+            setSelectedDistrict(data.addressDistrict || "");
+            setSelectedMunicipality(data.addressMunicipality || "");
+            setSelectedWard(data.addressWard || "");
             setCodeState(data.code || null);
           }
         } catch (e) {
@@ -89,6 +174,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
       setLastName("");
       setDobAd("");
       setDobBs("");
+      setAge("");
       setPhoneNumber("");
       setSelectedProvince("");
       setSelectedDistrict("");
@@ -102,9 +188,18 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
     const e: Record<string, string> = {};
     if (!firstName.trim()) e.firstName = t("mother_form.validation.first_name_req");
     if (!lastName.trim()) e.lastName = t("mother_form.validation.last_name_req");
-    if (!dobAd) e.dob = t("mother_form.validation.dob_req");
-    if (!phoneNumber.trim()) e.phoneNumber = t("mother_form.validation.phone_req");
-    else if (phoneNumber.length !== 10) e.phoneNumber = t("mother_form.validation.phone_digits");
+    if (!dobAd) {
+      e.dob = t("mother_form.validation.dob_req");
+      e.age = t("mother_form.validation.age_req");
+    }
+    const phoneVal = phoneNumber.trim();
+    if (phoneVal) {
+      if (phoneVal.length !== 10) {
+        e.phoneNumber = t("mother_form.validation.phone_digits");
+      } else if (!phoneVal.startsWith("98") && !phoneVal.startsWith("97")) {
+        e.phoneNumber = t("mother_form.validation.phone_invalid");
+      }
+    }
     if (!selectedProvince) e.province = t("mother_form.validation.province_req");
     if (!selectedDistrict) e.district = t("mother_form.validation.district_req");
     if (!selectedMunicipality) e.municipality = t("mother_form.validation.municipality_req");
@@ -154,7 +249,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
       <View className="pt-3">
         <View className="flex-row gap-4">
           <View className="flex-1">
-            <FieldLabel label={t("mother_form.first_name")} />
+            <FieldLabel label={t("mother_form.first_name")} required />
             <BoxInput
               placeholder={t("mother_form.first_name")}
               value={firstName}
@@ -163,7 +258,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
             />
           </View>
           <View className="flex-1">
-            <FieldLabel label={t("mother_form.last_name")} />
+            <FieldLabel label={t("mother_form.last_name")} required />
             <BoxInput
               placeholder={t("mother_form.last_name")}
               value={lastName}
@@ -173,28 +268,46 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
           </View>
         </View>
  
-        <FieldLabel label={t("mother_form.dob")} />
-        <Pressable onPress={() => setShowDobPicker(true)} className="mb-6">
-          <View className={`rounded-xl px-4 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between`}>
-            <Text className={`text-base ${dobBs ? "text-[#1E293B]" : "text-[#b8bbbeff]"}`}>
-              {dobBs || t("mother_form.dob_placeholder")}
-            </Text>
-            <Calendar size={18} color="#475569" />
+        <View className="flex-row gap-4 mb-4">
+          <View className="flex-1">
+            <FieldLabel label={t("mother_form.dob")} required />
+            <Pressable onPress={() => setShowDobPicker(true)}>
+              <View className={`rounded-xl px-4 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between`}>
+                <Text className={`text-base ${dobBs ? "text-[#1E293B]" : "text-[#b8bbbeff]"}`}>
+                  {dobBs ? (language === "np" ? toNepaliNumbers(dobBs) : dobBs) : t("mother_form.dob_placeholder")}
+                </Text>
+                <Calendar size={18} color="#475569" />
+              </View>
+              {errors.dob ? (
+                <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.dob}</Text>
+              ) : null}
+            </Pressable>
           </View>
-          {errors.dob ? (
-            <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.dob}</Text>
-          ) : null}
-        </Pressable>
+          <View className="flex-1">
+            <FieldLabel label={t("mother_form.age")} required />
+            <BoxInput
+              placeholder={t("mother_form.age_placeholder")}
+              value={age}
+              onChangeText={handleAgeChange}
+              keyboardType="number-pad"
+              maxLength={3}
+              error={errors.age}
+            />
+          </View>
+        </View>
+
         <CalendarPicker
           visible={showDobPicker}
           onClose={() => setShowDobPicker(false)}
           onDateSelect={(bsDate) => {
             setShowDobPicker(false);
             setDobBs(bsDate);
-            setErrors({ ...errors, dob: "" });
+            setErrors({ ...errors, dob: "", age: "" });
             try {
               const adDate = BsToAd(bsDate);
               setDobAd(adDate);
+              const calculatedAge = calculateAgeFromBs(bsDate);
+              setAge(calculatedAge.toString());
             } catch (e) {
               console.error("BS to AD conversion error:", e);
             }
@@ -223,6 +336,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         <View>
           <ProfilePicker
             label={t("mother_form.address.province")}
+            required
             placeholder={t("mother_form.address.select_province")}
             selectedValue={selectedProvince}
             onValueChange={(val) => {
@@ -244,6 +358,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         <View>
           <ProfilePicker
             label={t("mother_form.address.district")}
+            required
             placeholder={selectedProvince ? t("mother_form.address.select_district") : t("mother_form.address.select_province_first")}
             selectedValue={selectedDistrict}
             onValueChange={(val) => {
@@ -264,6 +379,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         <View>
           <ProfilePicker
             label={t("mother_form.address.municipality")}
+            required
             placeholder={selectedDistrict ? t("mother_form.address.select_municipality") : t("mother_form.address.select_district_first")}
             selectedValue={selectedMunicipality}
             onValueChange={(val) => {
@@ -283,6 +399,7 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         <View>
           <ProfilePicker
             label={t("mother_form.address.ward")}
+            required
             placeholder={selectedMunicipality ? t("mother_form.address.select_ward") : t("mother_form.address.select_municipality_first")}
             selectedValue={selectedWard}
             onValueChange={(val) => {

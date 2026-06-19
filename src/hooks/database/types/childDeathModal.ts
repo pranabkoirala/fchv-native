@@ -1,6 +1,6 @@
 export interface ChildDeathStoreType {
   id: string;
-  mother_id: string;
+  mother: string;
   mother_name: string;
   child_name?: string;
   birth_day: number;

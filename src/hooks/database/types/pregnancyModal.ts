@@ -1,6 +1,6 @@
 export type PregnancyStoreType = {
   id: string;
-  mother_id: string | null;
+  mother: string | null;
   is_synced: number;
   is_deleted: number;
   gravida: number | null;
@@ -34,7 +34,7 @@ export interface PregnancyData {
 
 export type CreatePregnancyPayload = {
   id: string;
-  mother_id: string;
+  mother: string;
   name?: string;
   gravida?: number;
   parity?: number;

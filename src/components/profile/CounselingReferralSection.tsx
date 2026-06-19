@@ -1,13 +1,13 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { ClipboardList, Plus, Trash2 } from "lucide-react-native";
+import { ClipboardList, Plus, Trash2, Heart, Activity, Baby } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Modal, Text, TouchableOpacity, View } from "react-native";
-import { AdToBs } from "react-native-nepali-picker";
+import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import {
   COUNCELING_QUESTION_AFTER_PREGNANT,
   COUNCELING_QUESTION_AFTER_PREGNANT_ONE_TIME,
-  COUNSELING_REFERRAL_QUESTIONS,
   COUNSELING_REFERRAL_QUESTIONS_AFTER_CHILD_BORN,
+  COUNSELING_REFERRAL_QUESTIONS_AFTER_CHILD_BORN_ONE_TIME,
   COUNSELING_REFERRAL_QUESTIONS_ONE_TIME_MOTHER
 } from "../../constants/CounselingQuestions";
 import { useToast } from "../../context/ToastContext";
@@ -16,6 +16,7 @@ import { CounselingReferralStoreType, getCounselingReferralByMother, getCounseli
 import { getInfantMonitoringsByMother } from "@/hooks/database/models/InfantMonitoringModel";
 import { getPregnancyByMotherId } from "../../hooks/database/models/PregnantWomenModal";
 import { toNepaliNumbers } from "../../utils/dateHelper";
+import { useHealthIssues, isHealthProblemQuestion } from "@/store/healthIssuesStore";
 
 interface CounselingReferralSectionProps {
   motherId: string;
@@ -26,6 +27,7 @@ export default function CounselingReferralSection({
   motherId,
   disabled
 }: CounselingReferralSectionProps) {
+  const [showHealthIssues] = useHealthIssues(motherId);
   const { showToast } = useToast();
   const { language, t } = useLanguage();
 
@@ -43,6 +45,10 @@ export default function CounselingReferralSection({
   // Delete confirmation modal state
   const [deleteModal, setDeleteModal] = useState(false);
   const [pendingDeleteQuestionId, setPendingDeleteQuestionId] = useState<string | null>(null);
+
+  // Manual Date Picker State
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerQuestionId, setDatePickerQuestionId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -85,10 +91,16 @@ export default function CounselingReferralSection({
     loadData();
   }, [motherId]);
 
-  const handleAdd = async (questionId: string) => {
+  const handleAdd = async (questionId: string, customAdDate: string) => {
     if (addingQuestionId) return;
 
-    const currentTime = new Date().toISOString();
+    let chosenDate = new Date(customAdDate);
+    if (isNaN(chosenDate.getTime())) {
+      chosenDate = new Date();
+    } else {
+      chosenDate.setHours(12, 0, 0, 0);
+    }
+    const currentTime = chosenDate.toISOString();
 
     let existingLogs = [];
     if (Array.isArray(answers[questionId])) {
@@ -107,8 +119,8 @@ export default function CounselingReferralSection({
     try {
       await saveCounselingReferral({
         id: record?.id,
-        mother_id: motherId,
-        pregnancy_id: currentPregnancyId,
+        mother: motherId,
+        pregnancy: currentPregnancyId,
         answers: JSON.stringify(newAnswers),
       });
       showToast(t("counseling_section.added_successfully"));
@@ -146,8 +158,8 @@ export default function CounselingReferralSection({
     try {
       await saveCounselingReferral({
         id: record?.id,
-        mother_id: motherId,
-        pregnancy_id: currentPregnancyId,
+        mother: motherId,
+        pregnancy: currentPregnancyId,
         answers: JSON.stringify(newAnswers),
       });
       showToast(t("counseling_section.deleted_successfully"));
@@ -215,8 +227,7 @@ export default function CounselingReferralSection({
       <View className="flex-1 flex-row flex-wrap mt-2 gap-2 items-center">
         {logs.map((log: any, index: number) => {
           const isLatest = index === logs.length - 1;
-          const isToday = log.date?.split("T")[0] === new Date().toISOString().split("T")[0];
-          const canDelete = isLatest && isToday; // ONLY allow deletion if it was recorded today
+          const canDelete = isLatest; // Allow deletion of the latest entry to correct mistakes
 
           let dateStr = "";
           try {
@@ -247,8 +258,16 @@ export default function CounselingReferralSection({
     );
   };
 
-  const renderQuestionList = (questions: any[], isOneTime: boolean = false) => {
-    return questions.map((question) => {
+  const renderQuestionList = (
+    questions: any[],
+    isOneTime: boolean = false,
+    theme: { activeBtnBg: string } = { activeBtnBg: "bg-[#475569]" }
+  ) => {
+    const visibleQuestions = showHealthIssues
+      ? questions
+      : questions.filter((q) => !isHealthProblemQuestion(q.id));
+
+    return visibleQuestions.map((question) => {
       const logs = Array.isArray(historyAnswers[question.id]) ? historyAnswers[question.id] : [];
       const isRecordedEver = logs.length > 0;
       const disableAdd = isOneTime && isRecordedEver;
@@ -259,22 +278,25 @@ export default function CounselingReferralSection({
       return (
         <View
           key={question.id}
-          className="p-4 border-b border-slate-50"
+          className="p-4 border-b border-slate-100/50"
         >
           <View className="flex-row items-start justify-between">
             <View className="flex-1 mr-4">
               <Text
                 className={"text-slate-800 font-semibold text-[16px] leading-relaxed"}
               >
-                {t(`counseling_section.questions.${question.id}`)}
+                {language === "np" ? question.ne : question.en}
               </Text>
             </View>
             <TouchableOpacity
               disabled={isAddDisabled}
-              onPress={() => handleAdd(question.id)}
+              onPress={() => {
+                setDatePickerQuestionId(question.id);
+                setShowDatePicker(true);
+              }}
               activeOpacity={0.75}
               style={{ opacity: 1, width: 32, height: 32, minWidth: 32, flexShrink: 0 }}
-              className={`items-center justify-center rounded-lg ${isUnavailable && !isAdding ? "bg-slate-100" : "bg-[#475569]"}`}
+              className={`items-center justify-center rounded-lg ${isUnavailable && !isAdding ? "bg-slate-100" : theme.activeBtnBg}`}
             >
               {isAdding ? (
                 <ActivityIndicator size={15} color="white" />
@@ -291,60 +313,98 @@ export default function CounselingReferralSection({
 
   if (loading) return null;
 
+  const isHomeDeliveryAdded = Array.isArray(historyAnswers['home_delivery']) && historyAnswers['home_delivery'].length > 0;
+
+  const filteredPostBirthOneTimeQuestions = COUNSELING_REFERRAL_QUESTIONS_AFTER_CHILD_BORN_ONE_TIME.filter(
+    (question) => {
+      if (question.id === "postnatal_iron_tablets_given" || question.id === "home_delivery_misoprostol") {
+        return isHomeDeliveryAdded;
+      }
+      return true;
+    }
+  );
+
   return (
     <View className="gap-y-4">
       {renderDeleteConfirmModal()}
 
       {/* General Counseling Section */}
-      <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        <View className="flex-row items-center px-4 py-3 bg-amber-50/10 border-b border-slate-50">
-          <View className="w-8 h-8 rounded-lg bg-gray-100 items-center justify-center mr-3">
-            <ClipboardList size={18} color="#64748B" />
+      <View className="bg-white rounded-2xl border border-indigo-100/70 overflow-hidden">
+        <View className="flex-row items-center px-4 py-3.5 bg-indigo-50/30 border-b border-indigo-100/40">
+          <View className="w-8 h-8 rounded-lg bg-indigo-100/70 items-center justify-center mr-3">
+            <Heart size={18} color="#4F46E5" />
           </View>
-          <Text className="text-xl font-medium text-slate-800">
+          <Text className="text-xl font-semibold text-indigo-900">
             {t("counseling_section.general_details")}
           </Text>
         </View>
         <View>
-          {renderQuestionList(COUNSELING_REFERRAL_QUESTIONS, false)}
-          {renderQuestionList(COUNSELING_REFERRAL_QUESTIONS_ONE_TIME_MOTHER, true)}
+          {/* {renderQuestionList(COUNSELING_REFERRAL_QUESTIONS, false, { activeBtnBg: "bg-indigo-600" })} */}
+          {renderQuestionList(COUNSELING_REFERRAL_QUESTIONS_ONE_TIME_MOTHER, true, { activeBtnBg: "bg-indigo-600" })}
         </View>
       </View>
 
       {/* Pregnancy Specific Counseling Section */}
       {isPregnant && (
-        <View className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <View className="flex-row items-center px-4 py-3 bg-gray-50/30 border-b border-gray-50">
-            <View className="w-8 h-8 rounded-lg bg-gray-100 items-center justify-center mr-3">
-              <ClipboardList size={18} color="#64748B" />
+        <View className="bg-white rounded-2xl border border-amber-100/70 overflow-hidden">
+          <View className="flex-row items-center px-4 py-3.5 bg-amber-50/30 border-b border-amber-100/40">
+            <View className="w-8 h-8 rounded-lg bg-amber-100/70 items-center justify-center mr-3">
+              <Activity size={18} color="#D97706" />
             </View>
-            <Text className="text-xl font-semibold text-gray-800">
+            <Text className="text-xl font-semibold text-amber-900">
               {t("counseling_section.after_pregnancy")}
             </Text>
           </View>
           <View>
-            {renderQuestionList(COUNCELING_QUESTION_AFTER_PREGNANT, false)}
-            {renderQuestionList(COUNCELING_QUESTION_AFTER_PREGNANT_ONE_TIME, true)}
+            {renderQuestionList(COUNCELING_QUESTION_AFTER_PREGNANT, false, { activeBtnBg: "bg-amber-600" })}
+            {renderQuestionList(COUNCELING_QUESTION_AFTER_PREGNANT_ONE_TIME, true, { activeBtnBg: "bg-amber-600" })}
           </View>
         </View>
       )}
 
       {/* Post-Birth Specific Counseling Section */}
       {hasChild && (
-        <View className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <View className="flex-row items-center px-4 py-3 bg-gray-50/30 border-b border-gray-50">
-            <View className="w-8 h-8 rounded-lg bg-gray-100 items-center justify-center mr-3">
-              <ClipboardList size={18} color="#64748B" />
+        <View className="bg-white rounded-2xl border border-emerald-100/70 overflow-hidden">
+          <View className="flex-row items-center px-4 py-3.5 bg-emerald-50/30 border-b border-emerald-100/40">
+            <View className="w-8 h-8 rounded-lg bg-emerald-100/70 items-center justify-center mr-3">
+              <Baby size={18} color="#059669" />
             </View>
-            <Text className="text-xl font-semibold text-gray-800">
+            <Text className="text-xl font-semibold text-emerald-900">
               {t("counseling_section.after_child_birth")}
             </Text>
           </View>
           <View>
-            {renderQuestionList(COUNSELING_REFERRAL_QUESTIONS_AFTER_CHILD_BORN, false)}
+            {renderQuestionList(COUNSELING_REFERRAL_QUESTIONS_AFTER_CHILD_BORN, false, { activeBtnBg: "bg-emerald-600" })}
+            {renderQuestionList(filteredPostBirthOneTimeQuestions, true, { activeBtnBg: "bg-emerald-600" })}
           </View>
         </View>
       )}
+      {/* Calendar Date Picker for manual date selection */}
+      <CalendarPicker
+        visible={showDatePicker}
+        onClose={() => {
+          setShowDatePicker(false);
+          setDatePickerQuestionId(null);
+        }}
+        onDateSelect={(bsDate) => {
+          setShowDatePicker(false);
+          if (datePickerQuestionId) {
+            try {
+              const adDate = BsToAd(bsDate);
+              handleAdd(datePickerQuestionId, adDate);
+            } catch (e) {
+              console.error("Date conversion error:", e);
+            }
+          }
+          setDatePickerQuestionId(null);
+        }}
+        language={language === "np" ? "np" : "en"}
+        theme="light"
+        brandColor="#4F46E5"
+        dayTextStyle={{ fontWeight: "normal" }}
+        weekTextStyle={{ fontWeight: "normal" }}
+        titleTextStyle={{ fontWeight: "normal" }}
+      />
     </View>
   );
 }

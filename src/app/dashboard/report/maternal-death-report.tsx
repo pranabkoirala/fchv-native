@@ -162,7 +162,7 @@ export default function MaternalDeathReportScreen() {
                     params: { id: item.id },
                   })
                 }
-                className="bg-white rounded-2xl p-4 mb-4 border border-slate-100 shadow-sm shadow-slate-200/50"
+                className="bg-white rounded-2xl p-4 mb-4 border border-slate-100"
               >
                 <View className="flex-row items-center justify-between mb-3">
                   <View className="flex-row items-center flex-1">

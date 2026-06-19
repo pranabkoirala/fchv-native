@@ -69,7 +69,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
     try {
       setSubmitting(true);
       const payload = {
-        mother_id: record.id,
+        mother: record.id,
         serial_no: record.serial_no,
         mother_name: record.mother_name,
         mother_age: record.mother_age,
@@ -132,7 +132,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
     >
       <SafeAreaView className="flex-1 bg-white">
         {/* Header */}
-        <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100 shadow-sm">
+        <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100">
           <View>
             <Text className="text-slate-800 text-xl font-semibold">{t("maternal_death_modal.title")}</Text>
           </View>
@@ -149,7 +149,7 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
               <FieldLabel label={t("maternal_death_modal.date_of_death")} hasError={false} />
               <Pressable
                 onPress={() => setShowDatePicker(true)}
-                className="bg-white border border-slate-200 px-4 py-2.5 rounded-xl flex-row items-center justify-between shadow-sm shadow-slate-100"
+                className="bg-white border border-slate-200 px-4 py-2.5 rounded-xl flex-row items-center justify-between"
               >
                 <View className="flex-row items-center">
                   <Text className="text-slate-800 text-[16px] font-medium">

@@ -11,7 +11,8 @@ export const ProfilePicker = ({
   getOptionLabel,
   error,
   isSearchable = false,
-  disabled = false
+  disabled = false,
+  required = false
 }: {
   label?: string;
   selectedValue: string;
@@ -22,6 +23,7 @@ export const ProfilePicker = ({
   error?: string;
   isSearchable?: boolean;
   disabled?: boolean;
+  required?: boolean;
 }) => {
 
   return (
@@ -29,6 +31,7 @@ export const ProfilePicker = ({
       {label ? (
         <Text className="mb-1.5 text-[16px] text-slate-800">
           {label}
+          {required && <Text className="text-red-500"> *</Text>}
         </Text>
       ) : null}
 
@@ -79,7 +82,7 @@ export const ProfilePicker = ({
         }}
       />
       {error ? (
-        <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{error}</Text>
+        <Text className="text-red-500 text-xs ml-1">{error}</Text>
       ) : null}
     </View>
   );

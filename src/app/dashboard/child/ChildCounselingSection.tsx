@@ -1,7 +1,7 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { BarChart3, MessageSquare, Plus, Trash2 } from "lucide-react-native";
+import { BarChart3, Check, MessageSquare, Minus, Plus, Trash2 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
 import {
   CHILD_COUNSELING_QUESTIONS,
@@ -34,6 +34,9 @@ export default function ChildCounselingSection({
   const [loading, setLoading] = useState(true);
   const [historyAnswers, setHistoryAnswers] = useState<Record<string, any>>({});
 
+  // Loading states for individual buttons
+  const [loadingButtons, setLoadingButtons] = useState<Record<string, boolean>>({});
+
   // Delete confirmation modal state
   const [deleteModal, setDeleteModal] = useState(false);
   const [pendingDeleteQuestionId, setPendingDeleteQuestionId] = useState<string | null>(null);
@@ -42,6 +45,10 @@ export default function ChildCounselingSection({
   const [muac, setMuac] = useState<'green' | 'yellow' | 'red' | null>(null);
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [orsCount, setOrsCount] = useState(1);
+  const [orsModalVisible, setOrsModalVisible] = useState(false);
+  const [zincCount, setZincCount] = useState(1);
+  const [zincModalVisible, setZincModalVisible] = useState(false);
 
   const parseMeasurement = (value: string) => {
     const parsed = parseFloat(value.replace(",", "."));
@@ -146,23 +153,27 @@ export default function ChildCounselingSection({
   }, [childId]);
 
   const handleToggle = async (questionId: string, value: any) => {
+    setLoadingButtons(prev => ({ ...prev, [questionId]: true }));
     const newAnswers = { ...answers, [questionId]: value };
     setAnswers(newAnswers);
 
     try {
       await saveChildCounseling({
         id: record?.id,
-        child_id: childId,
+        child: childId,
         answers: JSON.stringify(newAnswers),
       });
     } catch (e) {
       console.error("Failed to save answer", e);
       showToast("Failed to save");
       setAnswers(answers);
+    } finally {
+      setLoadingButtons(prev => ({ ...prev, [questionId]: false }));
     }
   };
 
   const handleAdd = async (questionId: string, customLogValue?: any, isOneTime: boolean = false) => {
+    setLoadingButtons(prev => ({ ...prev, [questionId]: true }));
     const currentTime = new Date().toISOString();
 
     let existingLogs = [];
@@ -175,6 +186,7 @@ export default function ChildCounselingSection({
     // Prevent multiple entries for one-time questions
     if (isOneTime && existingLogs.length > 0) {
       showToast("Already recorded");
+      setLoadingButtons(prev => ({ ...prev, [questionId]: false }));
       return;
     }
 
@@ -186,7 +198,7 @@ export default function ChildCounselingSection({
     try {
       await saveChildCounseling({
         id: record?.id,
-        child_id: childId,
+        child: childId,
         answers: JSON.stringify(newAnswers),
       });
       showToast(t("counseling_section.added_successfully") || "Recorded successfully");
@@ -194,11 +206,24 @@ export default function ChildCounselingSection({
       console.error("Failed to save answer", e);
       showToast("Failed to save");
       setAnswers(answers);
+    } finally {
+      setLoadingButtons(prev => ({ ...prev, [questionId]: false }));
     }
+  };
+
+  const handleSaveOrs = async () => {
+    await handleAdd("ors_for_child", orsCount);
+    setOrsModalVisible(false);
+  };
+
+  const handleSaveZinc = async () => {
+    await handleAdd("zinc_for_child", zincCount);
+    setZincModalVisible(false);
   };
 
   const handleAddMalnutrition = async () => {
     const mainQuestionId = MALNUTRITION_CONTENT.main_question.id;
+    setLoadingButtons(prev => ({ ...prev, [mainQuestionId]: true }));
     const currentTime = new Date().toISOString();
     const parsedWeight = parseMeasurement(weight);
     const parsedHeight = parseMeasurement(height);
@@ -206,6 +231,7 @@ export default function ChildCounselingSection({
 
     if (!muac) {
       showToast("Please select MUAC condition");
+      setLoadingButtons(prev => ({ ...prev, [mainQuestionId]: false }));
       return;
     }
 
@@ -228,6 +254,7 @@ export default function ChildCounselingSection({
       height: parsedHeight,
       bmi,
       severity,
+      sub_answers: {},
     };
 
     const newAnswers = { ...answers, [mainQuestionId]: [...existingLogs, newLog] };
@@ -236,7 +263,7 @@ export default function ChildCounselingSection({
     try {
       await saveChildCounseling({
         id: record?.id,
-        child_id: childId,
+        child: childId,
         answers: JSON.stringify(newAnswers),
       });
       showToast(t("counseling_section.added_successfully") || "Recorded successfully");
@@ -249,11 +276,16 @@ export default function ChildCounselingSection({
       console.error("Failed to save malnutrition", e);
       showToast("Failed to save");
       setAnswers(answers);
+    } finally {
+      setLoadingButtons(prev => ({ ...prev, [mainQuestionId]: false }));
     }
   };
 
-  const handleSetSubQuestion = async (subQuestionId: string, value: boolean) => {
+  const handleSetSubQuestion = async (logIndex: number, subQuestionId: string, value: boolean) => {
     const mainQuestionId = MALNUTRITION_CONTENT.main_question.id;
+    const loadingKey = `${mainQuestionId}_${logIndex}_${subQuestionId}`;
+    setLoadingButtons(prev => ({ ...prev, [loadingKey]: true }));
+
     let logs: any[] = [];
 
     if (Array.isArray(answers[mainQuestionId])) {
@@ -262,14 +294,24 @@ export default function ChildCounselingSection({
       logs = [{ date: record?.updated_at || new Date().toISOString(), value: true }];
     }
 
-    if (logs.length === 0) return;
+    if (!logs[logIndex]) {
+      setLoadingButtons(prev => ({ ...prev, [loadingKey]: false }));
+      return;
+    }
 
-    // Attach sub-question status to the latest log entry
-    const latestLog = { ...logs[logs.length - 1] };
-    if (!latestLog.sub_answers) latestLog.sub_answers = {};
-    latestLog.sub_answers[subQuestionId] = value;
+    const targetLog = { ...logs[logIndex] };
+    if (!targetLog.sub_answers) targetLog.sub_answers = {};
 
-    logs[logs.length - 1] = latestLog;
+    if (value) {
+      targetLog.sub_answers[subQuestionId] = {
+        value: true,
+        date: new Date().toISOString(),
+      };
+    } else {
+      delete targetLog.sub_answers[subQuestionId];
+    }
+
+    logs[logIndex] = targetLog;
 
     const newAnswers = { ...answers, [mainQuestionId]: logs };
     setAnswers(newAnswers);
@@ -277,7 +319,7 @@ export default function ChildCounselingSection({
     try {
       await saveChildCounseling({
         id: record?.id,
-        child_id: childId,
+        child: childId,
         answers: JSON.stringify(newAnswers),
       });
       showToast(t("counseling_section.added_successfully") || "Recorded successfully");
@@ -285,6 +327,8 @@ export default function ChildCounselingSection({
       console.error("Failed to save sub-question", e);
       showToast("Failed to save");
       setAnswers(answers);
+    } finally {
+      setLoadingButtons(prev => ({ ...prev, [loadingKey]: false }));
     }
   };
 
@@ -306,6 +350,7 @@ export default function ChildCounselingSection({
     if (!pendingDeleteQuestionId) return;
 
     const questionId = pendingDeleteQuestionId;
+    setLoadingButtons(prev => ({ ...prev, [`delete_${questionId}`]: true }));
     const rawValue = answers[questionId];
     let logs = Array.isArray(rawValue)
       ? [...rawValue]
@@ -316,6 +361,7 @@ export default function ChildCounselingSection({
     if (logs.length === 0) {
       setDeleteModal(false);
       setPendingDeleteQuestionId(null);
+      setLoadingButtons(prev => ({ ...prev, [`delete_${questionId}`]: false }));
       return;
     }
 
@@ -326,17 +372,19 @@ export default function ChildCounselingSection({
     setAnswers(newAnswers);
 
     try {
-      await saveChildCounseling({
+      const savedRecord = await saveChildCounseling({
         id: record?.id,
-        child_id: childId,
+        child: childId,
         answers: JSON.stringify(newAnswers),
       });
+      setRecord(savedRecord);
       showToast(t("counseling_section.deleted_successfully") || "Deleted successfully");
     } catch (e) {
       console.error("Failed to delete answer", e);
       showToast("Failed to delete");
       setAnswers(answers);
     } finally {
+      setLoadingButtons(prev => ({ ...prev, [`delete_${questionId}`]: false }));
       setDeleteModal(false);
       setPendingDeleteQuestionId(null);
     }
@@ -393,12 +441,21 @@ export default function ChildCounselingSection({
           }
           if (log.weight) extraInfo += ` ${log.weight}kg`;
           if (log.height) extraInfo += ` ${log.height}cm`;
+          if (questionId === "ors_for_child" && typeof log.value === "number") {
+            const displayVal = language === "np" ? toNepaliNumbers(log.value) : log.value;
+            const unit = log.value === 1 ? t("counseling_section.ors_packet_one") : t("counseling_section.ors_packet_other");
+            extraInfo += ` (${displayVal} ${unit})`;
+          }
+          if (questionId === "zinc_for_child" && typeof log.value === "number") {
+            const displayVal = language === "np" ? toNepaliNumbers(log.value) : log.value;
+            const unit = log.value === 1 ? t("counseling_section.zinc_tablet_one") : t("counseling_section.zinc_tablet_other");
+            extraInfo += ` (${displayVal} ${unit})`;
+          }
 
           return (
             <View key={index} className={`flex-row items-center ${canDelete ? "bg-blue-50 border border-blue-100" : "bg-slate-50 border border-slate-100"} px-2.5 py-1 rounded-md`}>
-              <View className={`w-1.5 h-1.5 rounded-full mr-1.5 ${canDelete ? "bg-blue-400" : "bg-slate-300"}`} />
               <Text className="text-[11px] text-slate-600 font-bold">
-                {language === "np" ? toNepaliNumbers(index + 1) : index + 1} • {dateStr}
+                {dateStr}
                 {extraInfo}
               </Text>
               {canDelete && (
@@ -449,7 +506,6 @@ export default function ChildCounselingSection({
             <TouchableOpacity
               onPress={cancelDelete}
               className="flex-1 py-3.5 items-center"
-              activeOpacity={0.7}
             >
               <Text className="text-slate-500 font-semibold text-[15px]">
                 {t("counseling_section.delete_confirm_no")}
@@ -457,12 +513,188 @@ export default function ChildCounselingSection({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={confirmDeleteLatest}
-              className="flex-1 py-3.5 items-center border-l border-slate-100"
-              activeOpacity={0.7}
+              disabled={loadingButtons[`delete_${pendingDeleteQuestionId}`]}
+              className="flex-1 py-3.5 items-center border-l border-slate-100 justify-center"
             >
-              <Text className="text-red-600 font-semibold text-[15px]">
-                {t("counseling_section.delete_confirm_yes")}
+              {loadingButtons[`delete_${pendingDeleteQuestionId}`] ? (
+                <ActivityIndicator color="#DC2626" size="small" />
+              ) : (
+                <Text className="text-red-600 font-semibold text-[15px]">
+                  {t("counseling_section.delete_confirm_yes")}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderOrsModal = () => (
+    <Modal
+      visible={orsModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setOrsModalVisible(false)}
+    >
+      <View className="flex-1 justify-center items-center bg-black/40 px-6">
+        <View className="bg-white rounded-2xl pb-2 w-full max-w-[320px]">
+          {/* Header */}
+          <View className="bg-[#eff6ff] rounded-t-2xl px-5 pt-5 pb-4 items-center border-b border-blue-50">
+            <View className="w-12 h-12 rounded-full bg-blue-100 items-center justify-center mb-3">
+              <Plus size={22} color="#2563EB" />
+            </View>
+            <Text className="text-slate-800 text-[18px] font-bold text-center">
+              {t("counseling_section.distribute_ors_title")}
+            </Text>
+            <Text className="text-slate-500 text-[13px] text-center mt-1">
+              {t("counseling_section.distribute_ors_desc")}
+            </Text>
+          </View>
+
+          {/* Counter Controls */}
+          <View className="p-6 items-center justify-center bg-white">
+            <View className="flex-row items-center gap-x-4">
+              {/* Decrement */}
+              <TouchableOpacity
+                onPress={() => setOrsCount(prev => Math.max(1, prev - 1))}
+                disabled={orsCount <= 1}
+                className={`w-11 h-11 rounded-xl items-center justify-center bg-[#475569]`}
+              >
+                <Text className={`font-bold text-xl`}>
+                  <Minus color="white" />
+                </Text>
+              </TouchableOpacity>
+
+              {/* Input field */}
+              <TextInput
+                keyboardType="number-pad"
+                value={String(orsCount)}
+                onChangeText={(txt) => {
+                  const val = parseInt(txt.replace(/[^0-9]/g, "")) || 0;
+                  setOrsCount(val);
+                }}
+                className="h-14 flex-1 border border-slate-200 bg-white rounded-xl text-center font-bold text-[19px] text-slate-800 p-0"
+              />
+
+              {/* Increment */}
+              <TouchableOpacity
+                onPress={() => setOrsCount(prev => prev + 1)}
+                className="w-11 h-11 rounded-xl items-center justify-center border bg-[#475569]"
+              >
+                <Text className="font-bold text-xl text-white"><Plus color="white" /></Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Actions */}
+          <View className="flex-row border-t border-slate-100">
+            <TouchableOpacity
+              onPress={() => setOrsModalVisible(false)}
+              className="flex-1 py-3.5 items-center justify-center"
+            >
+              <Text className="text-slate-500 font-semibold text-[15px]">
+                {t("counseling_section.cancel")}
               </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSaveOrs}
+              disabled={orsCount <= 0 || loadingButtons["ors_for_child"]}
+              className="flex-1 py-3.5 items-center border-l border-slate-100 justify-center bg-blue-50"
+            >
+              {loadingButtons["ors_for_child"] ? (
+                <ActivityIndicator color="#2563EB" size="small" />
+              ) : (
+                <Text className="text-blue-600 font-semibold text-[15px]">
+                  {t("common.save")}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderZincModal = () => (
+    <Modal
+      visible={zincModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setZincModalVisible(false)}
+    >
+      <View className="flex-1 justify-center items-center bg-black/40 px-6">
+        <View className="bg-white rounded-2xl pb-2 w-full max-w-[320px]">
+          {/* Header */}
+          <View className="bg-[#fefce8] rounded-t-2xl px-5 pt-5 pb-4 items-center border-b border-amber-50">
+            <View className="w-12 h-12 rounded-full bg-amber-100 items-center justify-center mb-3">
+              <Plus size={22} color="#D97706" />
+            </View>
+            <Text className="text-slate-800 text-[18px] font-bold text-center">
+              {t("counseling_section.distribute_zinc_title")}
+            </Text>
+            <Text className="text-slate-500 text-[13px] text-center mt-1">
+              {t("counseling_section.distribute_zinc_desc")}
+            </Text>
+          </View>
+
+          {/* Counter Controls */}
+          <View className="p-6 items-center justify-center bg-white">
+            <View className="flex-row items-center gap-x-4">
+              {/* Decrement */}
+              <TouchableOpacity
+                onPress={() => setZincCount(prev => Math.max(1, prev - 1))}
+                disabled={zincCount <= 1}
+                className={`w-11 h-11 rounded-xl items-center justify-center bg-[#475569]`}
+              >
+                <Text className={`font-bold text-xl rounded-md`}>
+                  <Minus color="white" />
+                </Text>
+              </TouchableOpacity>
+
+              {/* Input field */}
+              <TextInput
+                keyboardType="number-pad"
+                value={String(zincCount)}
+                onChangeText={(txt) => {
+                  const val = parseInt(txt.replace(/[^0-9]/g, "")) || 0;
+                  setZincCount(val);
+                }}
+                className="h-14 flex-1 border border-slate-200 bg-white rounded-xl text-center font-bold text-[19px] text-slate-800 p-0"
+              />
+
+              {/* Increment */}
+              <TouchableOpacity
+                onPress={() => setZincCount(prev => prev + 1)}
+                className="w-11 h-11 rounded-xl items-center justify-center bg-[#475569]"
+              >
+                <Text className="font-bold text-xl text-white"><Plus color="white"/></Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Actions */}
+          <View className="flex-row border-t border-slate-100">
+            <TouchableOpacity
+              onPress={() => setZincModalVisible(false)}
+              className="flex-1 py-3.5 items-center justify-center"
+            >
+              <Text className="text-slate-500 font-semibold text-[15px]">
+                {t("counseling_section.cancel")}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSaveZinc}
+              disabled={zincCount <= 0 || loadingButtons["zinc_for_child"]}
+              className="flex-1 py-3.5 items-center border-l border-slate-100 justify-center bg-amber-50"
+            >
+              {loadingButtons["zinc_for_child"] ? (
+                <ActivityIndicator color="#D97706" size="small" />
+              ) : (
+                <Text className="text-amber-600 font-semibold text-[15px]">
+                  {t("common.save")}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -506,9 +738,13 @@ export default function ChildCounselingSection({
             const displayBmi = language === "np" && bmiValue ? toNepaliNumbers(bmiValue) : bmiValue;
 
             const muacColor = log.muac === 'red' ? '#F43F5E' : log.muac === 'yellow' ? '#FAB005' : '#10B981';
+            const subAnswers = log.sub_answers || {};
+            const malnutritionQuestions = MALNUTRITION_CONTENT.sub_questions.filter((q) =>
+              log.muac === "green" ? q.id === "malnutrition_cured" : q.id !== "malnutrition_cured",
+            );
 
             return (
-              <View key={`${log.date}-${index}`} className={`rounded-2xl border ${style.card} p-3 shadow-sm`}>
+              <View key={`${log.date}-${index}`} className={`rounded-2xl border ${style.card} p-3`}>
                 <View className="flex-row items-center justify-between mb-2">
                   <View className="flex-row items-center">
                     <View className="bg-white/80 rounded-full px-2 py-0.5 border border-white/50 mr-2">
@@ -522,7 +758,7 @@ export default function ChildCounselingSection({
                     <TouchableOpacity
                       onPress={() => requestDeleteLatest(questionId)}
                       disabled={disabled}
-                      className={`w-7 h-7 rounded-full bg-white/90 items-center justify-center shadow-sm ${disabled ? 'opacity-50' : ''}`}
+                      className={`w-7 h-7 rounded-full bg-white/90 items-center justify-center ${disabled ? 'opacity-50' : ''}`}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                       <Trash2 size={12} color={disabled ? "#94A3B8" : "#EF4444"} />
@@ -565,6 +801,35 @@ export default function ChildCounselingSection({
                     </View>
                   </View>
                 </View>
+
+                <View className="mt-3 pt-3 border-t border-white/70 gap-y-2">
+                  {malnutritionQuestions.map((q) => {
+                    const rawAnswer = subAnswers[q.id];
+                    const isSelected = rawAnswer === true || rawAnswer?.value === true;
+                    const loadingKey = `${questionId}_${index}_${q.id}`;
+
+                    return (
+                      <View key={q.id} className="flex-row items-center justify-between bg-white/70 border border-white/80 rounded-xl px-3 py-2">
+                        <Text className="flex-1 text-slate-700 text-[13px] font-medium leading-5 mr-3">
+                          {language === "np" ? q.ne : q.en}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => handleSetSubQuestion(index, q.id, !isSelected)}
+                          disabled={disabled || loadingButtons[loadingKey]}
+                          className={`${isSelected ? "bg-primary" : disabled ? "bg-slate-100" : "bg-slate-700"} w-8 h-8 rounded-lg items-center justify-center`}
+                        >
+                          {loadingButtons[loadingKey] ? (
+                            <ActivityIndicator color="white" size="small" />
+                          ) : isSelected ? (
+                            <Check size={17} color="white" />
+                          ) : (
+                            <Plus size={17} color={disabled ? "#CBD5E1" : "white"} />
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                </View>
               </View>
             );
           })}
@@ -585,7 +850,7 @@ export default function ChildCounselingSection({
     }
 
     return (
-      <View className="mb-8 bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+      <View className="mb-8 bg-white rounded-2xl border border-slate-100 overflow-hidden">
         <View className="flex-row items-center p-4 bg-red-50/10 border-b border-slate-50">
           <View className="w-8 h-8 rounded-lg bg-red-100 items-center justify-center mr-3">
             <BarChart3 size={18} color="#DC2626" />
@@ -681,12 +946,16 @@ export default function ChildCounselingSection({
 
           <TouchableOpacity
             onPress={handleAddMalnutrition}
-            disabled={!muac || disabled}
-            className={`w-full py-2.5 rounded-xl items-center justify-center mb-4 ${(!muac || disabled) ? "bg-slate-300" : "bg-primary"}`}
+            disabled={!muac || disabled || loadingButtons[mainQuestionId]}
+            className={`w-full py-2.5 rounded-xl items-center justify-center mb-4 ${(!muac || disabled || loadingButtons[mainQuestionId]) ? "bg-slate-300" : "bg-primary"}`}
           >
-            <Text className="text-white font-bold text-lg">
-              {t("counseling_section.add")}
-            </Text>
+            {loadingButtons[mainQuestionId] ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text className="text-white font-bold text-lg">
+                {t("counseling_section.add")}
+              </Text>
+            )}
           </TouchableOpacity>
 
           {muac === 'green' && (
@@ -698,29 +967,6 @@ export default function ChildCounselingSection({
           )}
 
           {renderMalnutritionHistory(malnutritionLogs, mainQuestionId)}
-
-          {/* Sub questions - now as independent questions with multiple logs */}
-          <View className="mt-8 gap-y-6">
-            {MALNUTRITION_CONTENT.sub_questions.map((q) => (
-              <View key={q.id} className="border-t border-slate-100 pt-4">
-                <View className="flex-row items-start justify-between">
-                  <View className="flex-1 mr-4">
-                    <Text className="text-slate-700 text-[15px] font-medium leading-relaxed">
-                      {language === "np" ? q.ne : q.en}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleAdd(q.id)}
-                    disabled={disabled}
-                    className={`${disabled ? 'bg-slate-200' : 'bg-slate-700'} p-2 rounded-lg`}
-                  >
-                    <Plus size={20} color={disabled ? "#94A3B8" : "white"} />
-                  </TouchableOpacity>
-                </View>
-                {renderLogsInline(q.id)}
-              </View>
-            ))}
-          </View>
         </View>
       </View>
     );
@@ -735,20 +981,24 @@ export default function ChildCounselingSection({
         </View>
 
         <View className="bg-white rounded-xl">
-          {[CHILD_COUNSELING_QUESTIONS[0]].map((q, index) => (
+          {CHILD_COUNSELING_QUESTIONS.map((q, index) => (
             <View key={q.id} className="bg-white py-4 px-2 border-t border-slate-100">
               <View className="flex-row items-start justify-between">
                 <View className="flex-1 mr-4">
                   <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
-                    {language === "np" ? toNepaliNumbers(1) : 1}. {language === "np" ? q.ne : q.en}
+                    {language === "np" ? q.ne : q.en}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => handleAdd(q.id)}
-                  disabled={disabled}
-                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-3 py-2 rounded-lg flex-row items-center ml-2`}
+                  disabled={disabled || loadingButtons[q.id]}
+                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
                 >
-                  <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
+                  {loadingButtons[q.id] ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
+                  )}
                 </TouchableOpacity>
               </View>
               {renderLogsInline(q.id)}
@@ -764,15 +1014,19 @@ export default function ChildCounselingSection({
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 mr-4">
                     <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
-                      {language === "np" ? toNepaliNumbers(2) : 2}. {language === "np" ? q.ne : q.en}
+                      {language === "np" ? q.ne : q.en}
                     </Text>
                   </View>
                   <TouchableOpacity
                     onPress={() => handleAdd(q.id)}
-                    disabled={disabled}
-                    className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-3 py-2 rounded-lg flex-row items-center ml-2`}
+                    disabled={disabled || loadingButtons[q.id]}
+                    className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} p-2 rounded-lg flex-row items-center ml-2 justify-center`}
                   >
-                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
+                    {loadingButtons[q.id] ? (
+                      <ActivityIndicator color="white" size="small" />
+                    ) : (
+                      <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
+                    )}
                   </TouchableOpacity>
                 </View>
                 {renderLogsInline(q.id)}
@@ -780,25 +1034,95 @@ export default function ChildCounselingSection({
                 {isConditionBad && (
                   <View className="mt-4 ml-1">
                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} className="flex-1">
-                      {CHILD_HEALTH_COUNSELLING_QUESTIONS.slice(1).map((subQ: any, subIndex: number) => (
-                        <View key={subQ.id} className="py-4">
-                          <View className="flex-row items-start justify-between">
-                            <View className="flex-1 mr-2">
-                              <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
-                                {language === "np" ? subQ.ne : subQ.en}
-                              </Text>
+                      {CHILD_HEALTH_COUNSELLING_QUESTIONS.slice(1).map((subQ: any, subIndex: number) => {
+                        // Diarrhea-dependent questions only shown if child has diarrhea
+                        if (subQ.id === "diarrhea_treated_with_ors_zinc" || subQ.id === "ors_for_child" || subQ.id === "zinc_for_child") {
+                          const hasDiarrheaLogs = Array.isArray(answers["has_diarrhea"]) ? answers["has_diarrhea"] : [];
+                          if (hasDiarrheaLogs.length === 0) return null;
+                        }
+
+                        if (subQ.id === "ors_for_child") {
+                          return (
+                            <View key={subQ.id} className="py-4">
+                              <View className="flex-row items-start justify-between">
+                                <View className="flex-1 mr-2">
+                                  <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
+                                    {language === "np" ? subQ.ne : subQ.en}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    setOrsCount(1);
+                                    setOrsModalVisible(true);
+                                  }}
+                                  disabled={disabled || loadingButtons[subQ.id]}
+                                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
+                                >
+                                  {loadingButtons[subQ.id] ? (
+                                    <ActivityIndicator color="white" size="small" />
+                                  ) : (
+                                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
+                                  )}
+                                </TouchableOpacity>
+                              </View>
+                              {renderLogsInline(subQ.id)}
                             </View>
-                            <TouchableOpacity
-                              onPress={() => handleAdd(subQ.id)}
-                              disabled={disabled}
-                              className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-3 py-2 rounded-lg flex-row items-center ml-2`}
-                            >
-                              <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
-                            </TouchableOpacity>
+                          );
+                        }
+
+                        if (subQ.id === "zinc_for_child") {
+                          return (
+                            <View key={subQ.id} className="py-4">
+                              <View className="flex-row items-start justify-between">
+                                <View className="flex-1 mr-2">
+                                  <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
+                                    {language === "np" ? subQ.ne : subQ.en}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() => {
+                                    setZincCount(1);
+                                    setZincModalVisible(true);
+                                  }}
+                                  disabled={disabled || loadingButtons[subQ.id]}
+                                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
+                                >
+                                  {loadingButtons[subQ.id] ? (
+                                    <ActivityIndicator color="white" size="small" />
+                                  ) : (
+                                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
+                                  )}
+                                </TouchableOpacity>
+                              </View>
+                              {renderLogsInline(subQ.id)}
+                            </View>
+                          );
+                        }
+
+                        return (
+                          <View key={subQ.id} className="py-4">
+                            <View className="flex-row items-start justify-between">
+                              <View className="flex-1 mr-2">
+                                <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
+                                  {language === "np" ? subQ.ne : subQ.en}
+                                </Text>
+                              </View>
+                              <TouchableOpacity
+                                onPress={() => handleAdd(subQ.id)}
+                                disabled={disabled || loadingButtons[subQ.id]}
+                                className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
+                              >
+                                {loadingButtons[subQ.id] ? (
+                                  <ActivityIndicator color="white" size="small" />
+                                ) : (
+                                  <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                            {renderLogsInline(subQ.id)}
                           </View>
-                          {renderLogsInline(subQ.id)}
-                        </View>
-                      ))}
+                        );
+                      })}
                     </ScrollView>
                   </View>
                 )}
@@ -815,6 +1139,8 @@ export default function ChildCounselingSection({
   return (
     <View className="mt-2">
       {renderDeleteConfirmModal()}
+      {renderOrsModal()}
+      {renderZincModal()}
       {renderMalnutritionGroup()}
       {renderCounselingGroup()}
     </View>

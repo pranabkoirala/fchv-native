@@ -2,6 +2,8 @@ import * as Crypto from "expo-crypto";
 import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import { CreateVisitPayload, VisitStoreType } from "../types/visitModal";
+import { bulkInsertToTempTable } from "./CommonModal";
+import { setSyncTimestamp } from "./SyncModel";
 
 export async function createVisit(
   payload: Omit<CreateVisitPayload, "created_at" | "updated_at">,
@@ -13,16 +15,15 @@ export async function createVisit(
 
   await db.runAsync(
     `INSERT OR REPLACE INTO visit 
-      (id, mother_id, name, address, visit_date, visit_type, visit_notes, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      (id, mother, name, visit_date, visit_type, visit_place, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       id,
-      payload.mother_id,
+      payload.mother,
       payload.name ?? null,
-      payload.address ?? null,
       payload.visit_date,
       payload.visit_type,
-      payload.visit_notes ?? null,
+      payload.visit_place ?? null,
       payload.is_synced ? 1 : 0,
       0,
       currentYear,
@@ -34,12 +35,11 @@ export async function createVisit(
 
   return {
     id,
-    mother_id: payload.mother_id,
+    mother: payload.mother,
     name: payload.name ?? null,
-    address: payload.address ?? null,
     visit_date: payload.visit_date,
     visit_type: payload.visit_type,
-    visit_notes: payload.visit_notes ?? null,
+    visit_place: payload.visit_place ?? null,
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
     reg_year: currentYear,
@@ -58,16 +58,12 @@ export async function updateVisit(
   const db = await getDb();
   const now = new Date().toISOString();
 
-  const sets: string[] = ["updated_at = ?"];
-  const values: any[] = [now];
+  const sets: string[] = ["updated_at = ?", "is_synced = ?"];
+  const values: any[] = [now, 0];
 
   if (payload.name !== undefined) {
     sets.push("name = ?");
     values.push(payload.name);
-  }
-  if (payload.address !== undefined) {
-    sets.push("address = ?");
-    values.push(payload.address);
   }
   if (payload.visit_date !== undefined) {
     sets.push("visit_date = ?");
@@ -77,13 +73,12 @@ export async function updateVisit(
     sets.push("visit_type = ?");
     values.push(payload.visit_type);
   }
-  if (payload.visit_notes !== undefined) {
-    sets.push("visit_notes = ?");
-    values.push(payload.visit_notes);
+  if (payload.visit_place !== undefined) {
+    sets.push("visit_place = ?");
+    values.push(payload.visit_place);
   }
   if (payload.is_synced !== undefined) {
-    sets.push("is_synced = ?");
-    values.push(payload.is_synced ? 1 : 0);
+    values[1] = payload.is_synced ? 1 : 0;
   }
 
   values.push(id);
@@ -94,7 +89,7 @@ export async function deleteVisit(id: string): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
   await db.runAsync(
-    `UPDATE visit SET is_deleted = 1, updated_at = ? WHERE id = ?`,
+    `UPDATE visit SET is_deleted = 1, is_synced = 0, updated_at = ? WHERE id = ?`,
     [now, id],
   );
 }
@@ -109,12 +104,12 @@ export async function getVisitById(id: string): Promise<VisitStoreType | null> {
 
 export interface VisitListItem {
   id: string;
-  mother_id: string;
+  mother: string;
   name: string;
   address: string;
   visit_date: string;
   visit_type: string;
-  visit_notes: string;
+  visit_place: string;
 }
 
 export async function getAllVisits(): Promise<VisitListItem[]> {
@@ -122,26 +117,26 @@ export async function getAllVisits(): Promise<VisitListItem[]> {
   const query = `
     SELECT 
       v.id,
-      v.mother_id,
-      COALESCE(v.name, m.name) as name,
-      COALESCE(v.address, m.address) as address,
+      v.mother,
+      COALESCE(v.name, TRIM(COALESCE(m.first_name, '') || ' ' || COALESCE(m.last_name, ''))) as name,
+      TRIM(COALESCE(m.address_locality, '') || ' ' || COALESCE(m.address_ward, '')) as address,
       v.visit_date,
       v.visit_type,
-      v.visit_notes
+      v.visit_place
     FROM visit v
-    LEFT JOIN mother m ON v.mother_id = m.id
+    LEFT JOIN mother m ON v.mother = m.id
     WHERE v.is_deleted = 0
     ORDER BY v.visit_date DESC, v.created_at DESC
   `;
   const rows = await db.getAllAsync<any>(query);
   return rows.map((row) => ({
     id: row.id,
-    mother_id: row.mother_id,
+    mother: row.mother,
     name: row.name || "Unknown",
     address: row.address || "",
     visit_date: row.visit_date,
     visit_type: row.visit_type,
-    visit_notes: row.visit_notes || "",
+    visit_place: row.visit_place || "",
   }));
 }
 
@@ -153,22 +148,11 @@ export async function getVisitCount(): Promise<number> {
   return result?.count ?? 0;
 }
 
-export async function unSyncedVisits(): Promise<CreateVisitPayload[]> {
+export async function unSyncedVisits(): Promise<VisitStoreType[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<VisitStoreType>(
-    `SELECT * FROM visit WHERE is_synced = 0 AND is_deleted = 0`,
+  return await db.getAllAsync<VisitStoreType>(
+    `SELECT * FROM visit WHERE is_synced = 0`,
   );
-
-  return rows.map((row) => ({
-    id: row.id,
-    mother_id: row.mother_id,
-    name: row.name ?? undefined,
-    address: row.address ?? undefined,
-    visit_date: row.visit_date,
-    visit_type: row.visit_type,
-    visit_notes: row.visit_notes ?? undefined,
-    is_synced: false,
-  }));
 }
 
 export async function getVisitsByMotherId(
@@ -176,7 +160,106 @@ export async function getVisitsByMotherId(
 ): Promise<VisitStoreType[]> {
   const db = await getDb();
   return await db.getAllAsync<VisitStoreType>(
-    `SELECT * FROM visit WHERE mother_id = ? AND is_deleted = 0 ORDER BY visit_date ASC`,
+    `SELECT * FROM visit WHERE mother = ? AND is_deleted = 0 ORDER BY visit_date ASC`,
     [motherId],
   );
+}
+
+export async function insertToTempVisitTable(apiRes: any[]) {
+  if (!apiRes.length) return;
+
+  const db = await getDb();
+  const columns = [
+    "id",
+    "mother",
+    "name",
+    "visit_date",
+    "visit_type",
+    "visit_place",
+    "reg_year",
+    "reg_month",
+    "is_synced",
+    "is_deleted",
+    "created_at",
+    "updated_at",
+  ];
+
+  await bulkInsertToTempTable<any>(
+    {
+      db,
+      table: "visit_staging",
+      columns,
+      onConflict: "replace",
+      rows: (item) => {
+        const createdAt = item.created_at ?? new Date().toISOString();
+        const updatedAt = item.updated_at ?? createdAt;
+        const deleted = item.deleted ?? item.is_deleted ?? false;
+
+        return [
+          item.id,
+          item.mother ?? null,
+          item.name ?? null,
+          item.visit_date,
+          item.visit_type,
+          item.visit_place ?? item.visit_notes ?? null,
+          item.reg_year ?? null,
+          item.reg_month ?? null,
+          1,
+          deleted ? 1 : 0,
+          createdAt,
+          updatedAt,
+        ];
+      },
+    },
+    apiRes,
+  );
+}
+
+export async function moveTempToRealVisitTable() {
+  const db = await getDb();
+
+  const staged = await db.getAllAsync<VisitStoreType>(`SELECT * FROM visit_staging`);
+  if (!staged.length) return;
+
+  for (const item of staged) {
+    await db.runAsync(
+      `
+      INSERT INTO visit
+        (id, mother, name, visit_date, visit_type, visit_place, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
+      VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        mother = excluded.mother,
+        name = excluded.name,
+        visit_date = excluded.visit_date,
+        visit_type = excluded.visit_type,
+        visit_place = excluded.visit_place,
+        reg_year = excluded.reg_year,
+        reg_month = excluded.reg_month,
+        is_synced = excluded.is_synced,
+        is_deleted = excluded.is_deleted,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+      WHERE datetime(excluded.updated_at) > datetime(visit.updated_at)
+         OR visit.updated_at IS NULL;
+      `,
+      [
+        item.id,
+        item.mother,
+        item.name,
+        item.visit_date,
+        item.visit_type,
+        item.visit_place ?? null,
+        item.reg_year ?? null,
+        item.reg_month ?? null,
+        1,
+        item.is_deleted ? 1 : 0,
+        item.created_at,
+        item.updated_at,
+      ],
+    );
+  }
+
+  const now = new Date().toISOString();
+  await setSyncTimestamp("visit", now);
 }

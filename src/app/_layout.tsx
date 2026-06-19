@@ -1,27 +1,27 @@
-import "react-native-gesture-handler";
-import "../global.css";
-import "../i18n/config"; // Import i18n config
-import { Slot } from "expo-router";
-import { useEffect } from "react";
-import { LanguageProvider } from "../context/LanguageContext";
-import { ToastProvider } from "../context/ToastContext";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { StatusBar } from "expo-status-bar";
-import { InteractionManager, View } from "react-native";
 import { doSync } from "@/api/services/sync/sync";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { configureNotificationsAsync } from "@/utils/notificationHelper";
+import { Slot } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { InteractionManager, View } from "react-native";
+import "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { LanguageProvider } from "../context/LanguageContext";
+import { ToastProvider } from "../context/ToastContext";
+import "../global.css";
+import "../i18n/config"; // Import i18n config
 
 export default function RootLayout() {
   // Mounts the network listener for data synchronization
   const { isConnected } = useOnlineStatus();
 
-  // useEffect(() => {
-  //   if(isConnected){
-  //     doSync();
-  //   }
-  // }, [isConnected, doSync]);
+  useEffect(() => {
+    if(isConnected){
+      doSync();
+    }
+  }, [isConnected, doSync]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {

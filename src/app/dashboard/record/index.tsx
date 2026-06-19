@@ -19,7 +19,7 @@ import {
 import { formatAdDate, formatBsDate, toNepaliNumbers } from "../../../utils/dateHelper";
 
 const RecordSkeleton = () => (
-  <View className="bg-white rounded-2xl p-5 mb-4 border border-gray-100 shadow-sm">
+  <View className="bg-white rounded-2xl p-5 mb-4 border border-gray-100">
     <View className="flex-row items-center justify-between">
       <View className="flex-row items-center flex-1 mr-3">
         <Skeleton width={48} height={48} borderRadius={24} style={{ marginRight: 16 }} />
@@ -61,7 +61,9 @@ const RecordCard = memo(function RecordCard({
   return (
     <TouchableOpacity
       onPress={() => onPress(item)}
-      className="bg-white rounded-2xl p-5 mb-4 border border-gray-200 shadow-sm"
+      className={`bg-white rounded-2xl p-5 mb-4 border ${
+        item.hasHealthProblem ? "border-red-500 bg-red-50/10" : "border-gray-200"
+      }`}
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 mr-3">

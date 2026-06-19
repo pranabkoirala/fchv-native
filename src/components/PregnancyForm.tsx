@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Calendar } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, StatusBar, Text, View } from "react-native";
-import { BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { BsToAd, AdToBs, CalendarPicker } from "react-native-nepali-picker";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../context/ToastContext";
 import {
@@ -18,6 +18,7 @@ import {
 import { BoxInput, FieldLabel } from "./FormElements";
 import { ProfilePicker } from "./ProfilePicker";
 import { Button } from "./button";
+import { toNepaliNumbers } from "../utils/dateHelper";
 
 const RISK_OPTIONS = [
   { value: "normal", en: "Normal", np: "सामान्य" },
@@ -178,6 +179,15 @@ export default function PregnancyForm({
     return "";
   };
 
+  const toNepaliDate = (adDate: string) => {
+    if (!adDate || adDate === "N/A") return "";
+    try {
+      return AdToBs(adDate);
+    } catch {
+      return adDate;
+    }
+  };
+
   const validate = () => {
     const e: Record<string, string> = {};
     if (!selectedMotherId)
@@ -190,13 +200,13 @@ export default function PregnancyForm({
         e.parity = t("pregnancy_form.validation.parity_invalid");
       }
     }
-    if (!caretakersName.trim()) {
-      e.caretakersName = t("pregnancy_form.validation.caretaker_name_req");
-    }
-    if (!caretakersPhone.trim()) {
-      e.caretakersPhone = t("pregnancy_form.validation.caretaker_phone_req");
-    } else if (caretakersPhone.length !== 10) {
-      e.caretakersPhone = t("pregnancy_form.validation.phone_digits");
+    const phoneVal = caretakersPhone.trim();
+    if (phoneVal) {
+      if (phoneVal.length !== 10) {
+        e.caretakersPhone = t("pregnancy_form.validation.phone_digits");
+      } else if (!phoneVal.startsWith("98") && !phoneVal.startsWith("97")) {
+        e.caretakersPhone = t("pregnancy_form.validation.phone_invalid");
+      }
     }
     return e;
   };
@@ -210,7 +220,7 @@ export default function PregnancyForm({
     try {
       await createPregnancy({
         id: pregnancyId || Crypto.randomUUID(),
-        mother_id: selectedMotherId,
+        mother: selectedMotherId,
         gravida: parseInt(gravida) || 0,
         parity: parseInt(parity) || 0,
         lmp_date: lmp,
@@ -249,8 +259,8 @@ export default function PregnancyForm({
       <StatusBar barStyle="dark-content" className="bg-white" />
       <View className="pt-3">
         <ProfilePicker
-          // key={`picker-${mothers.length}-${id || "new"}`}
           label={t("pregnancy_form.select_mother")}
+          required
           placeholder={
             isLoading
               ? t("pregnancy_form.loading_mothers")
@@ -270,7 +280,7 @@ export default function PregnancyForm({
 
       <View className="flex-row gap-4 mb-4">
         <View className="flex-1">
-          <FieldLabel label={t("pregnancy_form.gravida")} />
+          <FieldLabel label={t("pregnancy_form.gravida")} required />
           <BoxInput
             placeholder="e.g. 1"
             value={gravida}
@@ -280,10 +290,11 @@ export default function PregnancyForm({
             }}
             keyboardType="numeric"
             error={errors.gravida}
+            helperText={t("pregnancy_form.gravida_help")}
           />
         </View>
         <View className="flex-1">
-          <FieldLabel label={t("pregnancy_form.parity")} />
+          <FieldLabel label={t("pregnancy_form.parity")} required />
           <BoxInput
             placeholder="e.g. 0"
             value={parity}
@@ -293,11 +304,12 @@ export default function PregnancyForm({
             }}
             keyboardType="numeric"
             error={errors.parity}
+            helperText={t("pregnancy_form.parity_help")}
           />
         </View>
       </View>
 
-      <FieldLabel label={t("pregnancy_form.lmp_date")} />
+      <FieldLabel label={t("pregnancy_form.lmp_date")} required />
       <Pressable onPress={() => setShowLmpPicker(true)} className="mb-6">
         <View
           className={`rounded-xl px-4 h-14 border flex-row items-center justify-between bg-white ${errors.lmp ? "border-red-300" : "border-gray-300"}`}
@@ -305,7 +317,7 @@ export default function PregnancyForm({
           <Text
             className={`text-base ${lmp ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}
           >
-            {lmp || t("pregnancy_form.select_lmp")}
+            {lmp ? (language === "np" ? toNepaliNumbers(lmp) : lmp) : t("pregnancy_form.select_lmp")}
           </Text>
           <Calendar size={18} color="#475569" />
         </View>
@@ -321,7 +333,7 @@ export default function PregnancyForm({
           <FieldLabel label={t("pregnancy_form.edd_date")} />
           <View className="rounded-xl px-4 h-14 border border-gray-200 bg-gray-50 justify-center">
             <Text className="text-[#1E293B] text-base font-semibold">
-              {edd}
+              {language === "np" ? toNepaliNumbers(toNepaliDate(edd)) : toNepaliDate(edd)}
             </Text>
           </View>
         </View>

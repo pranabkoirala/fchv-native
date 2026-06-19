@@ -45,8 +45,8 @@ export default function ChildDeathDetailsScreen() {
         const record = records.find((r) => r.id === id);
         if (record) {
           setData(record);
-          if (record.mother_id) {
-            const mother = await getMotherProfile(record.mother_id);
+          if (record.mother) {
+            const mother = await getMotherProfile(record.mother);
             setMotherData(mother);
           }
         }
@@ -200,7 +200,7 @@ export default function ChildDeathDetailsScreen() {
         contentContainerStyle={{ paddingBottom: 60, paddingTop: 16 }}
       >
         {/* Main Info Card */}
-        <View className="mx-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-6">
+        <View className="mx-4 bg-white p-6 rounded-3xl border border-slate-100 mb-6">
           <View className="flex-row items-center mb-6">
             <View className="w-16 h-16 bg-pink-50 rounded-full items-center justify-center mr-4 border border-pink-100">
               <Baby size={32} color="#EC4899" />
@@ -263,7 +263,7 @@ export default function ChildDeathDetailsScreen() {
         </View>
 
         {/* Family Details Card */}
-        <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+        <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
           <View className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex-row items-center">
             <User size={18} color="#64748B" className="mr-2" />
             <Text className="text-slate-800 font-bold text-sm uppercase tracking-wider">
@@ -300,7 +300,7 @@ export default function ChildDeathDetailsScreen() {
 
         {/* Remarks Section */}
         {!!data.remarks && (
-          <View className="mx-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+          <View className="mx-4 bg-white p-6 rounded-3xl border border-slate-100">
             <View className="flex-row items-center mb-4">
               <Info size={18} color="#64748B" className="mr-2" />
               <Text className="text-slate-800 font-bold text-sm uppercase tracking-wider">

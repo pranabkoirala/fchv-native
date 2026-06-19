@@ -208,7 +208,7 @@ export default function DashboardScreen() {
             });
           });
           pregnancies.forEach((p: any) => {
-            const mother = mothers.find((m: any) => m.id === p.mother_id);
+            const mother = mothers.find((m: any) => m.id === p.mother);
             const muniName = mother
               ? getMunicipalityById(mother.municipality)
               : "";
@@ -228,7 +228,7 @@ export default function DashboardScreen() {
             });
           });
           children.forEach((c: any) => {
-            const mother = mothers.find((m: any) => m.id === c.mother_id);
+            const mother = mothers.find((m: any) => m.id === c.mother);
             const muniName = mother
               ? getMunicipalityById(mother.municipality)
               : "";
@@ -256,6 +256,7 @@ export default function DashboardScreen() {
 
           setMotherCount(mCount);
           setPregnancyCount(pregnancies.length);
+          setChildCount(children.length);
           setAdolescentCount(adolCount);
           setMaternalDeathCount(mDeaths);
           setChildDeathCount(cDeaths);

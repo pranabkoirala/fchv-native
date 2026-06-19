@@ -8,7 +8,7 @@ export const ReportDetailsSkeleton = () => (
         contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
     >
         {/* Profile Header Card */}
-        <View className="mx-4 bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6 flex-row items-center">
+        <View className="mx-4 bg-white p-5 rounded-3xl border border-slate-100 mb-6 flex-row items-center">
             <View className="w-16 h-16 bg-slate-50 rounded-full items-center justify-center mr-4 border border-slate-100">
                 <Skeleton width={32} height={32} borderRadius={16} />
             </View>
@@ -19,7 +19,7 @@ export const ReportDetailsSkeleton = () => (
         </View>
 
         {/* Section 1 */}
-        <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+        <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
             <View className="bg-slate-50 px-5 py-4 border-b border-slate-100">
                 <Skeleton width="40%" height={16} borderRadius={4} />
             </View>
@@ -42,7 +42,7 @@ export const ReportDetailsSkeleton = () => (
         </View>
 
         {/* Section 2 */}
-        <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+        <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
             <View className="bg-slate-50 px-5 py-4 border-b border-slate-100">
                 <Skeleton width="35%" height={16} borderRadius={4} />
             </View>

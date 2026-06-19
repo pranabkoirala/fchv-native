@@ -146,6 +146,7 @@ const RecordCard = memo(function RecordCard({
   record: UnifiedRecord;
   onPress: () => void;
 }) {
+  const { t } = useLanguage();
   const getTypeIcon = () => {
     if (
       record.image &&
@@ -227,14 +228,14 @@ const RecordCard = memo(function RecordCard({
         <View className="flex-row items-center mb-1">
           <MapPin size={14} color="#94A3B8" />
           <Text className="text-[14px] text-slate-500 font-medium ml-1">
-            Ward No. {getWardById(record.ward)}
+            {t("reports.ward_no")} {getWardById(record.ward)}
           </Text>
         </View>
 
         <View className="flex-row items-center">
           <Calendar size={14} color="#94A3B8" />
           <Text className="text-[14px] text-slate-500 font-medium ml-1">
-            दर्ता: {formatDate(record.registrationDate)}
+            {t("reports.reg_date")} {formatDate(record.registrationDate)}
           </Text>
         </View>
       </View>
@@ -272,7 +273,6 @@ export default function ReportScreen() {
 
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   const [mothers, setMothers] = useState<MotherListDbItem[]>([]);
   const [children, setChildren] = useState<InfantMonitoringStoreType[]>([]);
@@ -342,22 +342,22 @@ export default function ReportScreen() {
 
     if (activeTab === "all" || activeTab === "child") {
       children.forEach((c) => {
-        const childMotherWard = motherWardMap[c.mother_id || ""] || "";
+        const childMotherWard = motherWardMap[c.mother || ""] || "";
         records.push({
           id: c.id,
-          name: c.baby_name || (language === "np" ? "अज्ञात बालक" : "Unnamed Baby"),
+          name: c.baby_name || t("reports.unnamed_baby"),
           ward: childMotherWard,
           registrationDate: c.created_at || "",
           status: "normal",
           statusLabel: t("reports.status.normal"),
           type: "child",
-          subtitle: `${t("reports.common.mother")}: ${c.mother_name || motherNameMap[c.mother_id || ""] || "-"}`,
+          subtitle: `${t("reports.common.mother")}: ${c.mother_name || motherNameMap[c.mother || ""] || "-"}`,
           reg_month: c.reg_month || (c.created_at ? c.created_at.substring(0, 7) : null),
         });
       });
     }
 
-    if (activeTab === "all" || activeTab === "pregnancy") {
+    if (activeTab === "pregnancy") {
       pregnancies.forEach((p) => {
         const riskMap: Record<string, { status: UnifiedRecord["status"]; label: string }> = {
           high: { status: "high_risk", label: t("reports.status.high_risk") },
@@ -368,7 +368,7 @@ export default function ReportScreen() {
 
         records.push({
           id: p.id,
-          name: p.name || (language === "np" ? "अज्ञात" : "Unknown"),
+          name: p.name || t("reports.unknown"),
           ward: p.ward || "",
           registrationDate: p.created_at || "",
           status: risk.status,
@@ -384,7 +384,7 @@ export default function ReportScreen() {
       maternalDeaths.forEach((md) => {
         records.push({
           id: md.id || "",
-          name: md.mother_name || (language === "np" ? "अज्ञात" : "Unknown"),
+          name: md.mother_name || t("reports.unknown"),
           ward: "",
           registrationDate: md.created_at || "",
           status: "deceased",
@@ -400,7 +400,7 @@ export default function ReportScreen() {
       childDeaths.forEach((cd) => {
         records.push({
           id: cd.id || "",
-          name: cd.baby_name || (language === "np" ? "अज्ञात बालक" : "Unnamed Child"),
+          name: cd.baby_name || t("reports.unnamed_baby"),
           ward: "",
           registrationDate: cd.created_at || "",
           status: "deceased",
@@ -415,26 +415,14 @@ export default function ReportScreen() {
     return records;
   }, [activeTab, mothers, children, pregnancies, maternalDeaths, childDeaths, motherNameMap, motherWardMap, language, t]);
 
-  const availableMonths = useMemo(() => {
-    const allRecords = getUnifiedRecords();
-    const months = new Set<string>();
-    allRecords.forEach((r: any) => {
-      if (r.reg_month) months.add(r.reg_month);
-    });
-    return Array.from(months).sort().reverse();
-  }, [getUnifiedRecords]);
-
   const records = useMemo(() => {
-    let records = getUnifiedRecords();
-    if (selectedMonth !== "all") {
-      records = records.filter((r: any) => r.reg_month === selectedMonth);
-    }
+    const records = getUnifiedRecords();
     if (!search.trim()) return records;
     const q = search.toLowerCase();
     return records.filter((r) =>
       r.name.toLowerCase().includes(q) || (r.ward || "").toLowerCase().includes(q)
     );
-  }, [getUnifiedRecords, search, selectedMonth]);
+  }, [getUnifiedRecords, search]);
 
   const handleCardPress = useCallback((record: UnifiedRecord) => {
     switch (record.type) {
@@ -491,37 +479,12 @@ export default function ReportScreen() {
           <Search size={22} color="#94A3B8" />
           <TextInput
             className="flex-1 ml-3 text-[16px] text-slate-800 font-medium"
-            placeholder={language === "np" ? "नाम वा वडा नम्बर खोज्नुहोस्..." : "Search by name or ward..."}
+            placeholder={t("reports.search_by_name_ward")}
             placeholderTextColor="#94A3B8"
             value={search}
             onChangeText={setSearch}
           />
         </View>
-      </View>
-
-      {/* Months Chips */}
-      <View className="mt-5">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}>
-          <TouchableOpacity
-            onPress={() => setSelectedMonth("all")}
-            className={`px-5 py-2.5 rounded-xl ${selectedMonth === "all" ? "bg-slate-700" : "bg-slate-200/50"}`}
-          >
-            <Text className={`text-[14px] font-bold ${selectedMonth === "all" ? "text-white" : "text-slate-600"}`}>
-              {language === "np" ? "सबै महिना" : "All Months"}
-            </Text>
-          </TouchableOpacity>
-          {availableMonths.map((m) => (
-            <TouchableOpacity
-              key={m}
-              onPress={() => setSelectedMonth(m)}
-              className={`px-5 py-2.5 rounded-xl ${selectedMonth === m ? "bg-slate-700" : "bg-slate-200/50"}`}
-            >
-              <Text className={`text-[14px] font-bold ${selectedMonth === m ? "text-white" : "text-slate-600"}`}>
-                {m} {language === "np" ? "महिना" : "Month"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
 
       {/* Category Tabs */}

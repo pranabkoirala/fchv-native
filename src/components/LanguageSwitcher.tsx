@@ -25,7 +25,7 @@ export default function LanguageSwitcher() {
       <TouchableOpacity
         onPress={() => setShowLangDropdown(!showLangDropdown)}
         activeOpacity={0.8}
-        className="flex-row items-center bg-surface px-4 py-2.5 rounded-full border border-gray-100 shadow-sm"
+        className="flex-row items-center bg-surface px-4 py-2.5 rounded-full border border-gray-100"
       >
         <Globe size={18} color={Colors.primary} />
         <Text className="text-text-primary font-semibold ml-2 text-sm">
@@ -48,7 +48,7 @@ export default function LanguageSwitcher() {
             }}
             onPress={() => setShowLangDropdown(false)}
           />
-          <View className="absolute top-12 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 min-w-[150px]">
+          <View className="absolute top-12 right-0 bg-white rounded-2xl border border-gray-100 p-2 min-w-[150px]">
             <TouchableOpacity
               onPress={() => toggleLanguage("en")}
               className={twMerge(

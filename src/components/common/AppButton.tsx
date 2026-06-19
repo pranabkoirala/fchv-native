@@ -63,7 +63,7 @@ export default function AppButton({
     danger: "bg-danger-500",
     outline: "border border-gray-200 bg-white",
     ghost: "bg-transparent",
-    floating: "bg-primary-500 shadow-lg",
+    floating: "bg-primary-500",
   };
 
   // TEXT COLORS
@@ -108,7 +108,7 @@ export default function AppButton({
       absolute bottom-6 right-6
       w-16 h-16
       flex items-center justify-center
-      bg-primary-500 shadow-lg
+      bg-primary-500
       rounded-full
     `;
   }

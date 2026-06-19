@@ -130,7 +130,7 @@ export default function ChildDeathReportScreen() {
                       params: { id: item.id },
                     })
                   }
-                  className="bg-white rounded-3xl p-5 mb-4 border border-slate-100 shadow-sm shadow-slate-200/40"
+                  className="bg-white rounded-3xl p-5 mb-4 border border-slate-100"
                 >
                   {/* Header: Name and Delete */}
                   <View className="flex-row justify-between items-start mb-4">

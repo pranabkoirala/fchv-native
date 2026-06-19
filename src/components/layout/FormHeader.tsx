@@ -24,7 +24,7 @@ const FormHeader = ({
 
   return (
     <View
-      className="bg-white px-6 pb-8 flex flex-row justify-between items-center rounded-b-[40px] mb-6 shadow-sm border-b border-gray-50"
+      className="bg-white px-6 pb-8 flex flex-row justify-between items-center rounded-b-[40px] mb-6 border-b border-gray-50"
       style={{ paddingTop: Math.max(insets.top + 12, 24) }}
     >
       <View className="flex-row items-center flex-1">

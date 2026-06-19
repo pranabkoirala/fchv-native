@@ -3,6 +3,7 @@ import { ReportDetailsSkeleton } from "@/components/common/ReportDetailsSkeleton
 import { useLanguage } from "@/context/LanguageContext";
 import { getMotherProfile, MotherProfileDbItem } from "@/hooks/database/models/MotherModel";
 import { getPregnancyById } from "@/hooks/database/models/PregnantWomenModal";
+import { getChildrenByPregnancy } from "@/hooks/database/models/InfantMonitoringModel";
 import { calculateAge } from "@/utils/parse";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -13,12 +14,15 @@ import {
     MapPin,
     Phone,
     User,
+    Baby,
+    ChevronRight,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
     ScrollView,
     StatusBar,
     Text,
+    TouchableOpacity,
     View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,6 +37,7 @@ export default function PregnancyDetailsScreen() {
     const [motherData, setMotherData] = useState<MotherProfileDbItem | null>(
         null,
     );
+    const [children, setChildren] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -42,8 +47,12 @@ export default function PregnancyDetailsScreen() {
                 const record = await getPregnancyById(id);
                 if (record) {
                     setData(record);
-                    const mother = await getMotherProfile(record.mother_id);
+                    const [mother, kids] = await Promise.all([
+                        getMotherProfile(record.mother),
+                        getChildrenByPregnancy(id),
+                    ]);
                     setMotherData(mother);
+                    setChildren(kids);
                 }
             } catch (error) {
                 console.error("Error loading details:", error);
@@ -145,7 +154,7 @@ export default function PregnancyDetailsScreen() {
                 contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
             >
                 {/* Profile Header Card */}
-                <View className="mx-4 bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6 flex-row items-center">
+                <View className="mx-4 bg-white p-5 rounded-3xl border border-slate-100 mb-6 flex-row items-center">
                     <View className="w-16 h-16 bg-purple-50 rounded-full items-center justify-center mr-4 border border-purple-100">
                         <User size={28} color="#8B5CF6" />
                     </View>
@@ -170,7 +179,7 @@ export default function PregnancyDetailsScreen() {
                 </View>
 
                 {/* Clinical Details Card */}
-                <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+                <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
                     <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
                         <Activity size={16} color="#64748B" className="mr-2" />
                         <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
@@ -224,7 +233,7 @@ export default function PregnancyDetailsScreen() {
                 </View>
 
                 {/* Caretaker Details Card */}
-                <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+                <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
                     <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
                         <Phone size={16} color="#64748B" className="mr-2" />
                         <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
@@ -248,7 +257,7 @@ export default function PregnancyDetailsScreen() {
 
                 {/* Mother Details Card */}
                 {motherData && (
-                    <View className="mx-4 bg-white rounded-3xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+                    <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
                         <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
                             <Info size={16} color="#64748B" className="mr-2" />
                             <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
@@ -273,6 +282,47 @@ export default function PregnancyDetailsScreen() {
                                 icon={MapPin}
                                 color="#8B5CF6"
                             />
+                        </View>
+                    </View>
+                )}
+
+                {/* Children registered under this pregnancy */}
+                {children.length > 0 && (
+                    <View className="mx-4 bg-white rounded-3xl border border-slate-100 mb-6 overflow-hidden">
+                        <View className="bg-slate-50 px-5 py-3 border-b border-slate-100 flex-row items-center">
+                            <Baby size={16} color="#4F46E5" className="mr-2" />
+                            <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
+                                {language === "np" ? "यस गर्भावस्थाबाट जन्मिएका बच्चाहरू" : "Children from this Pregnancy"}
+                            </Text>
+                        </View>
+                        <View className="p-4">
+                            {children.map((child, idx) => (
+                                <TouchableOpacity
+                                    key={child.id || idx}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: "/dashboard/child/child-profile",
+                                            params: { id: child.id, from: "reports" }
+                                        } as any)
+                                    }
+                                    className="flex-row items-center justify-between border-b border-slate-100 py-3 last:border-0"
+                                >
+                                    <View className="flex-row items-center">
+                                        <View className="w-8 h-8 rounded-full bg-indigo-50 items-center justify-center mr-3">
+                                            <Baby size={14} color="#4F46E5" />
+                                        </View>
+                                        <View>
+                                            <Text className="font-semibold text-slate-800 text-[15px]">
+                                                {child.baby_name || (language === "np" ? "नाम नखुलेको" : "Unnamed")}
+                                            </Text>
+                                            <Text className="text-[12px] text-slate-400 mt-0.5">
+                                                {child.gender || "-"} | DOB: {child.date_of_birth || "-"}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <ChevronRight size={18} color="#94A3B8" />
+                                </TouchableOpacity>
+                            ))}
                         </View>
                     </View>
                 )}

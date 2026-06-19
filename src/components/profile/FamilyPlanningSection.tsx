@@ -52,7 +52,7 @@ export default function FamilyPlanningSection({ motherId, disabled }: FamilyPlan
       setIsDeleting(true);
       // Create a payload object starting with current values
       const payload: any = {
-        mother_id: motherId,
+        mother: motherId,
         pregnancy_id: currentPregnancyId,
         family_planning: record.family_planning,
         ocp_qty: record.ocp_qty,

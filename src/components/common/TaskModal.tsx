@@ -8,12 +8,12 @@ import {
     Modal,
     Platform,
     Pressable,
-    SafeAreaView,
     ScrollView,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { CalendarPicker } from "react-native-nepali-picker";
 
 export type Priority = "URGENT" | "MEDIUM" | "NORMAL";

@@ -1,9 +1,10 @@
 // db/index.ts
 import * as SQLite from "expo-sqlite";
-import { SCHEMA_SQL } from "./schema";
 import { MIGRATIONS, SCHEMA_VERSION } from "./migrations";
+import { SCHEMA_SQL } from "./schema";
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let initPromise: Promise<void> | null = null;
 
 // Get the DB singleton (async open)
 export async function getDb(): Promise<SQLite.SQLiteDatabase> {
@@ -13,15 +14,31 @@ export async function getDb(): Promise<SQLite.SQLiteDatabase> {
   return dbPromise;
 }
 
+export function isDatabaseInitInProgress(): boolean {
+  return initPromise !== null;
+}
+
 async function initSyncDefaultColumns(): Promise<void> {
   const db = await getDb();
 
   await db.runAsync(
     `INSERT OR IGNORE INTO sync (table_name, last_synced_at)
-     VALUES (?, NULL), (?, NULL);`,
+     VALUES (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL), (?, NULL);`,
     [
+      "mother",
+      "visit",
+      "todo",
       "pregnancy",
-      "pregnant_women",
+      "adolescent_ifa",
+      "child_monitoring",
+      "mothers_group_meetings",
+      "hmis_maternal_death",
+      "hmis_newborn_death",
+      "supplements",
+      "family_planning",
+      "counseling_referral",
+      "child_counseling",
+      "child_vaccination",
     ],
   );
 }
@@ -51,6 +68,54 @@ async function hasAnyUserTables(db: SQLite.SQLiteDatabase): Promise<boolean> {
   return (row?.count ?? 0) > 0;
 }
 
+async function tableHasColumn(
+  db: SQLite.SQLiteDatabase,
+  table: string,
+  column: string
+): Promise<boolean> {
+  const columns = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${table});`);
+  return columns.some((row) => row.name === column);
+}
+
+async function repairLegacyChildColumn(
+  db: SQLite.SQLiteDatabase,
+  table: string
+): Promise<void> {
+  const hasChild = await tableHasColumn(db, table, "child");
+  const hasChildId = await tableHasColumn(db, table, "child_id");
+
+  if (hasChild && hasChildId) {
+    await db.execAsync(
+      `UPDATE ${table} SET child = child_id WHERE child IS NULL OR child = '';`
+    );
+    return;
+  }
+
+  if (!hasChild && hasChildId) {
+    await db.execAsync(`ALTER TABLE ${table} RENAME COLUMN child_id TO child;`);
+  }
+}
+
+async function repairLegacyColumnsBeforeSchema(
+  db: SQLite.SQLiteDatabase
+): Promise<void> {
+  await db.execAsync(`
+    DROP INDEX IF EXISTS idx_child_vaccination_child_id;
+    DROP INDEX IF EXISTS idx_child_counseling_child_id;
+  `);
+
+  const childTables = [
+    "child_counseling",
+    "child_counseling_staging",
+    "child_vaccination",
+    "child_vaccination_staging",
+  ];
+
+  for (const table of childTables) {
+    await repairLegacyChildColumn(db, table);
+  }
+}
+
 async function applyMigrations(
   db: SQLite.SQLiteDatabase,
   fromVersion: number
@@ -72,26 +137,45 @@ async function applyMigrations(
 }
 
 export async function initDatabase(): Promise<void> {
-  const db = await getDb();
+  if (initPromise) {
+    return initPromise;
+  }
 
-  const hadTables = await hasAnyUserTables(db);
-  await db.execAsync(SCHEMA_SQL); // Executes all schema SQL at once
+  initPromise = (async () => {
+    const db = await getDb();
 
-  let userVersion = await getUserVersion(db);
-  if (userVersion === 0) {
+    const hadTables = await hasAnyUserTables(db);
     if (hadTables) {
-      userVersion = await applyMigrations(db, 0);
-    } else {
-      await setUserVersion(db, SCHEMA_VERSION);
-      userVersion = SCHEMA_VERSION;
+      await repairLegacyColumnsBeforeSchema(db);
     }
+
+    await db.execAsync(SCHEMA_SQL); // Executes all schema SQL at once
+
+    let userVersion = await getUserVersion(db);
+    if (userVersion === 0) {
+      if (hadTables) {
+        userVersion = await applyMigrations(db, 0);
+      } else {
+        await setUserVersion(db, SCHEMA_VERSION);
+        userVersion = SCHEMA_VERSION;
+      }
+    }
+
+    if (userVersion < SCHEMA_VERSION) {
+      await applyMigrations(db, userVersion);
+    }
+
+    await initSyncDefaultColumns();
+  })();
+
+  try {
+    await initPromise;
+  } catch (err) {
+    initPromise = null;
+    throw err;
   }
 
-  if (userVersion < SCHEMA_VERSION) {
-    await applyMigrations(db, userVersion);
-  }
-
-  await initSyncDefaultColumns();
+  return initPromise;
 }
 
 export async function clearDatabase(): Promise<void> {

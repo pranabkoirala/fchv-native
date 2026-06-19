@@ -37,7 +37,7 @@ export default function SupplementModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      const payload = { mother_id: motherId, pregnancy_id: pregnancyId } as any;
+      const payload = { mother: motherId, pregnancy_id: pregnancyId } as any;
       payload[supplementKey] = 1;
 
       await saveSupplement(payload);

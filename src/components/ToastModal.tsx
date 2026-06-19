@@ -186,10 +186,11 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const styles = StyleSheet.create({
   toastPill: {
     position: "absolute",
-    top: SCREEN_HEIGHT / 2 - 24,
+    // top: SCREEN_HEIGHT / 2 - 24,
+    bottom: 120,
     alignSelf: "center",
     backgroundColor: "#475569",
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 24,
     elevation: 5,
@@ -212,13 +213,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     width: "100%",
     maxWidth: 360,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
     elevation: 5,
     position: "relative",
     overflow: "hidden"

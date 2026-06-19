@@ -48,7 +48,9 @@ const MotherTrackerCard = memo(function MotherTrackerCard({
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => onPress(mother)}
-      className="bg-white p-5 rounded-[32px] mb-6 border border-gray-100 shadow-sm mx-5"
+      className={`bg-white p-5 rounded-[32px] mb-6 border mx-5 ${
+        mother.hasHealthProblem ? "border-red-500 bg-red-50/10" : "border-gray-100"
+      }`}
     >
       <View className="flex-row justify-between items-start mb-4">
         <View className="flex-1 pr-4">
@@ -178,7 +180,7 @@ export default function MotherListScreen() {
   const listHeader = (
     <>
       <View className="px-5 mt-4">
-        <View className="flex-row items-center bg-white px-4 h-14 rounded-2xl border border-gray-100 shadow-sm">
+        <View className="flex-row items-center bg-white px-4 h-14 rounded-2xl border border-gray-100">
           <Search size={20} color="#94A3B8" />
           <TextInput
             className="flex-1 ml-3 text-base text-[#1E293B] font-medium"
@@ -195,7 +197,7 @@ export default function MotherListScreen() {
           onPress={() =>
             router.push("/dashboard/mother-list/add-mother" as any)
           }
-          className="flex-1 bg-[#0262C4] p-5 rounded-[28px] items-center justify-center shadow-lg shadow-blue-900/20"
+          className="flex-1 bg-[#0262C4] p-5 rounded-[28px] items-center justify-center"
         >
           <View className="bg-white/20 p-2 rounded-xl mb-3">
             <Plus size={24} color="white" strokeWidth={3} />
@@ -205,7 +207,7 @@ export default function MotherListScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="flex-1 bg-[#006F62] p-5 rounded-[28px] items-center justify-center shadow-lg shadow-teal-900/20">
+        <TouchableOpacity className="flex-1 bg-[#006F62] p-5 rounded-[28px] items-center justify-center">
           <View className="bg-white/20 p-2 rounded-xl mb-3">
             <Baby size={24} color="white" strokeWidth={3} />
           </View>

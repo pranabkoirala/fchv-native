@@ -114,7 +114,7 @@ export default function ChildMonitoringReportScreen() {
               ))}
             </View>
           ) : data.length === 0 ? (
-            <View className="py-20 items-center justify-center bg-white rounded-2xl border border-slate-100 shadow-sm shadow-slate-200/50">
+            <View className="py-20 items-center justify-center bg-white rounded-2xl border border-slate-100">
               <View className="w-16 h-16 bg-slate-50 rounded-full items-center justify-center mb-4">
                 <User size={32} color="#CBD5E1" />
               </View>
@@ -133,7 +133,7 @@ export default function ChildMonitoringReportScreen() {
                     params: { id: item.id },
                   })
                 }
-                className="bg-white rounded-2xl p-4 mb-4 border border-slate-100 shadow-sm shadow-slate-200/50"
+                className="bg-white rounded-2xl p-4 mb-4 border border-slate-100"
               >
                 <View className="flex-row items-center">
                   <View className="w-12 h-12 bg-indigo-50 rounded-xl items-center justify-center mr-4">
@@ -146,7 +146,7 @@ export default function ChildMonitoringReportScreen() {
                     <Text className="text-slate-500 text-[12px] font-medium">
                       Mother:{" "}
                       <Text className="text-slate-700">
-                        {mothers[item.mother_id || ""] || "-"}
+                        {mothers[item.mother || ""] || "-"}
                       </Text>
                     </Text>
                     <Text className="text-slate-400 text-[11px] font-medium mt-1">

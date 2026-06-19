@@ -24,7 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const MeetingDetailsSkeleton = () => (
     <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 50, paddingTop: 10 }}>
         {/* Header Card */}
-        <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 shadow-sm shadow-slate-100">
+        <View className="bg-white rounded-2xl p-6 mb-6 border border-gray-100 ">
             <View className="flex-row justify-between items-start mb-6">
                 <View className="flex-1 flex-row items-center">
                     <View className="p-2 bg-slate-50 rounded-lg mr-3">
@@ -64,7 +64,7 @@ const MeetingDetailsSkeleton = () => (
                 <Skeleton width={150} height={22} borderRadius={6} />
             </View>
             {[1, 2].map((i) => (
-                <View key={i} className="bg-white px-5 py-4 rounded-2xl mb-3 flex-row items-center border border-gray-100 shadow-sm shadow-slate-100">
+                <View key={i} className="bg-white px-5 py-4 rounded-2xl mb-3 flex-row items-center border border-gray-100">
                     <View className="bg-slate-50 p-3 rounded-xl mr-4">
                         <Skeleton width={24} height={24} borderRadius={8} />
                     </View>
@@ -154,9 +154,9 @@ export default function MeetingDetails() {
                     </Text>
                 </View>
             ) : (
-                <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 50, paddingTop: 10 }}>
+                <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}>
                     {/* Main Header Card */}
-                    <View className="bg-white rounded-lg p-6 mb-6 border border-gray-100 shadow-sm shadow-slate-100">
+                    <View className="bg-white rounded-lg p-6 mb-6 border border-gray-100">
                         <View className="flex-row justify-between items-start mb-1">
                             <View className="flex-1">
                                 <View className="flex-row">

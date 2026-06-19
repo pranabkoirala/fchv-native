@@ -23,17 +23,17 @@ export async function createPregnancy(
   // If this new pregnancy is marked as current, deactivate other current pregnancies for this mother
   if (payload.is_current) {
     await db.runAsync(
-      `UPDATE pregnancy SET is_current = 0, updated_at = ? WHERE mother_id = ? AND id != ? AND is_current = 1`,
-      [now, payload.mother_id, id]
+      `UPDATE pregnancy SET is_current = 0, updated_at = ? WHERE mother = ? AND id != ? AND is_current = 1`,
+      [now, payload.mother, id]
     );
   }
 
   await db.runAsync(
     `INSERT INTO pregnancy 
-      (id, mother_id, lmp_date, expected_delivery_date, caretakers_name, caretakers_phone, is_current, gravida, parity, selected, ended, delivered, risk_level, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+      (id, mother, lmp_date, expected_delivery_date, caretakers_name, caretakers_phone, is_current, gravida, parity, selected, ended, delivered, risk_level, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
-      mother_id = excluded.mother_id,
+      mother = excluded.mother,
       lmp_date = excluded.lmp_date,
       expected_delivery_date = excluded.expected_delivery_date,
       caretakers_name = excluded.caretakers_name,
@@ -50,7 +50,7 @@ export async function createPregnancy(
       updated_at = excluded.updated_at;`,
     [
       id,
-      payload.mother_id,
+      payload.mother,
       payload.lmp_date,
       payload.expected_delivery_date ?? null,
       payload.caretakers_name ?? null,
@@ -73,7 +73,7 @@ export async function createPregnancy(
 
   return {
     id: id,
-    mother_id: payload.mother_id,
+    mother: payload.mother,
     lmp_date: payload.lmp_date,
     expected_delivery_date: payload.expected_delivery_date ?? null,
     caretakers_name: payload.caretakers_name ?? null,
@@ -101,13 +101,13 @@ export async function unSyncedPregnancies(): Promise<CreatePregnancyPayload[]> {
       p.*,
       (m.first_name || ' ' || m.last_name) as mother_name
      FROM pregnancy p
-     LEFT JOIN mother m ON p.mother_id = m.id
+     LEFT JOIN mother m ON p.mother = m.id
      WHERE p.is_synced = 0 AND p.is_deleted = 0`,
   );
 
   return rows.map((row) => ({
     id: row.id,
-    mother_id: row.mother_id || "",
+    mother: row.mother || "",
     name: row.mother_name || "Unknown",
     gravida: row.gravida ?? undefined,
     parity: row.parity ?? undefined,
@@ -130,8 +130,20 @@ export async function getPregnancyByMotherId(
   const db = await getDb();
   return await db.getFirstAsync<PregnancyStoreType>(
     `SELECT * FROM pregnancy 
-     WHERE mother_id = ? AND is_deleted = 0 
+     WHERE mother = ? AND is_deleted = 0 
      ORDER BY created_at DESC LIMIT 1`,
+    [motherId],
+  );
+}
+
+export async function getPregnanciesByMotherId(
+  motherId: string,
+): Promise<PregnancyStoreType[]> {
+  const db = await getDb();
+  return await db.getAllAsync<PregnancyStoreType>(
+    `SELECT * FROM pregnancy 
+     WHERE mother = ? AND is_deleted = 0 
+     ORDER BY created_at DESC`,
     [motherId],
   );
 }
@@ -151,13 +163,20 @@ export async function insertToTempPregnancyTable(apiRes: any[]) {
 
   const columns = [
     "id",
-    "mother_id",
+    "mother",
     "gravida",
     "parity",
     "lmp_date",
     "expected_delivery_date",
+    "caretakers_name",
+    "caretakers_phone",
     "is_current",
     "selected",
+    "ended",
+    "delivered",
+    "risk_level",
+    "reg_year",
+    "reg_month",
     "is_synced",
     "is_deleted",
     "created_at",
@@ -172,13 +191,20 @@ export async function insertToTempPregnancyTable(apiRes: any[]) {
       onConflict: "replace",
       rows: (item: any) => [
         item.id,
-        item.mother_id,
+        item.mother ?? null,
         item.gravida ?? null,
         item.parity ?? null,
         item.lmp_date,
         item.expected_delivery_date ?? null,
+        item.caretakers_name ?? null,
+        item.caretakers_phone ?? null,
         item.is_current ? 1 : 0,
         item.selected ? 1 : 0,
+        item.ended ? 1 : 0,
+        item.delivered ? 1 : 0,
+        item.risk_level ?? "normal",
+        item.reg_year ?? null,
+        item.reg_month ?? null,
         1,
         item.deleted ? 1 : 0,
         item.created_at,
@@ -200,17 +226,24 @@ export async function moveTempToRealPregnancyTable() {
     await db.runAsync(
       `
       INSERT INTO pregnancy
-        (id, mother_id, gravida, parity, lmp_date, expected_delivery_date, is_current, selected, is_synced, is_deleted, created_at, updated_at)
+        (id, mother, gravida, parity, lmp_date, expected_delivery_date, caretakers_name, caretakers_phone, is_current, selected, ended, delivered, risk_level, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
       VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
-        mother_id = excluded.mother_id,
+        mother = excluded.mother,
         gravida = excluded.gravida,
         parity = excluded.parity,
         lmp_date = excluded.lmp_date,
         expected_delivery_date = excluded.expected_delivery_date,
+        caretakers_name = excluded.caretakers_name,
+        caretakers_phone = excluded.caretakers_phone,
         is_current = excluded.is_current,
         selected = excluded.selected,
+        ended = excluded.ended,
+        delivered = excluded.delivered,
+        risk_level = excluded.risk_level,
+        reg_year = excluded.reg_year,
+        reg_month = excluded.reg_month,
         created_at = excluded.created_at,
         updated_at = excluded.updated_at,
         is_synced = excluded.is_synced,
@@ -220,13 +253,20 @@ export async function moveTempToRealPregnancyTable() {
       `,
       [
         item.id,
-        item.mother_id,
+        item.mother,
         item.gravida,
         item.parity,
         item.lmp_date,
         item.expected_delivery_date,
+        item.caretakers_name,
+        item.caretakers_phone,
         item.is_current,
         item.selected,
+        item.ended,
+        item.delivered,
+        item.risk_level,
+        item.reg_year,
+        item.reg_month,
         1,
         item.is_deleted,
         item.created_at,
@@ -256,7 +296,7 @@ export async function getPregnancyCount(): Promise<number> {
 
 export interface PregnantWomenListItem {
   id: string;
-  mother_id: string;
+  mother: string;
   name: string;
   husband_name: string;
   age: number;
@@ -276,7 +316,7 @@ export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
   const query = `
     SELECT 
       p.id,
-      p.mother_id,
+      p.mother,
       (m.first_name || ' ' || m.last_name) as name,
       m.husband_name,
       m.phone_number as phone,
@@ -288,7 +328,7 @@ export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
       p.reg_month,
       p.created_at
     FROM pregnancy p
-    INNER JOIN mother m ON p.mother_id = m.id
+    INNER JOIN mother m ON p.mother = m.id
     WHERE p.is_deleted = 0 AND p.is_current = 1 AND m.is_deleted = 0
     ORDER BY p.updated_at DESC
   `;
@@ -308,7 +348,7 @@ export async function getPregnancyById(id: string): Promise<any> {
       (m.first_name || ' ' || m.last_name) as mother_name,
       m.phone_number as mother_phone
     FROM pregnancy p
-    INNER JOIN mother m ON p.mother_id = m.id
+    INNER JOIN mother m ON p.mother = m.id
     WHERE p.id = ? AND p.is_deleted = 0
   `;
   return await db.getFirstAsync<any>(query, [id]);
@@ -323,61 +363,40 @@ export async function updatePregnancy(
   const db = await getDb();
   const now = new Date().toISOString();
 
-  const sets: string[] = ["updated_at = ?"];
-  const values: any[] = [now];
-
-  if (payload.lmp_date !== undefined) {
-    sets.push("lmp_date = ?");
-    values.push(payload.lmp_date);
-  }
-  if (payload.expected_delivery_date !== undefined) {
-    sets.push("expected_delivery_date = ?");
-    values.push(payload.expected_delivery_date);
-  }
-  if (payload.gravida !== undefined) {
-    sets.push("gravida = ?");
-    values.push(payload.gravida);
-  }
-  if (payload.parity !== undefined) {
-    sets.push("parity = ?");
-    values.push(payload.parity);
-  }
-  if (payload.is_current !== undefined) {
-    sets.push("is_current = ?");
-    values.push(payload.is_current ? 1 : 0);
-  }
-  if (payload.selected !== undefined) {
-    sets.push("selected = ?");
-    values.push(payload.selected ? 1 : 0);
-  }
-  if (payload.caretakers_name !== undefined) {
-    sets.push("caretakers_name = ?");
-    values.push(payload.caretakers_name);
-  }
-  if (payload.caretakers_phone !== undefined) {
-    sets.push("caretakers_phone = ?");
-    values.push(payload.caretakers_phone);
-  }
-  if (payload.is_synced !== undefined) {
-    sets.push("is_synced = ?");
-    values.push(payload.is_synced ? 1 : 0);
-  }
-  if (payload.ended !== undefined) {
-    sets.push("ended = ?");
-    values.push(payload.ended ? 1 : 0);
-  }
-  if (payload.delivered !== undefined) {
-    sets.push("delivered = ?");
-    values.push(payload.delivered ? 1 : 0);
-  }
-  if (payload.risk_level !== undefined) {
-    sets.push("risk_level = ?");
-    values.push(payload.risk_level);
-  }
-
-  values.push(id);
-  const sql = `UPDATE pregnancy SET ${sets.join(", ")} WHERE id = ?`;
-  await db.runAsync(sql, values);
+  await db.runAsync(
+    `UPDATE pregnancy SET
+      mother = COALESCE(?, mother),
+      lmp_date = COALESCE(?, lmp_date),
+      expected_delivery_date = COALESCE(?, expected_delivery_date),
+      caretakers_name = COALESCE(?, caretakers_name),
+      caretakers_phone = COALESCE(?, caretakers_phone),
+      is_current = COALESCE(?, is_current),
+      gravida = COALESCE(?, gravida),
+      parity = COALESCE(?, parity),
+      selected = COALESCE(?, selected),
+      ended = COALESCE(?, ended),
+      delivered = COALESCE(?, delivered),
+      risk_level = COALESCE(?, risk_level),
+      is_synced = 0,
+      updated_at = ?
+    WHERE id = ?`,
+    [
+      payload.mother ?? null,
+      payload.lmp_date ?? null,
+      payload.expected_delivery_date ?? null,
+      payload.caretakers_name ?? null,
+      payload.caretakers_phone ?? null,
+      payload.is_current === undefined ? null : payload.is_current ? 1 : 0,
+      payload.gravida ?? null,
+      payload.parity ?? null,
+      payload.selected === undefined ? null : payload.selected ? 1 : 0,
+      payload.ended === undefined ? null : payload.ended ? 1 : 0,
+      payload.delivered === undefined ? null : payload.delivered ? 1 : 0,
+      payload.risk_level ?? null,
+      now,
+      id,
+    ],
+  );
 }
 
 export async function getPregnancyTrend(): Promise<
@@ -422,7 +441,7 @@ export async function deactivateOtherPregnancies(motherId: string, currentPregna
   const db = await getDb();
   const now = new Date().toISOString();
   await db.runAsync(
-    `UPDATE pregnancy SET is_current = 0, updated_at = ? WHERE mother_id = ? AND id != ? AND is_current = 1`,
+    `UPDATE pregnancy SET is_current = 0, updated_at = ? WHERE mother = ? AND id != ? AND is_current = 1`,
     [now, motherId, currentPregnancyId]
   );
 }

@@ -1,11 +1,64 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 44;
+export const SCHEMA_VERSION = 69;
 
 type Migration = {
   version: number;
   up: (db: SQLite.SQLiteDatabase) => Promise<void>;
 };
+
+type TableInfoRow = {
+  name: string;
+};
+
+async function tableHasColumn(
+  db: SQLite.SQLiteDatabase,
+  table: string,
+  column: string,
+): Promise<boolean> {
+  const columns = await db.getAllAsync<TableInfoRow>(`PRAGMA table_info(${table});`);
+  return columns.some((row) => row.name === column);
+}
+
+async function getMotherSelectExpression(
+  db: SQLite.SQLiteDatabase,
+  table: string,
+): Promise<string> {
+  const hasMother = await tableHasColumn(db, table, "mother");
+  const hasMotherId = await tableHasColumn(db, table, "mother_id");
+
+  if (hasMother && hasMotherId) return "COALESCE(NULLIF(mother, ''), mother_id)";
+  if (hasMother) return "mother";
+  if (hasMotherId) return "mother_id";
+
+  return "''";
+}
+
+async function repairMotherColumn(
+  db: SQLite.SQLiteDatabase,
+  table: string,
+): Promise<void> {
+  const columns = await db.getAllAsync<TableInfoRow>(`PRAGMA table_info(${table});`);
+  if (!columns.length) return;
+
+  const hasMother = columns.some((row) => row.name === "mother");
+  const hasMotherId = columns.some((row) => row.name === "mother_id");
+  if (hasMother && hasMotherId) {
+    await db.execAsync(
+      `UPDATE ${table} SET mother = mother_id WHERE mother IS NULL OR mother = '';`,
+    );
+    return;
+  }
+
+  if (hasMother) return;
+
+  if (hasMotherId) {
+    await db.execAsync(`ALTER TABLE ${table} RENAME COLUMN mother_id TO mother;`);
+    return;
+  }
+
+  await db.execAsync(`ALTER TABLE ${table} ADD COLUMN mother TEXT;`);
+}
 
 export const MIGRATIONS: Migration[] = [
   {
@@ -57,7 +110,7 @@ export const MIGRATIONS: Migration[] = [
           DROP TABLE IF EXISTS visit;
           CREATE TABLE IF NOT EXISTS visit (
             id TEXT PRIMARY KEY,
-            mother_id TEXT NOT NULL,
+            mother TEXT NOT NULL,
             name TEXT,
             address TEXT,
             is_synced INTEGER NOT NULL DEFAULT 0,
@@ -67,7 +120,7 @@ export const MIGRATIONS: Migration[] = [
             visit_notes TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY(mother_id) REFERENCES mother(id)
+            FOREIGN KEY(mother) REFERENCES mother(id)
           );
         `);
       } catch (e) {
@@ -87,10 +140,10 @@ export const MIGRATIONS: Migration[] = [
       }
       try {
         await db.execAsync(`
-          ALTER TABLE pregnancy ADD COLUMN mother_id TEXT;
+          ALTER TABLE pregnancy ADD COLUMN mother TEXT;
         `);
       } catch (e) {
-        console.log("Migration 6 (mother_id column) already applied or failed:", e);
+        console.log("Migration 6 (mother column) already applied or failed:", e);
       }
     }
   },
@@ -151,7 +204,7 @@ export const MIGRATIONS: Migration[] = [
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS hmis_maternal_death (
             id TEXT PRIMARY KEY,
-            mother_id TEXT,
+            mother TEXT,
             serial_no INTEGER,
             mother_name TEXT,
             mother_age INTEGER,
@@ -166,7 +219,7 @@ export const MIGRATIONS: Migration[] = [
             is_deleted INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY(mother_id) REFERENCES mother(id)
+            FOREIGN KEY(mother) REFERENCES mother(id)
           );
         `);
       } catch (e) {
@@ -212,7 +265,7 @@ export const MIGRATIONS: Migration[] = [
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS hmis_child_death (
             id TEXT PRIMARY KEY,
-            mother_id TEXT,
+            mother TEXT,
             mother_name TEXT,
             child_name TEXT,
             birth_day INTEGER,
@@ -225,7 +278,7 @@ export const MIGRATIONS: Migration[] = [
             is_deleted INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY(mother_id) REFERENCES mother(id)
+            FOREIGN KEY(mother) REFERENCES mother(id)
           );
         `);
       } catch (e) {
@@ -255,7 +308,7 @@ export const MIGRATIONS: Migration[] = [
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS hmis_infant_monitoring (
               id TEXT PRIMARY KEY,
-              mother_id TEXT,
+              mother TEXT,
               mother_name TEXT,
               baby_name TEXT,
               baby_birth_day INTEGER,
@@ -279,7 +332,7 @@ export const MIGRATIONS: Migration[] = [
               is_deleted INTEGER NOT NULL DEFAULT 0,
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL,
-              FOREIGN KEY(mother_id) REFERENCES mother(id)
+              FOREIGN KEY(mother) REFERENCES mother(id)
           );
         `);
       } catch (e) {
@@ -574,13 +627,13 @@ export const MIGRATIONS: Migration[] = [
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS counseling_referral (
             id TEXT PRIMARY KEY,
-            mother_id TEXT NOT NULL,
+            mother TEXT NOT NULL,
             answers TEXT,
             is_synced INTEGER NOT NULL DEFAULT 0,
             is_deleted INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY(mother_id) REFERENCES mother(id)
+            FOREIGN KEY(mother) REFERENCES mother(id)
           );
         `);
       } catch (e) {
@@ -740,10 +793,12 @@ export const MIGRATIONS: Migration[] = [
 
       // Recreate counseling table to ensure proper definition
       try {
+        const motherSelect = await getMotherSelectExpression(db, "counseling");
+
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS counseling_new (
             id TEXT PRIMARY KEY,
-            mother_id TEXT NOT NULL,
+            mother TEXT NOT NULL,
             pregnancy_id TEXT,
             is_counseled INTEGER DEFAULT 0,
             counseled_topics TEXT,
@@ -753,12 +808,12 @@ export const MIGRATIONS: Migration[] = [
             is_deleted INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY(mother_id) REFERENCES mother(id),
+            FOREIGN KEY(mother) REFERENCES mother(id),
             FOREIGN KEY(pregnancy_id) REFERENCES pregnancy(id)
           );
           
-          INSERT OR IGNORE INTO counseling_new (id, mother_id, pregnancy_id, is_counseled, counseled_topics, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
-          SELECT id, mother_id, pregnancy_id, is_counseled, counseled_topics, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at FROM counseling;
+          INSERT OR IGNORE INTO counseling_new (id, mother, pregnancy_id, is_counseled, counseled_topics, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
+          SELECT id, ${motherSelect}, pregnancy_id, is_counseled, counseled_topics, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at FROM counseling;
           
           DROP TABLE counseling;
           ALTER TABLE counseling_new RENAME TO counseling;
@@ -769,10 +824,12 @@ export const MIGRATIONS: Migration[] = [
 
       // Recreate counseling_referral table to add UNIQUE constraint
       try {
+        const motherSelect = await getMotherSelectExpression(db, "counseling_referral");
+
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS counseling_referral_new (
             id TEXT PRIMARY KEY,
-            mother_id TEXT NOT NULL,
+            mother TEXT NOT NULL,
             pregnancy_id TEXT,
             answers TEXT,
             reg_year INTEGER,
@@ -781,13 +838,13 @@ export const MIGRATIONS: Migration[] = [
             is_deleted INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY(mother_id) REFERENCES mother(id),
+            FOREIGN KEY(mother) REFERENCES mother(id),
             FOREIGN KEY(pregnancy_id) REFERENCES pregnancy(id),
-            UNIQUE(mother_id, pregnancy_id, reg_year, reg_month)
+            UNIQUE(mother, pregnancy_id, reg_year, reg_month)
           );
           
-          INSERT OR IGNORE INTO counseling_referral_new (id, mother_id, pregnancy_id, answers, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
-          SELECT id, mother_id, pregnancy_id, answers, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at FROM counseling_referral;
+          INSERT OR IGNORE INTO counseling_referral_new (id, mother, pregnancy_id, answers, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
+          SELECT id, ${motherSelect}, pregnancy_id, answers, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at FROM counseling_referral;
           
           DROP TABLE counseling_referral;
           ALTER TABLE counseling_referral_new RENAME TO counseling_referral;
@@ -978,6 +1035,897 @@ export const MIGRATIONS: Migration[] = [
       } catch (e) {
         console.log("Migration 44 failed or already applied:", e);
       }
+    }
+  },
+  {
+    version: 45,
+    up: async (db) => {
+      const queries = [
+        "ALTER TABLE child_monitoring ADD COLUMN pregnancy_id TEXT;",
+        "ALTER TABLE child_monitoring ADD COLUMN registration_source TEXT DEFAULT 'DIRECT_CHILD_REGISTRATION';"
+      ];
+      for (const query of queries) {
+        try {
+          await db.execAsync(query);
+        } catch (e) {
+          console.log(`Migration 45 failed or already applied: ${query}`, e);
+        }
+      }
+    }
+  },
+  {
+    version: 46,
+    up: async (db) => {
+      // SQLite doesn't support DROP COLUMN, so we recreate visit without address
+      try {
+        const motherSelect = await getMotherSelectExpression(db, "visit");
+
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS visit_new (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('ANC', 'PNC')),
+            visit_notes TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(mother) REFERENCES mother(id)
+          );
+
+          INSERT INTO visit_new (id, mother, name, is_synced, is_deleted, visit_date, visit_type, visit_notes, reg_year, reg_month, created_at, updated_at)
+          SELECT id, ${motherSelect}, name, is_synced, is_deleted, visit_date, visit_type, visit_notes, reg_year, reg_month, created_at, updated_at
+          FROM visit;
+
+          DROP TABLE visit;
+          ALTER TABLE visit_new RENAME TO visit;
+        `);
+      } catch (e) {
+        console.log("Migration 46 (remove address from visit) failed:", e);
+      }
+    }
+  },
+  {
+    version: 47,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS mother_staging(
+            id TEXT PRIMARY KEY,
+            code TEXT,
+            husband_name TEXT,
+            ethnicity TEXT,
+            education TEXT,
+            photo TEXT,
+            first_name TEXT,
+            last_name TEXT,
+            phone_number TEXT,
+            date_of_birth TEXT,
+            address_locality TEXT,
+            address_house_number TEXT,
+            address_province TEXT,
+            address_district TEXT,
+            address_municipality TEXT,
+            address_ward TEXT,
+            income TEXT,
+            occupation TEXT,
+            blood_group TEXT,
+            jati_code TEXT,
+            lmp_date TEXT,
+            parity INTEGER,
+            gravida INTEGER,
+            cover_photo TEXT,
+            emergency_contact_number TEXT,
+            partner_name TEXT,
+            partner_mobile TEXT,
+            partner_age TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 47 (mother_staging table) failed:", e);
+      }
+    }
+  },
+  {
+    version: 48,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS adolescent_ifa_staging (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            age_group TEXT NOT NULL,
+            phase1_week_1 INTEGER DEFAULT 0,
+            phase1_week_2 INTEGER DEFAULT 0,
+            phase1_week_3 INTEGER DEFAULT 0,
+            phase1_week_4 INTEGER DEFAULT 0,
+            phase1_week_5 INTEGER DEFAULT 0,
+            phase1_week_6 INTEGER DEFAULT 0,
+            phase1_week_7 INTEGER DEFAULT 0,
+            phase1_week_8 INTEGER DEFAULT 0,
+            phase1_week_9 INTEGER DEFAULT 0,
+            phase1_week_10 INTEGER DEFAULT 0,
+            phase1_week_11 INTEGER DEFAULT 0,
+            phase1_week_12 INTEGER DEFAULT 0,
+            phase1_week_13 INTEGER DEFAULT 0,
+            phase1_completed INTEGER DEFAULT 0,
+            phase2_week_1 INTEGER DEFAULT 0,
+            phase2_week_2 INTEGER DEFAULT 0,
+            phase2_week_3 INTEGER DEFAULT 0,
+            phase2_week_4 INTEGER DEFAULT 0,
+            phase2_week_5 INTEGER DEFAULT 0,
+            phase2_week_6 INTEGER DEFAULT 0,
+            phase2_week_7 INTEGER DEFAULT 0,
+            phase2_week_8 INTEGER DEFAULT 0,
+            phase2_week_9 INTEGER DEFAULT 0,
+            phase2_week_10 INTEGER DEFAULT 0,
+            phase2_week_11 INTEGER DEFAULT 0,
+            phase2_week_12 INTEGER DEFAULT 0,
+            phase2_week_13 INTEGER DEFAULT 0,
+            phase2_completed INTEGER DEFAULT 0,
+            remarks TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 48 (adolescent_ifa_staging table) failed:", e);
+      }
+    }
+  },
+  {
+    version: 49,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS child_monitoring_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            baby_name TEXT,
+            date_of_birth TEXT,
+            birth_place TEXT,
+            status TEXT,
+            fchv_present INTEGER DEFAULT 0,
+            skilled_birth_attended INTEGER DEFAULT 0,
+            baby_weight TEXT,
+            umbilical_ointment INTEGER DEFAULT 0,
+            skin_to_skin INTEGER DEFAULT 0,
+            early_breastfeeding INTEGER DEFAULT 0,
+            asphyxiated_newborn INTEGER DEFAULT 0,
+            is_all_given INTEGER DEFAULT 0,
+            gender TEXT,
+            remarks TEXT,
+            pregnancy_id TEXT,
+            registration_source TEXT DEFAULT 'DIRECT_CHILD_REGISTRATION',
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 49 (child_monitoring_staging table) failed:", e);
+      }
+    }
+  },
+  {
+    version: 50,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS pregnancy_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            gravida INTEGER,
+            parity INTEGER,
+            lmp_date TEXT NOT NULL,
+            expected_delivery_date TEXT,
+            caretakers_name TEXT,
+            caretakers_phone TEXT,
+            is_current INTEGER NOT NULL DEFAULT 0,
+            selected INTEGER NOT NULL DEFAULT 0,
+            ended INTEGER NOT NULL DEFAULT 0,
+            delivered INTEGER NOT NULL DEFAULT 0,
+            risk_level TEXT NOT NULL DEFAULT 'normal',
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 50 (pregnancy_staging table) failed:", e);
+      }
+    }
+  },
+  {
+    version: 51,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS mothers_group_meetings_staging (
+            id TEXT PRIMARY KEY,
+            meeting_date TEXT NOT NULL,
+            meeting_location TEXT NOT NULL,
+            ward_no TEXT,
+            attendees_count INTEGER DEFAULT 0,
+            discussed_topics TEXT,
+            decisions TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 51 (mothers_group_meetings_staging table) failed:", e);
+      }
+    }
+  },
+  {
+    version: 52,
+    up: async (db) => {
+      try {
+        const columns = await db.getAllAsync<{ name: string }>(
+          `PRAGMA table_info(visit);`,
+        );
+        const columnNames = new Set(columns.map((column) => column.name));
+        const hasVisitTable = columnNames.size > 0;
+        const hasVisitPlace = columnNames.has("visit_place");
+        const hasVisitNotes = columnNames.has("visit_notes");
+        const motherSelect = columnNames.has("mother") && columnNames.has("mother_id")
+          ? "COALESCE(NULLIF(mother, ''), mother_id)"
+          : columnNames.has("mother")
+            ? "mother"
+            : columnNames.has("mother_id")
+              ? "mother_id"
+              : "''";
+
+        if (!hasVisitTable) {
+          await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS visit (
+              id TEXT PRIMARY KEY,
+              mother TEXT NOT NULL,
+              name TEXT,
+              is_synced INTEGER NOT NULL DEFAULT 0,
+              is_deleted INTEGER NOT NULL DEFAULT 0,
+              visit_date TEXT NOT NULL,
+              visit_type TEXT NOT NULL CHECK(visit_type IN ('ANC', 'PNC')),
+              visit_place TEXT,
+              reg_year INTEGER,
+              reg_month INTEGER,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY(mother) REFERENCES mother(id)
+            );
+          `);
+        } else if (!hasVisitPlace) {
+          const visitPlaceSelect = hasVisitNotes ? "visit_notes" : "NULL";
+
+          await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS visit_new (
+              id TEXT PRIMARY KEY,
+              mother TEXT NOT NULL,
+              name TEXT,
+              is_synced INTEGER NOT NULL DEFAULT 0,
+              is_deleted INTEGER NOT NULL DEFAULT 0,
+              visit_date TEXT NOT NULL,
+              visit_type TEXT NOT NULL CHECK(visit_type IN ('ANC', 'PNC')),
+              visit_place TEXT,
+              reg_year INTEGER,
+              reg_month INTEGER,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY(mother) REFERENCES mother(id)
+            );
+
+            INSERT INTO visit_new (id, mother, name, is_synced, is_deleted, visit_date, visit_type, visit_place, reg_year, reg_month, created_at, updated_at)
+            SELECT id, ${motherSelect}, name, is_synced, is_deleted, visit_date, visit_type, ${visitPlaceSelect}, reg_year, reg_month, created_at, updated_at
+            FROM visit;
+
+            DROP TABLE visit;
+            ALTER TABLE visit_new RENAME TO visit;
+          `);
+        }
+
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS visit_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('ANC', 'PNC')),
+            visit_place TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 52 (visit_place and visit_staging) failed:", e);
+      }
+    }
+  },
+  {
+    version: 53,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS visit (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('ANC', 'PNC')),
+            visit_place TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(mother) REFERENCES mother(id)
+          );
+
+          CREATE TABLE IF NOT EXISTS visit_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('ANC', 'PNC')),
+            visit_place TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 53 (ensure visit tables) failed:", e);
+      }
+    }
+  },
+  {
+    version: 54,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS todo (
+            id TEXT PRIMARY KEY,
+            task TEXT NOT NULL,
+            description TEXT,
+            task_date TEXT,
+            task_time TEXT,
+            notification_id TEXT,
+            is_completed INTEGER NOT NULL DEFAULT 0,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+
+          CREATE TABLE IF NOT EXISTS todo_staging (
+            id TEXT PRIMARY KEY,
+            task TEXT NOT NULL,
+            description TEXT,
+            task_date TEXT,
+            task_time TEXT,
+            notification_id TEXT,
+            is_completed INTEGER NOT NULL DEFAULT 0,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 54 (ensure todo tables) failed:", e);
+      }
+
+      try {
+        await db.execAsync(`ALTER TABLE todo ADD COLUMN is_synced INTEGER NOT NULL DEFAULT 0;`);
+      } catch (e) {
+        console.log("Migration 54 (todo is_synced column) already applied or failed:", e);
+      }
+    }
+  },
+  {
+    version: 55,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS hmis_maternal_death_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            serial_no INTEGER,
+            mother_name TEXT,
+            mother_age INTEGER,
+            death_condition TEXT,
+            death_condition_other TEXT,
+            death_day INTEGER,
+            death_month INTEGER,
+            death_year INTEGER,
+            death_place TEXT,
+            death_place_other TEXT,
+            child_condition TEXT,
+            remarks TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 55 (hmis_maternal_death_staging table) failed:", e);
+      }
+
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["hmis_maternal_death"],
+        );
+      } catch (e) {
+        console.log("Migration 55 (hmis_maternal_death sync row) failed:", e);
+      }
+    }
+  },
+  {
+    version: 56,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS hmis_newborn_death_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            child_id TEXT,
+            mother_name TEXT,
+            baby_name TEXT,
+            birth_day INTEGER,
+            birth_month INTEGER,
+            birth_year INTEGER,
+            death_day INTEGER,
+            death_month INTEGER,
+            death_year INTEGER,
+            birth_condition TEXT,
+            birth_condition_other TEXT,
+            death_age_days INTEGER,
+            death_age_unit TEXT DEFAULT 'days',
+            cause_of_death TEXT,
+            cause_of_death_other TEXT,
+            death_place TEXT,
+            death_place_other TEXT,
+            gender TEXT,
+            remarks TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 56 (hmis_newborn_death_staging table) failed:", e);
+      }
+
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["hmis_newborn_death"],
+        );
+      } catch (e) {
+        console.log("Migration 56 (hmis_newborn_death sync row) failed:", e);
+      }
+    }
+  },
+  {
+    version: 57,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS supplements_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            pregnancy_id TEXT,
+            iron_pregnancy INTEGER DEFAULT 0,
+            iron_post_delivery INTEGER DEFAULT 0,
+            vitamin_a_post_delivery INTEGER DEFAULT 0,
+            calcium INTEGER DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 57 (supplements_staging table) failed:", e);
+      }
+
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["supplements"],
+        );
+      } catch (e) {
+        console.log("Migration 57 (supplements sync row) failed:", e);
+      }
+    }
+  },
+  {
+    version: 58,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS family_planning_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            family_planning TEXT,
+            ocp_qty INTEGER DEFAULT 0,
+            ecp_qty INTEGER DEFAULT 0,
+            condom_qty INTEGER DEFAULT 0,
+            pregnancy_id TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 58 (family_planning_staging table) failed:", e);
+      }
+
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["family_planning"],
+        );
+      } catch (e) {
+        console.log("Migration 58 (family_planning sync row) failed:", e);
+      }
+    }
+  },
+  {
+    version: 59,
+    up: async (db) => {
+      const tables = [
+        "child_monitoring",
+        "supplements",
+        "family_planning",
+        "hmis_newborn_death",
+      ];
+
+      for (const table of tables) {
+        try {
+          await db.execAsync(
+            `ALTER TABLE ${table} RENAME COLUMN mother_id TO mother;`,
+          );
+        } catch (e) {
+          console.log(`Migration 59: ${table} already has mother column or rename failed:`, e);
+        }
+      }
+    }
+  },
+  {
+    version: 60,
+    up: async (db) => {
+      await repairMotherColumn(db, "family_planning");
+      await repairMotherColumn(db, "family_planning_staging");
+    }
+  },
+  {
+    version: 61,
+    up: async (db) => {
+      const tables = [
+        "pregnancy",
+        "pregnancy_staging",
+        "visit",
+        "visit_staging",
+        "child_monitoring",
+        "child_monitoring_staging",
+        "supplements",
+        "supplements_staging",
+        "family_planning",
+        "family_planning_staging",
+        "counseling",
+        "counseling_referral",
+        "hmis_maternal_death",
+        "hmis_maternal_death_staging",
+        "hmis_newborn_death",
+        "hmis_newborn_death_staging",
+      ];
+
+      for (const table of tables) {
+        await repairMotherColumn(db, table);
+      }
+    }
+  },
+  {
+    version: 62,
+    up: async (db) => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS counseling_referral_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            pregnancy TEXT,
+            answers TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+      `);
+    }
+  },
+  {
+    version: 63,
+    up: async (db) => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS child_counseling_staging (
+            id TEXT PRIMARY KEY,
+            child TEXT,
+            answers TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+      `);
+    }
+  },
+  {
+    version: 64,
+    up: async (db) => {
+      const tables = ["child_counseling", "child_counseling_staging"];
+
+      for (const table of tables) {
+        if (await tableHasColumn(db, table, "child_id")) {
+          await db.execAsync(
+            `ALTER TABLE ${table} RENAME COLUMN child_id TO child;`,
+          );
+        }
+      }
+
+      await db.execAsync(
+        `DROP INDEX IF EXISTS idx_child_counseling_child_id;`,
+      );
+    }
+  },
+  {
+    version: 65,
+    up: async (db) => {
+      const tables = ["counseling_referral", "counseling_referral_staging"];
+
+      for (const table of tables) {
+        if (await tableHasColumn(db, table, "pregnancy_id")) {
+          await db.execAsync(
+            `ALTER TABLE ${table} RENAME COLUMN pregnancy_id TO pregnancy;`,
+          );
+        }
+      }
+    }
+  },
+  {
+    version: 66,
+    up: async (db) => {
+      await db.execAsync(`DROP TABLE IF EXISTS counseling;`);
+    }
+  },
+  {
+    version: 67,
+    up: async (db) => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS child_vaccination_staging (
+            id TEXT PRIMARY KEY,
+            child_id TEXT,
+            vaccine_id TEXT,
+            is_given INTEGER DEFAULT 0,
+            given_date TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+      `);
+    }
+  },
+  {
+    version: 68,
+    up: async (db) => {
+      const tables = ["child_vaccination", "child_vaccination_staging"];
+
+      for (const table of tables) {
+        if (await tableHasColumn(db, table, "child_id")) {
+          await db.execAsync(
+            `ALTER TABLE ${table} RENAME COLUMN child_id TO child;`,
+          );
+        }
+      }
+
+      await db.execAsync(
+        `DROP INDEX IF EXISTS idx_child_vaccination_child_id;`,
+      );
+    }
+  },
+  {
+    version: 69,
+    up: async (db) => {
+      const getSelectExpression = (
+        columns: Set<string>,
+        column: string,
+        fallback: string,
+      ) => columns.has(column) ? column : fallback;
+
+      const getChildSelectExpression = (columns: Set<string>) => {
+        if (columns.has("child") && columns.has("child_id")) {
+          return "COALESCE(NULLIF(child, ''), child_id)";
+        }
+        if (columns.has("child")) return "child";
+        if (columns.has("child_id")) return "child_id";
+        return "''";
+      };
+
+      const migrateTable = async (table: string, withConstraints: boolean) => {
+        const columns = await db.getAllAsync<TableInfoRow>(`PRAGMA table_info(${table});`);
+        const columnNames = new Set(columns.map((column) => column.name));
+
+        if (!columns.length) {
+          await db.execAsync(withConstraints
+            ? `
+              CREATE TABLE IF NOT EXISTS child_vaccination (
+                id TEXT PRIMARY KEY,
+                child TEXT NOT NULL,
+                vaccine_id TEXT NOT NULL,
+                is_given INTEGER DEFAULT 0,
+                given_date TEXT,
+                is_synced INTEGER NOT NULL DEFAULT 0,
+                is_deleted INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(child) REFERENCES child_monitoring(id),
+                UNIQUE(child, vaccine_id)
+              );
+            `
+            : `
+              CREATE TABLE IF NOT EXISTS child_vaccination_staging (
+                id TEXT PRIMARY KEY,
+                child TEXT,
+                vaccine_id TEXT,
+                is_given INTEGER DEFAULT 0,
+                given_date TEXT,
+                is_synced INTEGER NOT NULL DEFAULT 0,
+                is_deleted INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+              );
+            `);
+          return;
+        }
+
+        const tableNew = `${table}_new`;
+        const childSelect = getChildSelectExpression(columnNames);
+        const idSelect = getSelectExpression(columnNames, "id", "lower(hex(randomblob(16)))");
+        const vaccineSelect = getSelectExpression(columnNames, "vaccine_id", "''");
+        const isGivenSelect = getSelectExpression(columnNames, "is_given", "0");
+        const givenDateSelect = getSelectExpression(columnNames, "given_date", "NULL");
+        const isSyncedSelect = getSelectExpression(columnNames, "is_synced", "0");
+        const isDeletedSelect = getSelectExpression(columnNames, "is_deleted", "0");
+        const createdAtSelect = columnNames.has("created_at")
+          ? "COALESCE(created_at, datetime('now'))"
+          : "datetime('now')";
+        const updatedAtSelect = columnNames.has("updated_at")
+          ? "COALESCE(updated_at, datetime('now'))"
+          : "datetime('now')";
+
+        await db.execAsync(`DROP TABLE IF EXISTS ${tableNew};`);
+        await db.execAsync(withConstraints
+          ? `
+            CREATE TABLE ${tableNew} (
+              id TEXT PRIMARY KEY,
+              child TEXT NOT NULL,
+              vaccine_id TEXT NOT NULL,
+              is_given INTEGER DEFAULT 0,
+              given_date TEXT,
+              is_synced INTEGER NOT NULL DEFAULT 0,
+              is_deleted INTEGER NOT NULL DEFAULT 0,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY(child) REFERENCES child_monitoring(id),
+              UNIQUE(child, vaccine_id)
+            );
+          `
+          : `
+            CREATE TABLE ${tableNew} (
+              id TEXT PRIMARY KEY,
+              child TEXT,
+              vaccine_id TEXT,
+              is_given INTEGER DEFAULT 0,
+              given_date TEXT,
+              is_synced INTEGER NOT NULL DEFAULT 0,
+              is_deleted INTEGER NOT NULL DEFAULT 0,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            );
+          `);
+
+        await db.execAsync(`
+          INSERT OR IGNORE INTO ${tableNew}
+            (id, child, vaccine_id, is_given, given_date, is_synced, is_deleted, created_at, updated_at)
+          SELECT
+            ${idSelect},
+            ${childSelect},
+            ${vaccineSelect},
+            ${isGivenSelect},
+            ${givenDateSelect},
+            ${isSyncedSelect},
+            ${isDeletedSelect},
+            ${createdAtSelect},
+            ${updatedAtSelect}
+          FROM ${table}
+          WHERE ${childSelect} IS NOT NULL
+            AND ${childSelect} != ''
+            AND ${vaccineSelect} IS NOT NULL
+            AND ${vaccineSelect} != '';
+        `);
+
+        await db.execAsync(`
+          DROP TABLE ${table};
+          ALTER TABLE ${tableNew} RENAME TO ${table};
+        `);
+      };
+
+      await db.execAsync(`
+        DROP INDEX IF EXISTS idx_child_vaccination_child_id;
+        DROP INDEX IF EXISTS idx_child_vaccination_reg;
+      `);
+
+      await migrateTable("child_vaccination", true);
+      await migrateTable("child_vaccination_staging", false);
+
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_child_vaccination_reg ON child_vaccination(child);
+      `);
+
+      await db.runAsync(
+        `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+        ["child_vaccination"],
+      );
     }
   },
 ];

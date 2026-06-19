@@ -1,6 +1,6 @@
 export interface MaternalDeathStoreType {
   id: string;
-  mother_id?: string;
+  mother?: string;
   serial_no?: number;
   mother_name?: string;
   mother_age?: number;
@@ -15,7 +15,8 @@ export interface MaternalDeathStoreType {
   death_place_other?: string;
   child_condition?: string; // 'Alive', 'Dead'
   remarks?: string;
-  reg_month?: string;
+  reg_year?: number | null;
+  reg_month?: number | string | null;
   is_synced?: number;
   is_deleted?: number;
   created_at: string;

@@ -10,7 +10,7 @@ const postPregnancy = async (data: CreatePregnancyPayload) => {
     lmp_date: data.lmp_date,
     caretakers_name: data.caretakers_name || "",
     caretakers_phone: data.caretakers_phone || "",
-    mother: data.mother_id, // Map mother_id to "mother"
+    mother: data.mother,
     expected_delivery_date: data.expected_delivery_date || "",
     is_current: !!data.is_current,
     parity: data.parity || 0,
@@ -23,7 +23,7 @@ const postPregnancy = async (data: CreatePregnancyPayload) => {
   // The fchv-sync endpoint expects an array of records
   const response = await httpClient.post<PregnancySyncPayload[]>(
     API_LIST.pregnancies.post,
-    syncPayload
+    [syncPayload]
   );
   
   // Server returns an array — return the first item so callers still get a single object
@@ -31,4 +31,30 @@ const postPregnancy = async (data: CreatePregnancyPayload) => {
   return Array.isArray(results) ? results[0] : results;
 };
 
-export { postPregnancy };
+const postBulkPregnancy = async (data: CreatePregnancyPayload[]) => {
+  const syncPayload: PregnancySyncPayload[] = data.map((item) => ({
+    id: item.id,
+    name: item.name || "Unknown",
+    lmp_date: item.lmp_date,
+    caretakers_name: item.caretakers_name || "",
+    caretakers_phone: item.caretakers_phone || "",
+    mother: item.mother || "",
+    expected_delivery_date: item.expected_delivery_date || "",
+    is_current: !!item.is_current,
+    parity: item.parity ?? 0,
+    selected: !!item.selected,
+    ended: !!item.ended,
+    delivered: !!item.delivered,
+    risk_level: item.risk_level || "normal",
+  }));
+
+  // The fchv-sync endpoint expects an array of records
+  const response = await httpClient.post<PregnancySyncPayload[]>(
+    API_LIST.pregnancies.post,
+    syncPayload
+  );
+
+  return response.data;
+};
+
+export { postBulkPregnancy, postPregnancy };

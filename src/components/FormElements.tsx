@@ -3,8 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, ActivityInd
 import { X, ChevronDown, Save } from "lucide-react-native";
 import Dropdown from "react-native-input-select";
 
-export const FieldLabel = ({ label }: { label: string }) => (
-  <Text className="text-gray-800 text-[16px] mb-2">{label}</Text>
+export const FieldLabel = ({ label, required }: { label: string, required?: boolean }) => (
+  <Text className="text-gray-800 text-[16px] mb-2">
+    {label}
+    {required && <Text className="text-red-500"> *</Text>}
+  </Text>
 );
 
 export const SelectInput = ({ label, placeholder, value, options, onSelect, error, disabled }: any) => {
@@ -131,6 +134,8 @@ export const BoxInput = ({
   keyboardType = "default",
   maxLength,
   error,
+  required,
+  helperText,
 }: {
   placeholder: string;
   value: string;
@@ -139,10 +144,15 @@ export const BoxInput = ({
   maxLength?: number;
   error?: string;
   label?: string;
+  required?: boolean;
+  helperText?: string;
 }) => (
   <View className="mb-4">
     {label && (
-      <Text className="text-slate-800 font-medium text-[16px] mb-1.5 ml-1">{label}</Text>
+      <Text className="text-slate-800 font-medium text-[16px] mb-1.5 ml-1">
+        {label}
+        {required && <Text className="text-red-500"> *</Text>}
+      </Text>
     )}
     <View
       className={`h-14 flex-row items-center rounded-xl px-4 border ${
@@ -160,6 +170,11 @@ export const BoxInput = ({
         returnKeyType="next"
       />
     </View>
+    {helperText && !error ? (
+      <Text className="text-gray-600 text-[12px] mt-1 ml-1 leading-4 font-normal">
+        {helperText}
+      </Text>
+    ) : null}
     {error ? (
       <Text className="text-rose-500 text-xs mt-1.5 ml-1 font-semibold">
         {error}

@@ -21,7 +21,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react-native";
-import { getDb } from "@/hooks/database/db";
+import { doSync } from "@/api/services/sync/sync";
+import { getDb, initDatabase } from "@/hooks/database/db";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -44,6 +45,8 @@ export default function DatabaseViewer({ onClose }: { onClose: () => void }) {
 
   const loadTables = async () => {
     try {
+      await initDatabase();
+      await doSync();
       const db = await getDb();
       const result = await db.getAllAsync<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'android_metadata'"
@@ -64,6 +67,7 @@ export default function DatabaseViewer({ onClose }: { onClose: () => void }) {
     setSqlMode(false);
     setSelectedTable(tableName);
     try {
+      await initDatabase();
       const db = await getDb();
       const result = (await db.getAllAsync(`SELECT * FROM ${tableName}`)) as any[];
       setTableData(result);
@@ -87,6 +91,7 @@ export default function DatabaseViewer({ onClose }: { onClose: () => void }) {
     setLoading(true);
     setSqlError(null);
     try {
+      await initDatabase();
       const db = await getDb();
       if (customSql.trim().toLowerCase().startsWith("select")) {
         const result = (await db.getAllAsync(customSql)) as any[];
@@ -235,7 +240,7 @@ export default function DatabaseViewer({ onClose }: { onClose: () => void }) {
         <View className="flex-1">
           {sqlMode ? (
             <View className="flex-1 p-4">
-              <View className="bg-slate-900 rounded-2xl p-4 shadow-sm">
+              <View className="bg-slate-900 rounded-2xl p-4">
                 <Text className="text-slate-400 text-[10px] font-bold uppercase mb-2">
                   Execute Custom SQL
                 </Text>

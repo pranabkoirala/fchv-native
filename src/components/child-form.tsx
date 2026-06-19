@@ -12,6 +12,8 @@ import {
   getAllMothersList,
   MotherListDbItem,
 } from "@/hooks/database/models/MotherModel";
+import { getPregnanciesByMotherId } from "@/hooks/database/models/PregnantWomenModal";
+import { PregnancyStoreType } from "@/hooks/database/types/pregnancyModal";
 import {
   BIRTH_PLACE_OPTIONS,
   CHILD_STATUS_OPTIONS,
@@ -28,7 +30,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "./button";
 
 export default function ChildRegistrationForm() {
-  const { id, motherId, from } = useLocalSearchParams<{ id: string; motherId?: string; from?: string }>();
+  const { id, motherId, pregnancyId, from } = useLocalSearchParams<{ id: string; motherId?: string; pregnancyId?: string; from?: string }>();
   const { showToast } = useToast();
   const router = useRouter();
   const { t, language } = useLanguage();
@@ -72,6 +74,57 @@ export default function ChildRegistrationForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Pregnancy linking: default YES when pregnancyId is passed in or when redirected from profile
+  const [linkToPregnancy, setLinkToPregnancy] = useState(!!pregnancyId || from === "profile");
+
+  // Suggestion states
+  const [motherPregnancies, setMotherPregnancies] = useState<PregnancyStoreType[]>([]);
+  const [suggestedPregnancy, setSuggestedPregnancy] = useState<PregnancyStoreType | null>(null);
+
+  // Fetch mother's pregnancies when selectedMotherId changes
+  useEffect(() => {
+    if (selectedMotherId) {
+      getPregnanciesByMotherId(selectedMotherId)
+        .then((res) => {
+          setMotherPregnancies(res);
+        })
+        .catch(console.error);
+    } else {
+      setMotherPregnancies([]);
+    }
+  }, [selectedMotherId]);
+
+  // Pregnancy matching logic based on child DOB (birthDateAd)
+  useEffect(() => {
+    if (!pregnancyId && birthDateAd && motherPregnancies.length > 0) {
+      const childDob = new Date(birthDateAd);
+      if (isNaN(childDob.getTime())) return;
+
+      // Find a pregnancy whose EDD is within 45 days of child's DOB
+      const match = motherPregnancies.find((p) => {
+        if (!p.expected_delivery_date) return false;
+        try {
+          const edd = new Date(p.expected_delivery_date);
+          if (isNaN(edd.getTime())) return false;
+          const diffTime = Math.abs(childDob.getTime() - edd.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays <= 45;
+        } catch {
+          return false;
+        }
+      });
+
+      if (match) {
+        setSuggestedPregnancy(match);
+      } else {
+        setSuggestedPregnancy(null);
+      }
+    } else {
+      setSuggestedPregnancy(null);
+    }
+  }, [birthDateAd, motherPregnancies, pregnancyId]);
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -82,7 +135,7 @@ export default function ChildRegistrationForm() {
           const all = await getAllInfantMonitorings();
           const infant = all.find((i) => i.id === id);
           if (infant) {
-            setSelectedMotherId(infant.mother_id || "");
+            setSelectedMotherId(infant.mother || "");
             setBabyName(infant.baby_name || "");
             setBirthPlace(infant.birth_place || "institution");
             setBabyWeight(infant.baby_weight || "normal");
@@ -121,8 +174,6 @@ export default function ChildRegistrationForm() {
     const e: Record<string, string> = {};
     if (!selectedMotherId)
       e.motherId = t("child_form.validation.mother_required", "Mother is required");
-    if (!babyName.trim())
-      e.babyName = t("child_form.validation.baby_name_required", "Baby name is required");
     if (!birthDateAd)
       e.birthDate = t("child_form.validation.birth_date_required", "Birth date is required");
     if (!gender)
@@ -134,10 +185,6 @@ export default function ChildRegistrationForm() {
     const vErrors = validate();
     if (Object.keys(vErrors).length > 0) {
       setErrors(vErrors);
-      Alert.alert(
-        t("child_form.validation.error", "Error"),
-        t("child_form.validation.fill_fields", "Please fill all required fields"),
-      );
       return;
     }
 
@@ -145,7 +192,7 @@ export default function ChildRegistrationForm() {
     try {
       const payload = {
         id: id || Crypto.randomUUID(),
-        mother_id: selectedMotherId,
+        mother: selectedMotherId,
         baby_name: babyName,
         date_of_birth: birthDateAd,
         birth_place: birthPlace,
@@ -162,6 +209,11 @@ export default function ChildRegistrationForm() {
         is_all_given: allGiven,
         gender: gender || undefined,
         remarks: remarks,
+        // Pregnancy linkage
+        pregnancy_id: linkToPregnancy && (pregnancyId || suggestedPregnancy?.id) ? (pregnancyId || suggestedPregnancy?.id) : null,
+        registration_source: (linkToPregnancy && (pregnancyId || suggestedPregnancy?.id)
+          ? 'PREGNANCY'
+          : 'DIRECT_CHILD_REGISTRATION') as 'PREGNANCY' | 'DIRECT_CHILD_REGISTRATION',
       };
       await createInfantMonitoring(payload);
       showToast(t("child_form.messages.save_success", "Record saved successfully"));
@@ -240,6 +292,52 @@ export default function ChildRegistrationForm() {
         showsVerticalScrollIndicator={false}
       >
         <View className="bg-white px-4 mb-16 py-5">
+          {/* Pregnancy Link Card — only shown when redirected from mother profile */}
+          {!id && from === "profile" && (
+            <View className="mb-5 rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+              <View className="flex-row items-center gap-3 px-5 py-3 bg-slate-50">
+                <View className="w-11 h-11 rounded-2xl bg-slate-100 items-center justify-center">
+                  <CalendarIcon size={20} color="#0F172A" />
+                </View>
+                <Text className="text-slate-900 font-semibold text-base">
+                  {t("child_form.link_to_pregnancy.title")}
+                </Text>
+              </View>
+              <View className="px-5 py-4">
+                <View className="flex-row gap-3">
+                  <TouchableOpacity
+                    onPress={() => setLinkToPregnancy(true)}
+                    activeOpacity={0.8}
+                    className={`flex-1 rounded-md py-3 items-center justify-center ${linkToPregnancy ? 'bg-slate-900' : 'bg-slate-100'}`}
+                  >
+                    <Text className={`font-semibold ${linkToPregnancy ? 'text-white' : 'text-slate-900'}`}>
+                      {t("child_form.link_to_pregnancy.yes")}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setLinkToPregnancy(false)}
+                    activeOpacity={0.8}
+                    className={`flex-1 rounded-md py-3 items-center justify-center ${!linkToPregnancy ? 'bg-slate-900' : 'bg-slate-100'}`}
+                  >
+                    <Text className={`font-semibold ${!linkToPregnancy ? 'text-white' : 'text-slate-900'}`}>
+                      {t("child_form.link_to_pregnancy.no")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                 <View className="flex-row items-start gap-3 mt-4">
+                  <View className="w-5 h-5 rounded-full bg-slate-200 items-center justify-center mt-1">
+                    <Check size={12} color="#0F172A" strokeWidth={3} />
+                  </View>
+                  <Text className="text-slate-600 text-sm leading-6">
+                    {linkToPregnancy
+                      ? t("child_form.link_to_pregnancy.linked_description")
+                      : t("child_form.link_to_pregnancy.unlinked_description")}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Mother Selection */}
           <ProfilePicker
             label={t("child_form.select_mother")}
@@ -248,9 +346,9 @@ export default function ChildRegistrationForm() {
             selectedValue={selectedMotherId}
             onValueChange={(val: string) => {
               setSelectedMotherId(val);
-              if (errors.motherId) setErrors({ ...errors, motherId: "" });
+              if (errors?.motherId) setErrors({ ...errors, motherId: "" });
             }}
-            error={errors.motherId}
+            error={errors?.motherId}
             isSearchable={true}
           />
 
@@ -316,6 +414,53 @@ export default function ChildRegistrationForm() {
               />
             </View>
 
+            {/* Suggested Pregnancy Match Selection */}
+            {!pregnancyId && suggestedPregnancy && (
+              <View className="mb-5 rounded-2xl border border-amber-100 bg-amber-50/40 overflow-hidden">
+                <View className="flex-row items-center px-4 py-3 bg-amber-50 border-b border-amber-100">
+                  <View className="w-7 h-7 rounded-full bg-amber-100 items-center justify-center mr-2">
+                    <CalendarIcon size={14} color="#D97706" />
+                  </View>
+                  <Text className="font-semibold text-amber-900 text-[15px]">
+                    {t("child_form.matching_pregnancy.title")}
+                  </Text>
+                </View>
+                <View className="p-4 bg-white border-b border-amber-50">
+                  <Text className="text-slate-600 text-[13px] leading-relaxed">
+                    {t("child_form.matching_pregnancy.description", {
+                      date: suggestedPregnancy.lmp_date,
+                    })}
+                  </Text>
+                </View>
+                <View className="flex-row">
+                  <TouchableOpacity
+                    onPress={() => setLinkToPregnancy(true)}
+                    className={`flex-1 py-3 items-center border-r border-amber-100 ${
+                      linkToPregnancy ? 'bg-amber-600' : 'bg-white'
+                    }`}
+                  >
+                    <Text className={`font-semibold text-[14px] ${
+                      linkToPregnancy ? 'text-white' : 'text-slate-500'
+                    }`}>
+                      {t("child_form.matching_pregnancy.yes")}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setLinkToPregnancy(false)}
+                    className={`flex-1 py-3 items-center ${
+                      !linkToPregnancy ? 'bg-slate-600' : 'bg-white'
+                    }`}
+                  >
+                    <Text className={`font-semibold text-[14px] ${
+                      !linkToPregnancy ? 'text-white' : 'text-slate-500'
+                    }`}>
+                      {t("child_form.matching_pregnancy.no")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             {/* Gender Selection */}
             <View className="mb-4">
               <Text className="text-slate-800 text-[16px] mb-3 ml-1">
@@ -370,7 +515,7 @@ export default function ChildRegistrationForm() {
             onValueChange={(val: string) => setBirthPlace(val)}
           />
 
-          <View className="mt-4 gap-y-3">
+          <View className="gap-y-3">
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() =>

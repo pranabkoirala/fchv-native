@@ -160,3 +160,11 @@ export const getRecentNepaliMonthBuckets = (monthCount = 3): NepaliTrendBucket[]
     return buckets;
 };
 
+export const getNepaliMonthKey = ({ year, month }: NepaliYearMonth): string => {
+    return `${year}-${String(month).padStart(2, "0")}`;
+};
+
+export const getRecentNepaliMonthKeys = (monthCount = 3): string[] => {
+    return getRecentNepaliMonthBuckets(monthCount).map(getNepaliMonthKey);
+};
+

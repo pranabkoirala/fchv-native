@@ -284,7 +284,7 @@ export default function NewbornDeathModal({
       setSubmitting(true);
       const selectedChild = motherChildren.find((child) => child.id === selectedChildId);
       const payload = {
-        mother_id: record.id,
+        mother: record.id,
         mother_name: record.mother_name,
         child_id: selectedChildId,
         baby_name: selectedChild?.baby_name?.trim() || "",
@@ -612,7 +612,7 @@ export default function NewbornDeathModal({
               )}
             </View>
 
-            <View className="pt-6">
+            <View className="pt-6 pb-5">
               <FieldLabel label={t("newborn_death_modal.remarks")} hasError={false} required={false} />
               <TextInput
                 placeholder={t("newborn_death_modal.remarks_placeholder")}

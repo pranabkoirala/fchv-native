@@ -2,14 +2,13 @@ export type VisitType = 'ANC' | 'PNC';
 
 export type VisitStoreType = {
   id: string;
-  mother_id: string;
+  mother: string;
   name: string | null;
-  address: string | null;
   is_synced: number;
   is_deleted: number;
   visit_date: string;
   visit_type: VisitType;
-  visit_notes: string | null;
+  visit_place: string | null;
   reg_year?: number | null;
   reg_month: number | null;
   created_at: string;
@@ -18,11 +17,10 @@ export type VisitStoreType = {
 
 export type CreateVisitPayload = {
   id?: string;
-  mother_id: string;
+  mother: string;
   name?: string;
-  address?: string;
   visit_date: string;
   visit_type: VisitType;
-  visit_notes?: string;
+  visit_place?: string;
   is_synced?: boolean;
 };

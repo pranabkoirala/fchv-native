@@ -28,7 +28,7 @@ export default function ConfirmActionModal({
         onPress={onClose}
         className="flex-1 bg-black/50 justify-center items-center px-4"
       >
-        <Pressable onPress={(e) => e.stopPropagation()} className="bg-white w-full rounded-3xl p-6 shadow-xl">
+        <Pressable onPress={(e) => e.stopPropagation()} className="bg-white w-full rounded-3xl p-6">
           
           <View className="flex-row justify-between items-center mb-6">
             <Text className="text-xl font-semibold text-slate-800">{title}</Text>

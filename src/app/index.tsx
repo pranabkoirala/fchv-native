@@ -1,5 +1,7 @@
+import { doSync } from "@/api/services/sync/sync";
 import { ACCESS_TOKEN_KEY } from "@/constants/token";
 import storage from "@/utils/storage";
+import NetInfo from "@react-native-community/netinfo";
 import { useRouter } from "expo-router";
 import { Loader2Icon } from "lucide-react-native";
 import { useEffect } from "react";
@@ -12,6 +14,10 @@ export default function WelcomeScreen() {
     const checkAuth = async () => {
       const token = await storage.get(ACCESS_TOKEN_KEY);
       if (token) {
+        const networkState = await NetInfo.fetch();
+        if (networkState.isConnected) {
+          await doSync();
+        }
         router.replace("/dashboard");
       } else {
         router.replace("/login");

@@ -52,7 +52,7 @@ export default function ChildMonitoringDetailsScreen() {
         const record = records.find((r) => r.id === id);
         if (record) {
           setData(record);
-          const m = mothers.find((m) => m.id === record.mother_id);
+          const m = mothers.find((m) => m.id === record.mother);
           setMotherName(m ? m.name : "-");
         }
       } catch (error) {
@@ -169,7 +169,7 @@ export default function ChildMonitoringDetailsScreen() {
         contentContainerStyle={{ paddingBottom: 120, paddingTop: 12 }}
       >
         {/* Profile Card */}
-        <View className="mx-4 bg-white p-5 rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-100 mb-6">
+        <View className="mx-4 bg-white p-5 rounded-2xl border border-slate-100 mb-6">
           <View className="flex-row items-center mb-4 pb-4 border-b border-slate-100">
             <View className="w-14 h-14 bg-indigo-50 rounded-full items-center justify-center mr-4">
               <User size={24} color="#6366F1" />
@@ -211,7 +211,7 @@ export default function ChildMonitoringDetailsScreen() {
         </View>
 
         {/* Indicators Card */}
-        <View className="mx-4 bg-white rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-100 overflow-hidden mb-6">
+        <View className="mx-4 bg-white rounded-2xl border border-slate-100 overflow-hidden mb-6">
           <View className="bg-slate-50 px-5 py-3 border-b border-slate-100">
             <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
               Health Indicators
@@ -262,7 +262,7 @@ export default function ChildMonitoringDetailsScreen() {
         </View>
 
         {/* Attendance Card */}
-        <View className="mx-4 bg-white rounded-2xl shadow-sm shadow-slate-200/50 border border-slate-100 overflow-hidden">
+        <View className="mx-4 bg-white rounded-2xl border border-slate-100 overflow-hidden">
           <View className="bg-slate-50 px-5 py-3 border-b border-slate-100">
             <Text className="text-slate-700 font-bold text-sm uppercase tracking-wider">
               Attendance
