@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Pressable } from "react-native";
+import { View, Text, TouchableOpacity, Pressable, Alert } from "react-native";
 import { User, Globe, LogOut, X, BookOpen } from "lucide-react-native";
 import { useLanguage } from "../../context/LanguageContext";
 import { useRouter } from "expo-router";
@@ -9,6 +9,8 @@ import {
 } from "@react-navigation/drawer";
 import ModalWithSafeArea from "../common/ModalWithSafeArea";
 import DatabaseViewer from "../DatabaseViewer";
+import { clearDatabase } from "@/hooks/database/db";
+import storage from "@/utils/storage";
 
 export default function CustomDrawer(props: DrawerContentComponentProps) {
   const { t } = useLanguage();
@@ -16,8 +18,24 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
   const [isDbOpen, setIsDbOpen] = useState(false);
 
   const handleLogout = () => {
-    props.navigation.closeDrawer?.();
-    router.replace("/login");
+    Alert.alert(
+      t("profile_settings.logout_alert_title") || "Log Out",
+      t("profile_settings.logout_alert_msg") ||
+        "Are you sure you want to log out? Ensure all data is synced.",
+      [
+        { text: t("profile_settings.cancel") || "Cancel", style: "cancel" },
+        {
+          text: t("profile_settings.logout") || "Log Out",
+          style: "destructive",
+          onPress: async () => {
+            props.navigation.closeDrawer?.();
+            await clearDatabase();
+            await storage.clear();
+            router.replace("/login");
+          },
+        },
+      ],
+    );
   };
 
   return (

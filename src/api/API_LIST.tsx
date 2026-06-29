@@ -1,9 +1,9 @@
 export const API_LIST = {
-    pregnancies: {
-      get: "/api/fchv/pregnancies/",
-      post: "/api/fchv/pregnancies/sync/"
-    },
-    mother: {
+  pregnancies: {
+    get: "/api/fchv/pregnancies/",
+    post: "/api/fchv/pregnancies/sync/"
+  },
+  mother: {
     request_otp: "/api/mothers/request-otp",
     register: "/api/mothers/register",
     create: "/api/fchv/mothers/sync",
@@ -15,11 +15,14 @@ export const API_LIST = {
     phone_verify: "/api/mothers/phone-verify",
     mother_sync: "/api/mothers/fchv-sync/"
   },
-   sync: {
+  sync: {
     unsynced_table_list: "/api/fchv/sync-tables-list"
   },
   token: {
     post: "/api/token/"
+  },
+  fchv_data: {
+    get: "/api/fchvs/{id}/",
   },
   adolescents: {
     get: "/api/fchv/adolescent-ifa/",
@@ -40,10 +43,10 @@ export const API_LIST = {
     post: "/api/fchv/visits/sync/",
     patch: "/api/fchv/visits/{id}/"
   },
-  anc_visits: {
-    get: "/api/fchv/anc-visits/",
-    post: "/api/fchv/anc-visits/sync/",
-    patch: "/api/fchv/anc-visits/{id}/"
+  pnc_visits: {
+    get: "/api/fchv/pnc-visits/",
+    post: "/api/fchv/pnc-visits/sync/",
+    patch: "/api/fchv/pnc-visits/{id}/"
   },
   todo: {
     get: "/api/fchv/todos/",
@@ -65,7 +68,7 @@ export const API_LIST = {
     post: "/api/fchv/supplements/sync/",
     patch: "/api/fchv/supplements/{id}/"
   },
-    family_planning: {
+  family_planning: {
     get: "/api/fchv/family-planning/",
     post: "/api/fchv/family-planning/sync/",
     patch: "/api/fchv/family-planning/{id}/"
@@ -84,6 +87,11 @@ export const API_LIST = {
     get: "/api/fchv/child-vaccinations/",
     post: "/api/fchv/child-vaccinations/sync/",
     patch: "/api/fchv/child-vaccinations/{id}/"
+  },
+  delivery: {
+    get: "/api/fchv/deliveries/",
+    post: "/api/fchv/deliveries/sync/",
+    patch: "/api/fchv/deliveries/{id}/"
   },
 
 }

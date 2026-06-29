@@ -1,39 +1,99 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
-import React from "react";
-import { CircleUserRound } from "lucide-react-native";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  FchvProfile,
+  getLocalFchvProfile,
+} from "@/hooks/database/models/FchvProfileModel";
 import { useRouter } from "expo-router";
-import { useTranslation } from "react-i18next";
+import { CircleUserRound } from "lucide-react-native";
+import { useEffect, useState } from "react";
+import { Image, Text, TouchableOpacity, View } from "react-native";
+
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+};
 
 const TopHeader = () => {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { language } = useLanguage();
+  const [profile, setProfile] = useState<FchvProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getLocalFchvProfile();
+        setProfile(data);
+      } catch (e) {
+        console.error("Error loading FCHV profile:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const fchvName = profile?.user?.name || "FCHV";
+  const orgName = profile?.organization?.name || "";
 
   return (
-    <View className="px-4 pt-10 pb-2 flex-row justify-between items-center bg-[#fff]">
-      <View className="flex-row items-center">
+    <View className="px-5 pt-10 pb-3 flex-row items-center justify-between bg-white border-b border-slate-100">
+      <View className="flex-row items-center flex-1">
         <View className="bg-white p-1 rounded-full mr-3">
-          <Image 
-            source={require("../../assets/fchv-logo.png")} 
-            className="w-12 h-12 rounded-full" 
-            resizeMode="cover" 
+          <Image
+            source={require("../../assets/fchv-logo.png")}
+            className="w-10 h-10 rounded-full"
+            resizeMode="cover"
           />
         </View>
-        <View>
-          <Text className="text-[#0F172A] text-[22px] font-bold leading-none">
-            {t("dashboard.greeting_title", "नमस्ते FCHV")}
-          </Text>
-          {/* <Text className="text-slate-500 text-[13px] font-medium mt-1">
-            {t("dashboard.greeting_sub", "Every visit saves a life.")}
-          </Text> */}
+        <View className="flex-1 mr-3">
+          {loading ? (
+            <View className="gap-y-1">
+              <View className="h-4 bg-slate-200 rounded w-28" />
+              <View className="h-3 bg-slate-100 rounded w-20" />
+            </View>
+          ) : (
+            <>
+              <Text
+                className="text-slate-900 text-[17px] font-bold leading-tight"
+                numberOfLines={1}
+              >
+                {`${t("common.namaste")}, ${fchvName}`}
+              </Text>
+              {orgName ? (
+                <Text
+                  className="text-slate-400 text-[11px] font-medium mt-0.5"
+                  numberOfLines={1}
+                >
+                  {orgName} Hospital
+                </Text>
+              ) : (
+                <Text className="text-slate-400 text-[11px] font-medium mt-0.5">
+                  {language === "np" ? "स्वास्थ्य स्वयंसेविका" : "FCHV"}
+                </Text>
+              )}
+            </>
+          )}
         </View>
       </View>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => router.push("/dashboard/fchv-profile")} 
-        className="bg-white p-2 rounded-full"
+        onPress={() => router.push("/dashboard/fchv-profile")}
+        className={`w-9 h-9 rounded-full items-center justify-center ${!loading && profile ? "bg-slate-700" : "bg-slate-100"}`}
       >
-        <CircleUserRound size={28} color="#475569" strokeWidth={2} />
+        {!loading && profile ? (
+          <Text className="text-white text-[13px] font-bold">
+            {getInitials(fchvName)}
+          </Text>
+        ) : (
+          <CircleUserRound size={22} color="#475569" strokeWidth={2} />
+        )}
       </TouchableOpacity>
     </View>
   );

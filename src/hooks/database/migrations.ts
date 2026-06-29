@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 70;
+export const SCHEMA_VERSION = 79;
 
 type Migration = {
   version: number;
@@ -2081,5 +2081,360 @@ export const MIGRATIONS: Migration[] = [
         console.log("Migration 70: seeding sync for anc_visit failed:", e);
       }
     }
+  },
+  {
+    version: 71,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          ALTER TABLE counseling_referral ADD COLUMN counseling_answers TEXT;
+          ALTER TABLE counseling_referral ADD COLUMN referral_answers TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 71: altering counseling_referral table failed:", e);
+      }
+      try {
+        await db.execAsync(`
+          ALTER TABLE counseling_referral_staging ADD COLUMN counseling_answers TEXT;
+          ALTER TABLE counseling_referral_staging ADD COLUMN referral_answers TEXT;
+        `);
+      } catch (e) {
+        console.log("Migration 71: altering counseling_referral_staging table failed:", e);
+      }
+    }
+  },
+  {
+    version: 72,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS delivery (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            delivery_date TEXT,
+            delivery_place TEXT,
+            baby_weight TEXT,
+            gender TEXT,
+            status TEXT DEFAULT 'alive',
+            fchv_present INTEGER DEFAULT 0,
+            skilled_birth_attended INTEGER DEFAULT 0,
+            asphyxiated_newborn INTEGER DEFAULT 0,
+            umbilical_ointment INTEGER DEFAULT 0,
+            skin_to_skin INTEGER DEFAULT 0,
+            early_breastfeeding INTEGER DEFAULT 0,
+            remarks TEXT,
+            pregnancy_id TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(mother) REFERENCES mother(id),
+            FOREIGN KEY(pregnancy_id) REFERENCES pregnancy(id)
+          );
+          CREATE INDEX IF NOT EXISTS idx_delivery_mother ON delivery(mother);
+          CREATE TABLE IF NOT EXISTS delivery_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            delivery_date TEXT,
+            delivery_place TEXT,
+            baby_weight TEXT,
+            gender TEXT,
+            status TEXT,
+            fchv_present INTEGER DEFAULT 0,
+            skilled_birth_attended INTEGER DEFAULT 0,
+            asphyxiated_newborn INTEGER DEFAULT 0,
+            umbilical_ointment INTEGER DEFAULT 0,
+            skin_to_skin INTEGER DEFAULT 0,
+            early_breastfeeding INTEGER DEFAULT 0,
+            remarks TEXT,
+            pregnancy_id TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 72: creating delivery tables failed:", e);
+      }
+    }
+  },
+  {
+    version: 73,
+    up: async (db) => {
+      const DELIVERY_COLUMNS = [
+        { name: "delivery_date", type: "TEXT" },
+        { name: "delivery_place", type: "TEXT" },
+        { name: "baby_weight", type: "TEXT" },
+        { name: "gender", type: "TEXT" },
+        { name: "status", type: "TEXT DEFAULT 'alive'" },
+        { name: "fchv_present", type: "INTEGER DEFAULT 0" },
+        { name: "skilled_birth_attended", type: "INTEGER DEFAULT 0" },
+        { name: "asphyxiated_newborn", type: "INTEGER DEFAULT 0" },
+        { name: "umbilical_ointment", type: "INTEGER DEFAULT 0" },
+        { name: "skin_to_skin", type: "INTEGER DEFAULT 0" },
+        { name: "early_breastfeeding", type: "INTEGER DEFAULT 0" },
+        { name: "remarks", type: "TEXT" },
+        { name: "pregnancy_id", type: "TEXT" },
+        { name: "reg_year", type: "INTEGER" },
+        { name: "reg_month", type: "INTEGER" },
+        { name: "is_synced", type: "INTEGER NOT NULL DEFAULT 0" },
+        { name: "is_deleted", type: "INTEGER NOT NULL DEFAULT 0" },
+        { name: "created_at", type: "TEXT NOT NULL" },
+        { name: "updated_at", type: "TEXT NOT NULL" },
+      ];
+
+      try {
+        for (const col of DELIVERY_COLUMNS) {
+          if (!(await tableHasColumn(db, "delivery", col.name))) {
+            await db.execAsync(`ALTER TABLE delivery ADD COLUMN ${col.name} ${col.type};`);
+          }
+          if (!(await tableHasColumn(db, "delivery_staging", col.name))) {
+            await db.execAsync(`ALTER TABLE delivery_staging ADD COLUMN ${col.name} ${col.type};`);
+          }
+        }
+      } catch (e) {
+        console.log("Migration 73: adding missing delivery columns failed:", e);
+      }
+    }
+  },
+  {
+    version: 74,
+    up: async (db) => {
+      try {
+        if (!(await tableHasColumn(db, "delivery", "delivery_date"))) {
+          await db.execAsync(`ALTER TABLE delivery ADD COLUMN delivery_date TEXT;`);
+        }
+        if (!(await tableHasColumn(db, "delivery", "delivery_place"))) {
+          await db.execAsync(`ALTER TABLE delivery ADD COLUMN delivery_place TEXT;`);
+        }
+        if (!(await tableHasColumn(db, "delivery_staging", "delivery_date"))) {
+          await db.execAsync(`ALTER TABLE delivery_staging ADD COLUMN delivery_date TEXT;`);
+        }
+        if (!(await tableHasColumn(db, "delivery_staging", "delivery_place"))) {
+          await db.execAsync(`ALTER TABLE delivery_staging ADD COLUMN delivery_place TEXT;`);
+        }
+      } catch (e) {
+        console.log("Migration 74: adding missing delivery columns failed:", e);
+      }
+    }
+  },
+  {
+    version: 75,
+    up: async (db) => {
+      const tables = [
+        "visit",
+        "visit_staging",
+        "anc_visit",
+        "anc_visit_staging",
+      ];
+      for (const table of tables) {
+        try {
+          if (!(await tableHasColumn(db, table, "visit_number"))) {
+            await db.execAsync(`ALTER TABLE ${table} ADD COLUMN visit_number INTEGER DEFAULT 1;`);
+          }
+        } catch (e) {
+          console.log(`Migration 75: adding visit_number to ${table} failed:`, e);
+        }
+      }
+    }
+  },
+  {
+    version: 76,
+    up: async (db) => {
+      const tables = ["anc_visit", "anc_visit_staging"];
+      for (const table of tables) {
+        try {
+          if (!(await tableHasColumn(db, table, "visit_type"))) {
+            await db.execAsync(`ALTER TABLE ${table} ADD COLUMN visit_type TEXT DEFAULT 'ANC';`);
+            await db.execAsync(`UPDATE ${table} SET visit_type = 'ANC' WHERE visit_type IS NULL;`);
+          }
+        } catch (e) {
+          console.log(`Migration 76: adding visit_type to ${table} failed:`, e);
+        }
+      }
+    }
+  },
+  {
+    version: 77,
+    up: async (db) => {
+      // Drop old anc_visit tables (FCHV only uses PNC)
+      try {
+        await db.execAsync(`DROP TABLE IF EXISTS anc_visit;`);
+      } catch (e) {
+        console.log("Migration 77: dropping anc_visit failed:", e);
+      }
+      try {
+        await db.execAsync(`DROP TABLE IF EXISTS anc_visit_staging;`);
+      } catch (e) {
+        console.log("Migration 77: dropping anc_visit_staging failed:", e);
+      }
+
+      // Remove anc_visit from sync tracker
+      try {
+        await db.runAsync(`DELETE FROM sync WHERE table_name = 'anc_visit';`);
+      } catch (e) {
+        console.log("Migration 77: removing anc_visit from sync failed:", e);
+      }
+
+      // Ensure pnc_visit is in sync tracker
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["pnc_visit"],
+        );
+      } catch (e) {
+        console.log("Migration 77: seeding sync for pnc_visit failed:", e);
+      }
+
+      // Fix visit table constraint to allow ANC, PNC, OTHER
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS visit_new (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC', 'ANC', 'OTHER')),
+            visit_place TEXT,
+            visit_number INTEGER DEFAULT 1,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(mother) REFERENCES mother(id)
+          );
+
+          INSERT OR IGNORE INTO visit_new SELECT * FROM visit;
+
+          DROP TABLE visit;
+          ALTER TABLE visit_new RENAME TO visit;
+        `);
+      } catch (e) {
+        console.log("Migration 77: recreating visit table failed:", e);
+      }
+
+      // Fix visit_staging table constraint to allow ANC, PNC, OTHER
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS visit_staging_new (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC', 'ANC', 'OTHER')),
+            visit_place TEXT,
+            visit_number INTEGER DEFAULT 1,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+
+          INSERT OR IGNORE INTO visit_staging_new SELECT * FROM visit_staging;
+
+          DROP TABLE visit_staging;
+          ALTER TABLE visit_staging_new RENAME TO visit_staging;
+        `);
+      } catch (e) {
+        console.log("Migration 77: recreating visit_staging table failed:", e);
+      }
+    }
+  },
+  {
+    version: 78,
+    up: async (db) => {
+      // Fix visit table constraint to allow ANC, PNC, OTHER
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS visit_new (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC', 'ANC', 'OTHER')),
+            visit_place TEXT,
+            visit_number INTEGER DEFAULT 1,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(mother) REFERENCES mother(id)
+          );
+
+          INSERT OR IGNORE INTO visit_new SELECT * FROM visit;
+
+          DROP TABLE IF EXISTS visit;
+          ALTER TABLE visit_new RENAME TO visit;
+        `);
+      } catch (e) {
+        console.log("Migration 78: recreating visit table failed:", e);
+      }
+
+      // Fix visit_staging table constraint to allow ANC, PNC, OTHER
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS visit_staging_new (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            name TEXT,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC', 'ANC', 'OTHER')),
+            visit_place TEXT,
+            visit_number INTEGER DEFAULT 1,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+
+          INSERT OR IGNORE INTO visit_staging_new SELECT * FROM visit_staging;
+
+          DROP TABLE IF EXISTS visit_staging;
+          ALTER TABLE visit_staging_new RENAME TO visit_staging;
+        `);
+      } catch (e) {
+        console.log("Migration 78: recreating visit_staging table failed:", e);
+      }
+    }
+  },
+  {
+    version: 79,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS fchv_profile (
+            id TEXT PRIMARY KEY,
+            user_username TEXT,
+            user_name TEXT,
+            user_type TEXT,
+            address_json TEXT,
+            phone_number TEXT,
+            description TEXT,
+            date_of_birth TEXT,
+            photo TEXT,
+            training_received_on TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            organization_json TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 79: creating fchv_profile table failed:", e);
+      }
+    },
   },
 ];

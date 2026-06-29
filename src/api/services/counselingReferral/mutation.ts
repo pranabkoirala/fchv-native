@@ -7,6 +7,8 @@ const mapCounselingReferralToSyncPayload = (data: CounselingReferralStoreType) =
   mother: data.mother,
   pregnancy: data.pregnancy ?? null,
   answers: data.answers ?? null,
+  counseling_answers: data.counseling_answers ?? null,
+  referral_answers: data.referral_answers ?? null,
   reg_year: data.reg_year ?? null,
   reg_month: data.reg_month ?? null,
   updated_at: data.updated_at || new Date().toISOString(),

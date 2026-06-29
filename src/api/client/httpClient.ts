@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosError, isAxiosError } from "axios";
 import { refreshToken } from "../services/auth/refreshToken";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "@/constants/token";
+import { clearDatabase } from "@/hooks/database/db";
 import storage from "@/utils/storage";
 import { router } from "expo-router";
 
@@ -51,9 +52,8 @@ const logAxiosError = (error: unknown) => {
 };
 
 const logout = async () => {
-  await storage.remove(ACCESS_TOKEN_KEY);
-  await storage.remove(REFRESH_TOKEN_KEY);
-  // Navigate to login screen
+  await clearDatabase();
+  await storage.clear();
   try {
     router.replace("/login");
   } catch {

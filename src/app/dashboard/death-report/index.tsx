@@ -1,10 +1,10 @@
 import { useToast } from "@/context/ToastContext";
 import { useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import CustomHeader from "../../../components/CustomHeader";
 import MaternalDeathForm from "../../../components/forms/MaternalDeathForm";
 import NewbornDeathForm from "../../../components/forms/NewbornDeathForm";
 
@@ -23,15 +23,9 @@ export default function DeathReportPage() {
     <SafeAreaView className="flex-1 bg-white" edges={["top", "bottom"]}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-3 border-b border-slate-100 bg-white">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2 rounded-full active:bg-slate-50">
-          <ArrowLeft size={24} color="#0F172A" />
-        </Pressable>
-        <Text className="text-lg font-semibold text-slate-800 ml-2">
-          {t("dashboard.quick_actions.death_report", { defaultValue: "Death Report" })}
-        </Text>
-      </View>
+      <CustomHeader
+        title={t("dashboard.quick_actions.death_report", { defaultValue: "Death Report" })}
+      />
 
       {/* Tabs */}
       <View className="flex-row px-4 pt-4 bg-white border-b border-slate-200">

@@ -126,8 +126,9 @@ CREATE TABLE IF NOT EXISTS mother(
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     visit_date TEXT NOT NULL,
-    visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC')),
+    visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC', 'ANC', 'OTHER')),
     visit_place TEXT,
+    visit_number INTEGER DEFAULT 1,
     reg_year INTEGER,
     reg_month INTEGER,
     created_at TEXT NOT NULL,
@@ -142,22 +143,25 @@ CREATE TABLE IF NOT EXISTS mother(
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     visit_date TEXT NOT NULL,
-    visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC')),
+    visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC', 'ANC', 'OTHER')),
     visit_place TEXT,
+    visit_number INTEGER DEFAULT 1,
     reg_year INTEGER,
     reg_month INTEGER,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
 
-  CREATE TABLE IF NOT EXISTS anc_visit (
+  CREATE TABLE IF NOT EXISTS pnc_visit (
     id TEXT PRIMARY KEY,
     mother TEXT NOT NULL,
     name TEXT,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     visit_date TEXT NOT NULL,
+    visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC')),
     visit_place TEXT,
+    visit_number INTEGER DEFAULT 1,
     reg_year INTEGER,
     reg_month INTEGER,
     created_at TEXT NOT NULL,
@@ -165,14 +169,16 @@ CREATE TABLE IF NOT EXISTS mother(
     FOREIGN KEY(mother) REFERENCES mother(id)
   );
 
-  CREATE TABLE IF NOT EXISTS anc_visit_staging (
+  CREATE TABLE IF NOT EXISTS pnc_visit_staging ( 
     id TEXT PRIMARY KEY,
     mother TEXT NOT NULL,
     name TEXT,
     is_synced INTEGER NOT NULL DEFAULT 0,
     is_deleted INTEGER NOT NULL DEFAULT 0,
     visit_date TEXT NOT NULL,
+    visit_type TEXT NOT NULL CHECK(visit_type IN ('PNC')),
     visit_place TEXT,
+    visit_number INTEGER DEFAULT 1,
     reg_year INTEGER,
     reg_month INTEGER,
     created_at TEXT NOT NULL,
@@ -182,6 +188,23 @@ CREATE TABLE IF NOT EXISTS mother(
 CREATE TABLE IF NOT EXISTS sync (
     table_name TEXT PRIMARY KEY,
     last_synced_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS fchv_profile (
+    id TEXT PRIMARY KEY,
+    user_username TEXT,
+    user_name TEXT,
+    user_type TEXT,
+    address_json TEXT,
+    phone_number TEXT,
+    description TEXT,
+    date_of_birth TEXT,
+    photo TEXT,
+    training_received_on TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    organization_json TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS todo (
@@ -535,6 +558,8 @@ CREATE TABLE IF NOT EXISTS counseling_referral (
     mother TEXT NOT NULL,
     pregnancy TEXT,
     answers TEXT,
+    counseling_answers TEXT,
+    referral_answers TEXT,
     reg_year INTEGER,
     reg_month INTEGER,
     is_synced INTEGER NOT NULL DEFAULT 0,
@@ -553,6 +578,8 @@ CREATE TABLE IF NOT EXISTS counseling_referral_staging (
     mother TEXT,
     pregnancy TEXT,
     answers TEXT,
+    counseling_answers TEXT,
+    referral_answers TEXT,
     reg_year INTEGER,
     reg_month INTEGER,
     is_synced INTEGER NOT NULL DEFAULT 0,
@@ -646,5 +673,57 @@ CREATE TABLE IF NOT EXISTS mothers_group_meetings_staging (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS delivery (
+    id TEXT PRIMARY KEY,
+    mother TEXT NOT NULL,
+    delivery_date TEXT,
+    delivery_place TEXT,
+    baby_weight TEXT,
+    gender TEXT,
+    status TEXT DEFAULT 'alive',
+    fchv_present INTEGER DEFAULT 0,
+    skilled_birth_attended INTEGER DEFAULT 0,
+    asphyxiated_newborn INTEGER DEFAULT 0,
+    umbilical_ointment INTEGER DEFAULT 0,
+    skin_to_skin INTEGER DEFAULT 0,
+    early_breastfeeding INTEGER DEFAULT 0,
+    remarks TEXT,
+    pregnancy_id TEXT,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(mother) REFERENCES mother(id),
+    FOREIGN KEY(pregnancy_id) REFERENCES pregnancy(id)
+);
+CREATE INDEX IF NOT EXISTS idx_delivery_mother ON delivery(mother);
+
+CREATE TABLE IF NOT EXISTS delivery_staging (
+    id TEXT PRIMARY KEY,
+    mother TEXT,
+    delivery_date TEXT,
+    delivery_place TEXT,
+    baby_weight TEXT,
+    gender TEXT,
+    status TEXT,
+    fchv_present INTEGER DEFAULT 0,
+    skilled_birth_attended INTEGER DEFAULT 0,
+    asphyxiated_newborn INTEGER DEFAULT 0,
+    umbilical_ointment INTEGER DEFAULT 0,
+    skin_to_skin INTEGER DEFAULT 0,
+    early_breastfeeding INTEGER DEFAULT 0,
+    remarks TEXT,
+    pregnancy_id TEXT,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
 
 `;

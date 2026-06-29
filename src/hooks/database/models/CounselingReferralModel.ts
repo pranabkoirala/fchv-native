@@ -3,18 +3,63 @@ import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
 import { bulkInsertToTempTable } from "./CommonModal";
 import { setSyncTimestamp } from "./SyncModel";
+import { isReferralQuestion } from "@/constants/CounselingQuestions";
 
 export interface CounselingReferralStoreType {
     id: string;
     mother: string;
     pregnancy: string | null;
     answers: string | null; // JSON string of question ID to array of logs
+    counseling_answers: string | null; // JSON string of question ID to array of logs (only counseling questions)
+    referral_answers: string | null; // JSON string of question ID to array of logs (only referral questions)
     reg_year: number;
     reg_month: number;
     is_synced: number;
     is_deleted: number;
     created_at: string;
     updated_at: string;
+}
+
+export function splitAnswers(answersStr: string | null) {
+  if (!answersStr) return { counseling: null, referral: null };
+  try {
+    const parsed = JSON.parse(answersStr);
+    const counseling: Record<string, any> = {};
+    const referral: Record<string, any> = {};
+    Object.entries(parsed).forEach(([qId, val]) => {
+      if (isReferralQuestion(qId)) {
+        referral[qId] = val;
+      } else {
+        counseling[qId] = val;
+      }
+    });
+    return {
+      counseling: Object.keys(counseling).length ? JSON.stringify(counseling) : null,
+      referral: Object.keys(referral).length ? JSON.stringify(referral) : null
+    };
+  } catch (e) {
+    console.error("Error splitting answers:", e);
+    return { counseling: null, referral: null };
+  }
+}
+
+export function mergeAnswers(counselingStr: string | null, referralStr: string | null) {
+  const merged: Record<string, any> = {};
+  if (counselingStr) {
+    try {
+      Object.assign(merged, JSON.parse(counselingStr));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  if (referralStr) {
+    try {
+      Object.assign(merged, JSON.parse(referralStr));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return Object.keys(merged).length ? JSON.stringify(merged) : null;
 }
 
 export async function getCounselingReferralByMother(
@@ -44,7 +89,9 @@ export async function saveCounselingReferral(payload: {
     id?: string;
     mother: string;
     pregnancy?: string | null;
-    answers: string | null;
+    answers?: string | null;
+    counseling_answers?: string | null;
+    referral_answers?: string | null;
     reg_year?: number;
     reg_month?: number;
 }): Promise<CounselingReferralStoreType> {
@@ -54,6 +101,22 @@ export async function saveCounselingReferral(payload: {
 
     const regYear = payload.reg_year || currentYear;
     const regMonth = payload.reg_month || currentMonth;
+
+    // Harmonize answers
+    let answers = payload.answers ?? null;
+    let counseling_answers = payload.counseling_answers ?? null;
+    let referral_answers = payload.referral_answers ?? null;
+
+    if (answers && !counseling_answers && !referral_answers) {
+        const split = splitAnswers(answers);
+        counseling_answers = split.counseling;
+        referral_answers = split.referral;
+    } else if ((counseling_answers || referral_answers) && !answers) {
+        answers = mergeAnswers(counseling_answers, referral_answers);
+    } else if (counseling_answers && referral_answers) {
+        // If all are provided, make sure answers is the combined set
+        answers = mergeAnswers(counseling_answers, referral_answers);
+    }
 
     try {
         // Check for existing record in this specific context
@@ -67,13 +130,15 @@ export async function saveCounselingReferral(payload: {
         if (existing) {
             await db.runAsync(
                 `UPDATE counseling_referral 
-                 SET answers = ?, updated_at = ?, is_synced = 0 
+                 SET answers = ?, counseling_answers = ?, referral_answers = ?, updated_at = ?, is_synced = 0 
                  WHERE id = ?`,
-                [payload.answers ?? null, now, existing.id],
+                [answers, counseling_answers, referral_answers, now, existing.id],
             );
             return {
                 ...existing,
-                answers: payload.answers ?? null,
+                answers,
+                counseling_answers,
+                referral_answers,
                 updated_at: now,
                 is_synced: 0,
             };
@@ -81,13 +146,15 @@ export async function saveCounselingReferral(payload: {
             const id = payload.id || Crypto.randomUUID();
             // Use INSERT OR REPLACE to handle any unique constraint issues gracefully
             await db.runAsync(
-                `INSERT OR REPLACE INTO counseling_referral (id, mother, pregnancy, answers, reg_year, reg_month, created_at, updated_at, is_synced, is_deleted) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
+                `INSERT OR REPLACE INTO counseling_referral (id, mother, pregnancy, answers, counseling_answers, referral_answers, reg_year, reg_month, created_at, updated_at, is_synced, is_deleted) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
                 [
                     id,
                     payload.mother,
                     payload.pregnancy ?? null,
-                    payload.answers ?? null,
+                    answers,
+                    counseling_answers,
+                    referral_answers,
                     regYear,
                     regMonth,
                     now,
@@ -98,7 +165,9 @@ export async function saveCounselingReferral(payload: {
                 id,
                 mother: payload.mother,
                 pregnancy: payload.pregnancy ?? null,
-                answers: payload.answers ?? null,
+                answers,
+                counseling_answers,
+                referral_answers,
                 reg_year: regYear,
                 reg_month: regMonth,
                 created_at: now,
@@ -141,6 +210,8 @@ const COUNSELING_REFERRAL_COLUMNS = [
     "mother",
     "pregnancy",
     "answers",
+    "counseling_answers",
+    "referral_answers",
     "reg_year",
     "reg_month",
     "is_synced",
@@ -157,18 +228,35 @@ const getCounselingReferralValues = (
         createdAt: string;
         updatedAt: string;
     },
-) => [
-    item.id ?? null,
-    item.mother ?? null,
-    item.pregnancy ?? null,
-    item.answers ?? null,
-    item.reg_year ?? null,
-    item.reg_month ?? null,
-    options.isSynced,
-    options.isDeleted,
-    options.createdAt,
-    options.updatedAt,
-];
+) => {
+    let answers = item.answers ?? null;
+    let counseling_answers = item.counseling_answers ?? null;
+    let referral_answers = item.referral_answers ?? null;
+
+    // Auto-harmonize if any are missing
+    if (answers && !counseling_answers && !referral_answers) {
+        const split = splitAnswers(answers);
+        counseling_answers = split.counseling;
+        referral_answers = split.referral;
+    } else if ((counseling_answers || referral_answers) && !answers) {
+        answers = mergeAnswers(counseling_answers, referral_answers);
+    }
+
+    return [
+        item.id ?? null,
+        item.mother ?? null,
+        item.pregnancy ?? null,
+        answers,
+        counseling_answers,
+        referral_answers,
+        item.reg_year ?? null,
+        item.reg_month ?? null,
+        options.isSynced,
+        options.isDeleted,
+        options.createdAt,
+        options.updatedAt,
+    ];
+};
 
 export async function unSyncedCounselingReferral(): Promise<CounselingReferralStoreType[]> {
     const db = await getDb();
@@ -198,6 +286,8 @@ export async function insertToTempCounselingReferralTable(apiRes: any[]) {
                         mother: item.mother ?? item.mother?.id ?? (typeof item.mother === "string" ? item.mother : null),
                         pregnancy: item.pregnancy ?? item.pregnancy_id ?? null,
                         answers: item.answers ?? null,
+                        counseling_answers: item.counseling_answers ?? null,
+                        referral_answers: item.referral_answers ?? null,
                         reg_year: item.reg_year,
                         reg_month: item.reg_month,
                     },

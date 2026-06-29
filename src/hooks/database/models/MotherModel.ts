@@ -757,6 +757,35 @@ export async function moveTempToRealMotherTable() {
   await setSyncTimestamp("mother", now);
 }
 
+export async function getDeliveredMotherIds(): Promise<string[]> {
+  const db = await getDb();
+  // A mother is considered "delivered" if she has any of:
+  //   1. A pregnancy record marked as delivered = 1
+  //   2. A child_monitoring record (newborn registered)
+  //   3. A delivery record (registered via the Delivery form)
+  const query = `
+    SELECT DISTINCT m.id
+    FROM mother m
+    WHERE m.is_deleted = 0
+      AND (
+        EXISTS (
+          SELECT 1 FROM pregnancy p
+          WHERE p.mother = m.id AND p.is_deleted = 0 AND p.delivered = 1
+        )
+        OR EXISTS (
+          SELECT 1 FROM child_monitoring cm
+          WHERE cm.mother = m.id AND cm.is_deleted = 0
+        )
+        OR EXISTS (
+          SELECT 1 FROM delivery d
+          WHERE d.mother = m.id AND d.is_deleted = 0
+        )
+      )
+  `;
+  const rows = await db.getAllAsync<{ id: string }>(query);
+  return rows.map((r) => r.id);
+}
+
 export async function updateMotherPregnancyData(
   motherId: string,
   data: { lmp_date: string; gravida: number; parity: number }

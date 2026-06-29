@@ -19,9 +19,9 @@ import {
   sendUnsyncedVisitsToServer,
 } from "./syncVisit";
 import {
-  getUnsyncedAncVisitsFromServer,
-  sendUnsyncedAncVisitsToServer,
-} from "./syncAncVisit";
+  getUnsyncedPncVisitsFromServer,
+  sendUnsyncedPncVisitsToServer,
+} from "./syncPncVisit";
 import {
   getUnsyncedTodosFromServer,
   sendUnsyncedTodosToServer,
@@ -67,6 +67,10 @@ import {
   sendUnsyncedChildVaccinationToServer,
 } from "./syncChildVaccination";
 import {
+  getUnsyncedDeliveriesFromServer,
+  sendUnsyncedDeliveriesToServer,
+} from "./syncDelivery";
+import {
   hasPendingDatabaseHydration,
   hydrateDatabaseFromServer,
 } from "./hydrateDatabase";
@@ -78,8 +82,8 @@ const SYNCERS: Partial<
     getUnsyncedMothersFromServer(last_synced_at),
   visit: (last_synced_at: string | null) =>
     getUnsyncedVisitsFromServer(last_synced_at),
-  anc_visit: (last_synced_at: string | null) =>
-    getUnsyncedAncVisitsFromServer(last_synced_at),
+  pnc_visit: (last_synced_at: string | null) =>
+    getUnsyncedPncVisitsFromServer(last_synced_at),
   todo: (last_synced_at: string | null) =>
     getUnsyncedTodosFromServer(last_synced_at),
   pregnancy: (last_synced_at: string | null) =>
@@ -104,6 +108,8 @@ const SYNCERS: Partial<
     getUnsyncedChildCounselingFromServer(last_synced_at),
   child_vaccination: (last_synced_at: string | null) =>
     getUnsyncedChildVaccinationFromServer(last_synced_at),
+  delivery: (last_synced_at: string | null) =>
+    getUnsyncedDeliveriesFromServer(last_synced_at),
 };
 
 export let isGlobalSyncRunning = false;
@@ -152,7 +158,7 @@ const runSync = async ({ sendOnly, throwOnError }: SyncOptions) => {
     // Push local unsynced data to server
     await sendUnsyncedMothersToServer();
     await sendUnsyncedVisitsToServer();
-    await sendUnsyncedAncVisitsToServer();
+    await sendUnsyncedPncVisitsToServer();
     await sendUnsyncedTodosToServer();
     await sendUnsyncedPregnancyToServer();
     await sendUnsyncedAdolescentIfaToServer();
@@ -165,6 +171,7 @@ const runSync = async ({ sendOnly, throwOnError }: SyncOptions) => {
     await sendUnsyncedCounselingReferralToServer();
     await sendUnsyncedChildCounselingToServer();
     await sendUnsyncedChildVaccinationToServer();
+    await sendUnsyncedDeliveriesToServer();
 
     if (await hasPendingDatabaseHydration()) {
       await hydrateDatabaseFromServer();
@@ -188,7 +195,7 @@ const runSync = async ({ sendOnly, throwOnError }: SyncOptions) => {
                 : table === "visits"
                   ? "visit"
                   : table === "anc_visits" || table === "anc-visits"
-                    ? "anc_visit"
+                    ? "pnc_visit"
                     : table === "todos"
                       ? "todo"
                     : table === "family-planning"
@@ -199,7 +206,9 @@ const runSync = async ({ sendOnly, throwOnError }: SyncOptions) => {
                           ? "child_counseling"
                           : table === "child-vaccination" || table === "child_vaccinations"
                             ? "child_vaccination"
-                            : table;
+                            : table === "deliveries"
+                              ? "delivery"
+                              : table;
       const fn = SYNCERS[tableName as SyncTableType];
       if (!fn) continue;
 

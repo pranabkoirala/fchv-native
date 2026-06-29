@@ -192,7 +192,12 @@ export default function ChildProfileScreen() {
             <CustomHeader
                 title={t("child_profile.title")}
                 onBackPress={() => {
-                    if (from === "profile" && record?.mother) {
+                    if (from === "/dashboard/report") {
+                        router.replace({
+                            pathname: from,
+                            params: { tab: "child" },
+                        } as any);
+                    } else if (from === "profile" && record?.mother) {
                         router.replace({
                             pathname: "/dashboard/profile",
                             params: { id: record.mother },

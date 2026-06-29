@@ -8,16 +8,11 @@ import {
   Info,
   MapPin,
   Navigation,
-  User
+  User,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ScrollView,
-  StatusBar,
-  Text,
-  View
-} from "react-native";
+import { ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import municipalitiesData from "../../../assets/json/municipalities.json";
 import CustomHeader from "../../../components/CustomHeader";

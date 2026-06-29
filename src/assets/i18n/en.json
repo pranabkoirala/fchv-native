@@ -28,7 +28,9 @@
     "delete": "Delete",
     "save": "Save",
     "unnamed_mother": "Unnamed Mother",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "mother": "Mother",
+    "child": "Child"
   },
   "dashboard": {
     "title": "FCHV Dashboard",
@@ -65,6 +67,7 @@
     },
     "sections": {
       "community_pulse": "Community Health Statistics",
+      "community_pulse_subtitle": "Key health indicators at a glance",
       "recent_activity": "Recent Activity",
       "tasks_today": "Tasks Today",
       "view_all": "View All"
@@ -73,13 +76,15 @@
       "mothers": "Mothers",
       "pregnant": "Pregnant",
       "children": "Children",
+      "deliveries": "Deliveries",
       "high_risk": "High Risk",
       "mat_death": "Mat. Death",
       "child_death": "Child Death",
       "mother_deaths": "Mother Deaths",
       "child_deaths": "Child Deaths",
+      "mothers_meetings": "Mothers Meetings",
       "pending_tasks": "Pending Tasks",
-      "adolescents": "Iron-consuming adolescents"
+      "adolescents": "Iadolescents"
     },
     "charts": {
       "monthly_trend": "Monthly Trend",
@@ -487,6 +492,7 @@
       "edd": "EDD: {{date}}",
       "due_label": "Due in",
       "overdue_label": "Overdue",
+      "for_delivery_label": "For delivery",
       "today_label": "Due",
       "days_short": "{{days}} days",
       "today_short": "Today"
@@ -545,7 +551,10 @@
       "mother": "Mothers",
       "dead_mother": "Dead Mother",
       "dead_child": "Dead Child",
-      "pregnancy": "Pregnancies"
+      "pregnancy": "Pregnancies",
+      "delivery": "Deliveries",
+      "mother_meeting": "Mother Meetings",
+      "visit": "Visits"
     },
     "search_by_name_ward": "Search by name...",
     "select_month": "Select Month",
@@ -562,6 +571,10 @@
       "moderate": "Moderate",
       "pending": "Pending",
       "deceased": "Deceased"
+    },
+    "visit": {
+      "type": "Type",
+      "attendees": "Attendees"
     },
     "no_results": "No results found",
     "try_different": "Try a different search term",
@@ -723,6 +736,7 @@
     "section_details": "Child Details",
     "section_additional": "Additional Information",
     "manual_override": "Manual override unit",
+    "choose_date": "Choose date",
     "death_date": "Death Date",
     "after_added": "Submitted",
     "subtitle": "Newborn & Child Death (0–59 months)",
@@ -731,6 +745,7 @@
     "choose_baby": "Choose Baby",
     "choose_baby_placeholder": "Select child",
     "select_child_error": "Please choose a child.",
+    "select_mother_first": "Please select a mother first.",
     "loading_children": "Loading children...",
     "no_children": "No children registered for this mother.",
     "unnamed_child": "Unnamed child",
@@ -1262,6 +1277,7 @@
     "zinc_tablet_other": "tablets",
     "records": "records",
     "no_records": "No records yet",
+    "no_records_desc": "Counseling will be recorded during visits",
     "status_completed": "Completed",
     "status_pending": "Pending",
     "status_not_started": "Not Started",
@@ -1271,7 +1287,10 @@
     "prenatal_register_title": "Pregnancy Registration Counseling",
     "prenatal_register_subtitle": "Record counseling provided during registration",
     "skip": "Skip",
-    "save_continue": "Save & Continue"
+    "save_continue": "Save & Continue",
+    "referral_counseling": "Referral Counseling",
+    "general_counseling": "General Counseling",
+    "recorded_dates": "Recorded Dates"
   },
   "mothers_group_meeting": {
     "title": "Mothers' Group Meeting",
@@ -1351,6 +1370,7 @@
     "address_ward_short": "Ward",
     "address_locality_short": "Locality",
     "date": "Visit Date (B.S.)",
+    "visit_number": "Visit Number",
     "type": "Visit Type",
     "types": {
       "anc": "Pregnant Woman - Regular Visit (ANC)",
@@ -1359,34 +1379,74 @@
     },
     "recipient": "Service Recipient",
     "recipient_placeholder": "Choose Service Recipient",
+    "section_visit_info": "Visit Information",
+    "section_recipient": "Recipient Details",
+    "no_address": "No address available",
     "address": "Address",
-    "observations": "Observation / Services",
-    "obs": {
-      "pregnancy_info": "Took information about pregnancy status",
-      "danger_signs": "Counseled on danger signs",
-      "iron_tablets": "Taking iron tablets",
-      "delivery_counseling": "Counseled for institutional delivery",
-      "referred": "Referred"
-    },
-    "health_facility": "Health Institution",
-    "health_facility_placeholder": "Select Health Institution",
-    "facilities": {
-      "chhatrabas": "Chhatrabas Health Post",
-      "phc": "Primary Health Center",
-      "district_hospital": "District Hospital",
-      "zonal_hospital": "Zonal Hospital"
-    },
+    "referral_questions": "Referral Reason / Questions Asked",
+    "counseling_questions": "Counseling Questions Asked",
+    "section_notes": "Notes",
     "remarks": "Remarks",
     "remarks_placeholder": "Write here...",
     "save": "Save",
+    "select_recipient_first": "Please select a service recipient first",
     "validation": {
       "date_required": "Visit date is required",
       "mother_required": "Service recipient is required",
-      "facility_required": "Health institution is required when referred"
+      "facility_required": "Health institution is required when referred",
+      "fill_required": "Please fill all required fields"
     },
     "messages": {
       "save_success": "Visit saved successfully",
       "save_failed": "Failed to save visit"
+    },
+    "quantity_title": "Enter Quantity",
+    "quantity_save": "Save",
+    "quantity_cancel": "Cancel",
+    "invalid_quantity": "Please enter a valid quantity between 0 and {max}"
+  },
+  "delivery": {
+    "title": "Delivery Registration",
+    "save": "Register Delivery",
+    "select_mother": "Mother",
+    "select_mother_placeholder": "Choose Mother",
+    "delivery_date": "Date of Delivery (B.S.)",
+    "select_date": "Select Date",
+    "gender": "Baby Gender",
+    "birth_place": "Delivery Place",
+    "select_birth_place": "Select Delivery Place",
+    "skilled_birth_attended": "Skilled birth attendant present",
+    "fchv_present": "FCHV present at delivery",
+    "child_status": "Child Status",
+    "baby_weight": "Baby Weight",
+    "select_weight": "Select Weight",
+    "asphyxiated_newborn": "Asphyxiated newborn",
+    "newborn_care": "Newborn Care Practices",
+    "remarks": "Remarks",
+    "remarks_placeholder": "Write here...",
+    "options": {
+      "normal": "Normal",
+      "low": "Low",
+      "very_low": "Very Low",
+      "male": "Male",
+      "female": "Female"
+    },
+    "link_to_pregnancy": {
+      "title": "Link to Pregnancy",
+      "yes": "Yes",
+      "no": "No",
+      "linked_description": "Delivery will be linked to the current pregnancy record.",
+      "unlinked_description": "Delivery will be registered without linking to a pregnancy."
+    },
+    "validation": {
+      "mother_required": "Mother is required",
+      "delivery_date_required": "Delivery date is required",
+      "gender_required": "Gender is required",
+      "error": "Error"
+    },
+    "messages": {
+      "save_success": "Delivery registered successfully",
+      "save_failed": "Failed to register delivery."
     }
   }
 }

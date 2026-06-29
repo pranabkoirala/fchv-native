@@ -3,24 +3,24 @@ import { useRouter } from "expo-router";
 import { Calendar } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, StatusBar, Text, View } from "react-native";
-import { BsToAd, AdToBs, CalendarPicker } from "react-native-nepali-picker";
+import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../context/ToastContext";
 import {
   getAllMothersList,
   getMotherProfile,
-  updateMotherPregnancyData,
   MotherListDbItem,
+  updateMotherPregnancyData,
 } from "../hooks/database/models/MotherModel";
 import {
   createPregnancy,
   getPregnancyByMotherId,
 } from "../hooks/database/models/PregnantWomenModal";
-import PrenatalRegisterCounselingModal from "./forms/PrenatalRegisterCounselingModal";
+import { toNepaliNumbers } from "../utils/dateHelper";
 import { BoxInput, FieldLabel } from "./FormElements";
 import { ProfilePicker } from "./ProfilePicker";
 import { Button } from "./button";
-import { toNepaliNumbers } from "../utils/dateHelper";
+import PrenatalRegisterCounselingModal from "./forms/PrenatalRegisterCounselingModal";
 
 const RISK_OPTIONS = [
   { value: "normal", en: "Normal", np: "सामान्य" },
@@ -157,7 +157,7 @@ export default function PregnancyForm({
               setCaretakersPhone(pregnancy.caretakers_phone || "");
               setRiskLevel(
                 (pregnancy.risk_level as "normal" | "moderate" | "high") ||
-                "normal",
+                  "normal",
               );
               setPregnancyId(pregnancy.id || null);
             }
@@ -180,7 +180,7 @@ export default function PregnancyForm({
         eddDate.setDate(eddDate.getDate() + 280);
         return eddDate.toISOString().split("T")[0];
       }
-    } catch (e) { }
+    } catch (e) {}
     return "";
   };
 
@@ -268,7 +268,7 @@ export default function PregnancyForm({
         params: { id: selectedMotherId },
       } as any);
     } else {
-      router.replace("/dashboard/record");
+      router.replace("/dashboard");
     }
   };
 
@@ -277,8 +277,7 @@ export default function PregnancyForm({
     .map((m) => ({ label: m.name, value: m.id }));
 
   return (
-    <View style={{ flex: 1 }}
-    >
+    <View style={{ flex: 1 }}>
       <StatusBar barStyle="dark-content" className="bg-white" />
       <View className="pt-3">
         <ProfilePicker
@@ -340,7 +339,11 @@ export default function PregnancyForm({
           <Text
             className={`text-base ${lmp ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}
           >
-            {lmp ? (language === "np" ? toNepaliNumbers(lmp) : lmp) : t("pregnancy_form.select_lmp")}
+            {lmp
+              ? language === "np"
+                ? toNepaliNumbers(lmp)
+                : lmp
+              : t("pregnancy_form.select_lmp")}
           </Text>
           <Calendar size={18} color="#475569" />
         </View>
@@ -356,7 +359,9 @@ export default function PregnancyForm({
           <FieldLabel label={t("pregnancy_form.edd_date")} />
           <View className="rounded-xl px-4 h-14 border border-gray-200 bg-gray-50 justify-center">
             <Text className="text-[#1E293B] text-base font-semibold">
-              {language === "np" ? toNepaliNumbers(toNepaliDate(edd)) : toNepaliDate(edd)}
+              {language === "np"
+                ? toNepaliNumbers(toNepaliDate(edd))
+                : toNepaliDate(edd)}
             </Text>
           </View>
         </View>
@@ -365,9 +370,7 @@ export default function PregnancyForm({
       <View className="mb-4">
         <ProfilePicker
           label={t("add_record.basic_info.risk_label")}
-          placeholder={
-            t("add_record.basic_info.risk_placeholder")
-          }
+          placeholder={t("add_record.basic_info.risk_placeholder")}
           selectedValue={riskLevel}
           onValueChange={(val) =>
             setRiskLevel(val as "normal" | "moderate" | "high")

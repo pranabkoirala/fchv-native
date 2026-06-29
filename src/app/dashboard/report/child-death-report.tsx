@@ -14,7 +14,7 @@ import {
   StatusBar,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "../../../components/CustomHeader";
@@ -126,7 +126,7 @@ export default function ChildDeathReportScreen() {
                   activeOpacity={0.8}
                   onPress={() =>
                     router.push({
-                      pathname: "/dashboard/report/child-death-details",
+                      pathname: "/dashboard/child/child-profile",
                       params: { id: item.id },
                     })
                   }

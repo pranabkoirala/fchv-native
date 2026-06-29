@@ -1,28 +1,29 @@
 import * as Crypto from "expo-crypto";
 import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
-import { CreateAncVisitPayload, AncVisitStoreType } from "../types/ancVisitModal";
+import { CreatePncVisitPayload, PncVisitStoreType } from "../types/pncVisitModal";
 import { bulkInsertToTempTable } from "./CommonModal";
 import { setSyncTimestamp } from "./SyncModel";
 
-export async function createAncVisit(
-  payload: Omit<CreateAncVisitPayload, "created_at" | "updated_at">,
-): Promise<AncVisitStoreType> {
+export async function createPncVisit(
+  payload: Omit<CreatePncVisitPayload, "created_at" | "updated_at">,
+): Promise<PncVisitStoreType> {
   const db = await getDb();
   const now = new Date().toISOString();
   const id = payload.id || Crypto.randomUUID();
   const { year: currentYear, month: currentMonth } = getCurrentNepaliDate();
 
   await db.runAsync(
-    `INSERT OR REPLACE INTO anc_visit 
-      (id, mother, name, visit_date, visit_place, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    `INSERT OR REPLACE INTO pnc_visit 
+      (id, mother, name, visit_date, visit_place, visit_number, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       id,
       payload.mother,
       payload.name ?? null,
       payload.visit_date,
       payload.visit_place ?? null,
+      payload.visit_number ?? 1,
       payload.is_synced ? 1 : 0,
       0,
       currentYear,
@@ -38,6 +39,7 @@ export async function createAncVisit(
     name: payload.name ?? null,
     visit_date: payload.visit_date,
     visit_place: payload.visit_place ?? null,
+    visit_number: payload.visit_number ?? 1,
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
     reg_year: currentYear,
@@ -47,10 +49,10 @@ export async function createAncVisit(
   };
 }
 
-export async function updateAncVisit(
+export async function updatePncVisit(
   id: string,
   payload: Partial<
-    Omit<CreateAncVisitPayload, "id" | "created_at" | "updated_at">
+    Omit<CreatePncVisitPayload, "id" | "created_at" | "updated_at">
   >,
 ): Promise<void> {
   const db = await getDb();
@@ -71,32 +73,36 @@ export async function updateAncVisit(
     sets.push("visit_place = ?");
     values.push(payload.visit_place);
   }
+  if (payload.visit_number !== undefined) {
+    sets.push("visit_number = ?");
+    values.push(payload.visit_number);
+  }
   if (payload.is_synced !== undefined) {
     values[1] = payload.is_synced ? 1 : 0;
   }
 
   values.push(id);
-  await db.runAsync(`UPDATE anc_visit SET ${sets.join(", ")} WHERE id = ?`, values);
+  await db.runAsync(`UPDATE pnc_visit SET ${sets.join(", ")} WHERE id = ?`, values);
 }
 
-export async function deleteAncVisit(id: string): Promise<void> {
+export async function deletePncVisit(id: string): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
   await db.runAsync(
-    `UPDATE anc_visit SET is_deleted = 1, is_synced = 0, updated_at = ? WHERE id = ?`,
+    `UPDATE pnc_visit SET is_deleted = 1, is_synced = 0, updated_at = ? WHERE id = ?`,
     [now, id],
   );
 }
 
-export async function getAncVisitById(id: string): Promise<AncVisitStoreType | null> {
+export async function getPncVisitById(id: string): Promise<PncVisitStoreType | null> {
   const db = await getDb();
-  return await db.getFirstAsync<AncVisitStoreType>(
-    `SELECT * FROM anc_visit WHERE id = ? AND is_deleted = 0`,
+  return await db.getFirstAsync<PncVisitStoreType>(
+    `SELECT * FROM pnc_visit WHERE id = ? AND is_deleted = 0`,
     [id],
   );
 }
 
-export interface AncVisitListItem {
+export interface PncVisitListItem {
   id: string;
   mother: string;
   name: string;
@@ -105,7 +111,7 @@ export interface AncVisitListItem {
   visit_place: string;
 }
 
-export async function getAllAncVisits(): Promise<AncVisitListItem[]> {
+export async function getAllPncVisits(): Promise<PncVisitListItem[]> {
   const db = await getDb();
   const query = `
     SELECT 
@@ -115,7 +121,7 @@ export async function getAllAncVisits(): Promise<AncVisitListItem[]> {
       TRIM(COALESCE(m.address_locality, '') || ' ' || COALESCE(m.address_ward, '')) as address,
       v.visit_date,
       v.visit_place
-    FROM anc_visit v
+    FROM pnc_visit v
     LEFT JOIN mother m ON v.mother = m.id
     WHERE v.is_deleted = 0
     ORDER BY v.visit_date DESC, v.created_at DESC
@@ -131,32 +137,41 @@ export async function getAllAncVisits(): Promise<AncVisitListItem[]> {
   }));
 }
 
-export async function getAncVisitCount(): Promise<number> {
+export async function getPncVisitCount(): Promise<number> {
   const db = await getDb();
   const result = await db.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM anc_visit WHERE is_deleted = 0",
+    "SELECT COUNT(*) as count FROM pnc_visit WHERE is_deleted = 0",
   );
   return result?.count ?? 0;
 }
 
-export async function unSyncedAncVisits(): Promise<AncVisitStoreType[]> {
+export async function unSyncedPncVisits(): Promise<PncVisitStoreType[]> {
   const db = await getDb();
-  return await db.getAllAsync<AncVisitStoreType>(
-    `SELECT * FROM anc_visit WHERE is_synced = 0`,
+  return await db.getAllAsync<PncVisitStoreType>(
+    `SELECT * FROM pnc_visit WHERE is_synced = 0`,
   );
 }
 
-export async function getAncVisitsByMotherId(
+export async function getPncVisitsByMotherId(
   motherId: string,
-): Promise<AncVisitStoreType[]> {
+): Promise<PncVisitStoreType[]> {
   const db = await getDb();
-  return await db.getAllAsync<AncVisitStoreType>(
-    `SELECT * FROM anc_visit WHERE mother = ? AND is_deleted = 0 ORDER BY visit_date ASC`,
+  return await db.getAllAsync<PncVisitStoreType>(
+    `SELECT * FROM pnc_visit WHERE mother = ? AND is_deleted = 0 ORDER BY visit_date ASC`,
     [motherId],
   );
 }
 
-export async function insertToTempAncVisitTable(apiRes: any[]) {
+export async function getMaxPncVisitNumberByMother(motherId: string): Promise<number> {
+  const db = await getDb();
+  const result = await db.getFirstAsync<{ max: number | null }>(
+    `SELECT MAX(visit_number) as max FROM pnc_visit WHERE mother = ? AND is_deleted = 0`,
+    [motherId],
+  );
+  return result?.max ?? 0;
+}
+
+export async function insertToTempPncVisitTable(apiRes: any[]) {
   if (!apiRes.length) return;
 
   const db = await getDb();
@@ -166,6 +181,7 @@ export async function insertToTempAncVisitTable(apiRes: any[]) {
     "name",
     "visit_date",
     "visit_place",
+    "visit_number",
     "reg_year",
     "reg_month",
     "is_synced",
@@ -177,7 +193,7 @@ export async function insertToTempAncVisitTable(apiRes: any[]) {
   await bulkInsertToTempTable<any>(
     {
       db,
-      table: "anc_visit_staging",
+      table: "pnc_visit_staging",
       columns,
       onConflict: "replace",
       rows: (item) => {
@@ -191,6 +207,7 @@ export async function insertToTempAncVisitTable(apiRes: any[]) {
           item.name ?? null,
           item.visit_date,
           item.visit_place ?? item.visit_notes ?? null,
+          item.visit_number ?? 1,
           item.reg_year ?? null,
           item.reg_month ?? null,
           1,
@@ -204,32 +221,33 @@ export async function insertToTempAncVisitTable(apiRes: any[]) {
   );
 }
 
-export async function moveTempToRealAncVisitTable() {
+export async function moveTempToRealPncVisitTable() {
   const db = await getDb();
 
-  const staged = await db.getAllAsync<AncVisitStoreType>(`SELECT * FROM anc_visit_staging`);
+  const staged = await db.getAllAsync<PncVisitStoreType>(`SELECT * FROM pnc_visit_staging`);
   if (!staged.length) return;
 
   for (const item of staged) {
     await db.runAsync(
       `
-      INSERT INTO anc_visit
-        (id, mother, name, visit_date, visit_place, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
+      INSERT INTO pnc_visit
+        (id, mother, name, visit_date, visit_place, visit_number, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
       VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         mother = excluded.mother,
         name = excluded.name,
         visit_date = excluded.visit_date,
         visit_place = excluded.visit_place,
+        visit_number = excluded.visit_number,
         reg_year = excluded.reg_year,
         reg_month = excluded.reg_month,
         is_synced = excluded.is_synced,
         is_deleted = excluded.is_deleted,
         created_at = excluded.created_at,
         updated_at = excluded.updated_at
-      WHERE datetime(excluded.updated_at) > datetime(anc_visit.updated_at)
-         OR anc_visit.updated_at IS NULL;
+      WHERE datetime(excluded.updated_at) > datetime(pnc_visit.updated_at)
+         OR pnc_visit.updated_at IS NULL;
       `,
       [
         item.id,
@@ -237,6 +255,7 @@ export async function moveTempToRealAncVisitTable() {
         item.name,
         item.visit_date,
         item.visit_place ?? null,
+        item.visit_number ?? 1,
         item.reg_year ?? null,
         item.reg_month ?? null,
         1,
@@ -248,5 +267,5 @@ export async function moveTempToRealAncVisitTable() {
   }
 
   const now = new Date().toISOString();
-  await setSyncTimestamp("anc_visit", now);
+  await setSyncTimestamp("pnc_visit", now);
 }

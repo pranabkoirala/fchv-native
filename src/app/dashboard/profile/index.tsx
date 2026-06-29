@@ -10,18 +10,23 @@ import {
   Hourglass,
   Pencil,
   Plus,
-  Stethoscope,
   User,
-  Zap
 } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { Alert, Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Image,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "../../../components/CustomHeader";
 import MaternalDeathModal from "../../../components/forms/MaternalDeathModal";
 import NewbornDeathModal from "../../../components/forms/NewbornDeathModal";
-import ANCModal from "../../../components/profile/ANCModal";
 import CounselingReferralSection from "../../../components/profile/CounselingReferralSection";
 import FamilyPlanningSection from "../../../components/profile/FamilyPlanningSection";
 import PNCDetailModal from "../../../components/profile/PNCDetailModal";
@@ -31,18 +36,20 @@ import { getInfantMonitoringsByMother } from "../../../hooks/database/models/Inf
 import { getMaternalDeathByMother } from "../../../hooks/database/models/MaternalDeathModel";
 import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
 import { getNewbornDeathByMother } from "../../../hooks/database/models/NewbornDeathModel";
+import {
+  createPncVisit,
+  getPncVisitsByMotherId,
+  updatePncVisit,
+} from "../../../hooks/database/models/PncVisitModel";
 import { getPregnancyByMotherId } from "../../../hooks/database/models/PregnantWomenModal";
 import {
   getSupplementByMother,
   SupplementStoreType,
 } from "../../../hooks/database/models/SupplementModel";
-import { createVisit, getVisitsByMotherId, updateVisit } from "../../../hooks/database/models/VisitModel";
-import { getAncVisitsByMotherId } from "../../../hooks/database/models/AncVisitModel";
 import { HmisRecordStoreType } from "../../../hooks/database/types/hmisRecordModal";
 import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
 import { NewbornDeathStoreType } from "../../../hooks/database/types/newbornDeathModal";
-import { VisitStoreType } from "../../../hooks/database/types/visitModal";
-import { AncVisitStoreType } from "../../../hooks/database/types/ancVisitModal";
+import { PncVisitStoreType } from "../../../hooks/database/types/pncVisitModal";
 import { toNepaliNumbers } from "../../../utils/dateHelper";
 
 const ProfileSkeleton = () => {
@@ -56,7 +63,12 @@ const ProfileSkeleton = () => {
         {/* Main Identity Card Skeleton */}
         <View className="bg-white p-6 rounded-xl border border-slate-100">
           <View className="flex-row w-full mb-6">
-            <Skeleton width={80} height={80} borderRadius={40} style={{ marginRight: 20 }} />
+            <Skeleton
+              width={80}
+              height={80}
+              borderRadius={40}
+              style={{ marginRight: 20 }}
+            />
             <View className="flex-1 justify-center gap-2">
               <Skeleton width="40%" height={16} borderRadius={4} />
               <Skeleton width="80%" height={28} borderRadius={6} />
@@ -72,14 +84,24 @@ const ProfileSkeleton = () => {
         {/* Dates Grid Skeleton */}
         <View className="flex-row gap-3">
           <View className="flex-1 bg-white p-4 rounded-xl flex-row items-center border border-slate-100">
-            <Skeleton width={40} height={40} borderRadius={20} style={{ marginRight: 12 }} />
+            <Skeleton
+              width={40}
+              height={40}
+              borderRadius={20}
+              style={{ marginRight: 12 }}
+            />
             <View className="flex-1 gap-1">
               <Skeleton width="60%" height={12} borderRadius={4} />
               <Skeleton width="80%" height={16} borderRadius={4} />
             </View>
           </View>
           <View className="flex-1 bg-white p-4 rounded-xl flex-row items-center border border-slate-100">
-            <Skeleton width={40} height={40} borderRadius={20} style={{ marginRight: 12 }} />
+            <Skeleton
+              width={40}
+              height={40}
+              borderRadius={20}
+              style={{ marginRight: 12 }}
+            />
             <View className="flex-1 gap-1">
               <Skeleton width="60%" height={12} borderRadius={4} />
               <Skeleton width="80%" height={16} borderRadius={4} />
@@ -90,7 +112,12 @@ const ProfileSkeleton = () => {
         {/* Sections Skeletons */}
         <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
           <View className="p-4 border-b border-slate-50 flex-row items-center">
-            <Skeleton width={32} height={32} borderRadius={16} style={{ marginRight: 12 }} />
+            <Skeleton
+              width={32}
+              height={32}
+              borderRadius={16}
+              style={{ marginRight: 12 }}
+            />
             <Skeleton width="50%" height={24} borderRadius={4} />
           </View>
           <View className="p-4 flex-row flex-wrap justify-between">
@@ -106,14 +133,21 @@ const ProfileSkeleton = () => {
   );
 };
 
-const SectionTitle = ({ title, icon: Icon, colorClass, bgColor = "bg-white" }: any) => (
-  <View className={`flex-row items-center p-4 rounded-t-xl ${bgColor} border-b border-slate-50`}>
+const SectionTitle = ({
+  title,
+  icon: Icon,
+  colorClass,
+  bgColor = "bg-white",
+}: any) => (
+  <View
+    className={`flex-row items-center p-4 py-2 rounded-t-xl ${bgColor} border-b border-slate-50`}
+  >
     <View
       className={`w-8 h-8 rounded-full items-center justify-center mr-3 bg-gray-100`}
     >
       <Icon size={16} color="#64748B" />
     </View>
-    <Text className="text-slate-800 font-semibold text-xl">{title}</Text>
+    <Text className="text-slate-800 font-semibold text-lg">{title}</Text>
   </View>
 );
 
@@ -140,7 +174,10 @@ const normalizeDateString = (dateStr: string | null | undefined) => {
   return /^\d{4}-\d{1,2}-\d{1,2}$/.test(pureDate) ? pureDate : null;
 };
 
-const resolveDateFormat = (dateStr: string, fallbackFormat: DateFormat): DateFormat => {
+const resolveDateFormat = (
+  dateStr: string,
+  fallbackFormat: DateFormat,
+): DateFormat => {
   const year = parseInt(dateStr.split("-")[0], 10);
   return year >= 2070 ? "BS" : fallbackFormat;
 };
@@ -148,13 +185,17 @@ const resolveDateFormat = (dateStr: string, fallbackFormat: DateFormat): DateFor
 const toDisplayNumber = (value: string | number, targetLang: string) =>
   targetLang === "np" ? toNepaliNumbers(value) : String(value);
 
-const parseDateParts = (dateStr: string | null | undefined, originalFormat: DateFormat) => {
+const parseDateParts = (
+  dateStr: string | null | undefined,
+  originalFormat: DateFormat,
+) => {
   const normalizedDate = normalizeDateString(dateStr);
   if (!normalizedDate) return [];
 
   try {
     const sourceFormat = resolveDateFormat(normalizedDate, originalFormat);
-    const bsDate = sourceFormat === "BS" ? normalizedDate : AdToBs(normalizedDate);
+    const bsDate =
+      sourceFormat === "BS" ? normalizedDate : AdToBs(normalizedDate);
     return bsDate.split("-").map((part) => parseInt(part, 10));
   } catch (e) {
     console.warn("Date parts conversion error for:", dateStr, e);
@@ -172,7 +213,8 @@ const formatBsDateDisplay = (
 
   try {
     const sourceFormat = resolveDateFormat(normalizedDate, originalFormat);
-    const bsDate = sourceFormat === "BS" ? normalizedDate : AdToBs(normalizedDate);
+    const bsDate =
+      sourceFormat === "BS" ? normalizedDate : AdToBs(normalizedDate);
     return toDisplayNumber(bsDate, targetLang);
   } catch (e) {
     console.warn("BS date display conversion error for:", dateStr, e);
@@ -181,7 +223,9 @@ const formatBsDateDisplay = (
 };
 
 const toLocalDate = (dateStr: string) => {
-  const [year, month, day] = dateStr.split("-").map((part) => parseInt(part, 10));
+  const [year, month, day] = dateStr
+    .split("-")
+    .map((part) => parseInt(part, 10));
   if (!year || !month || !day) return null;
   return new Date(year, month - 1, day);
 };
@@ -193,13 +237,17 @@ const toAdDateString = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const getDaysDiffFromBsEdd = (eddStr: string | null | undefined, originalFormat: DateFormat) => {
+const getDaysDiffFromBsEdd = (
+  eddStr: string | null | undefined,
+  originalFormat: DateFormat,
+) => {
   const normalizedDate = normalizeDateString(eddStr);
   if (!normalizedDate) return null;
 
   try {
     const sourceFormat = resolveDateFormat(normalizedDate, originalFormat);
-    const eddBs = sourceFormat === "BS" ? normalizedDate : AdToBs(normalizedDate);
+    const eddBs =
+      sourceFormat === "BS" ? normalizedDate : AdToBs(normalizedDate);
     const todayBs = AdToBs(toAdDateString(new Date()));
     const eddAdDate = toLocalDate(BsToAd(eddBs));
     const todayAdDate = toLocalDate(BsToAd(todayBs));
@@ -214,10 +262,10 @@ const getDaysDiffFromBsEdd = (eddStr: string | null | undefined, originalFormat:
 };
 
 const calculateEddFromLmp = (lmpDateStr: string | null | undefined) => {
-  if (!lmpDateStr || lmpDateStr === 'N/A' || lmpDateStr === '') return null;
+  if (!lmpDateStr || lmpDateStr === "N/A" || lmpDateStr === "") return null;
   try {
     // pregnancy?.lmp_date is BS string
-    const adDateStr = BsToAd(lmpDateStr.split('T')[0].replace(/\//g, '-'));
+    const adDateStr = BsToAd(lmpDateStr.split("T")[0].replace(/\//g, "-"));
     const lmpDate = new Date(adDateStr);
     if (!isNaN(lmpDate.getTime())) {
       const eddDate = new Date(lmpDate);
@@ -229,6 +277,16 @@ const calculateEddFromLmp = (lmpDateStr: string | null | undefined) => {
     console.warn("EDD Calculation error:", e);
   }
   return null;
+};
+
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 };
 
 export default function HmisRecordProfileScreen() {
@@ -249,29 +307,29 @@ export default function HmisRecordProfileScreen() {
   const [allChildren, setAllChildren] = useState<any[]>([]);
   const [mother, setMother] = useState<any>(null);
   const [pregnancy, setPregnancy] = useState<any>(null);
-  const [ancVisits, setAncVisits] = useState<AncVisitStoreType[]>([]);
-  const [pncVisits, setPncVisits] = useState<VisitStoreType[]>([]);
+
+  const [pncVisits, setPncVisits] = useState<PncVisitStoreType[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [pncModalVisible, setPncModalVisible] = useState(false);
   const [pncDetailVisible, setPncDetailVisible] = useState(false);
   const [pncSlotIndex, setPncSlotIndex] = useState(0);
-  const [selectedPncVisit, setSelectedPncVisit] = useState<VisitStoreType | null>(null);
+  const [selectedPncVisit, setSelectedPncVisit] =
+    useState<PncVisitStoreType | null>(null);
   const [isSavingPnc, setIsSavingPnc] = useState(false);
 
   const [maternalDeathModalVisible, setMaternalDeathModalVisible] =
     useState(false);
   const [newbornDeathModalVisible, setNewbornDeathModalVisible] =
     useState(false);
-  const [ancModalVisible, setAncModalVisible] = useState(false);
 
   // children linked to the CURRENT pregnancy
   const currentPregnancyChildren = children.filter(
-    (c) => pregnancy && c.pregnancy_id === pregnancy.id
+    (c) => pregnancy && c.pregnancy_id === pregnancy.id,
   );
   // children not linked to current pregnancy (direct or old pregnancies)
   const otherChildren = allChildren.filter(
-    (c) => !pregnancy || c.pregnancy_id !== pregnancy.id
+    (c) => !pregnancy || c.pregnancy_id !== pregnancy.id,
   );
 
   const totalChildCount = allChildren.length;
@@ -294,12 +352,11 @@ export default function HmisRecordProfileScreen() {
           return;
         }
         try {
-          const [mother, pregnancy, visits, ancVisitsData, allChildrenList] =
+          const [mother, pregnancy, pncVisitsLocal, allChildrenList] =
             await Promise.all([
               getMotherProfile(id),
               getPregnancyByMotherId(id),
-              getVisitsByMotherId(id),
-              getAncVisitsByMotherId(id),
+              getPncVisitsByMotherId(id),
               getInfantMonitoringsByMother(id),
             ]);
           // The first (most recent) child, for HMIS data display
@@ -314,10 +371,6 @@ export default function HmisRecordProfileScreen() {
             const lmpParts = parseDateParts(lmpDate, "BS");
             const eddParts = parseDateParts(eddDate, "AD");
             const regParts = parseDateParts(mother.regDate, "AD");
-
-            // Map visits to ANC/PNC slots
-            const ancVisitsList = ancVisitsData;
-            const pncVisitsLocal = visits.filter((v) => v.visit_type === "PNC");
 
             const data: HmisRecordStoreType = {
               id: mother.id,
@@ -334,15 +387,14 @@ export default function HmisRecordProfileScreen() {
               edd_month: eddParts.length >= 3 ? eddParts[1] : null,
               edd_day: eddParts.length >= 3 ? eddParts[2] : null,
               counseling_given: null,
-              // Sequential mapping for 8 ANC visits
-              checkup_12: ancVisitsList.length >= 1 ? 1 : null,
-              checkup_20: ancVisitsList.length >= 2 ? 1 : null,
-              checkup_26: ancVisitsList.length >= 3 ? 1 : null,
-              checkup_30: ancVisitsList.length >= 4 ? 1 : null,
-              checkup_34: ancVisitsList.length >= 5 ? 1 : null,
-              checkup_36: ancVisitsList.length >= 6 ? 1 : null,
-              checkup_38: ancVisitsList.length >= 7 ? 1 : null,
-              checkup_40: ancVisitsList.length >= 8 ? 1 : null,
+              checkup_12: null,
+              checkup_20: null,
+              checkup_26: null,
+              checkup_30: null,
+              checkup_34: null,
+              checkup_36: null,
+              checkup_38: null,
+              checkup_40: null,
               checkup_other: null,
               iron_preg_received: null,
               iron_pnc_received: null,
@@ -366,7 +418,6 @@ export default function HmisRecordProfileScreen() {
               setPregnancy(pregnancy);
               setChildren(allChildrenList);
               setAllChildren(allChildrenList);
-              setAncVisits(ancVisitsData);
               setPncVisits(pncVisitsLocal);
               const deathData = await getMaternalDeathByMother(mother.id);
               setExistingDeathRecord(deathData);
@@ -422,10 +473,14 @@ export default function HmisRecordProfileScreen() {
     );
   }
 
-  const activePregnancy = pregnancy && pregnancy.is_current === 1 && !pregnancy.delivered && !pregnancy.ended;
+  const activePregnancy =
+    pregnancy &&
+    pregnancy.is_current === 1 &&
+    !pregnancy.delivered &&
+    !pregnancy.ended;
   const profileEddDate = pregnancy
     ? normalizeDateString(pregnancy.expected_delivery_date) ||
-    calculateEddFromLmp(pregnancy.lmp_date)
+      calculateEddFromLmp(pregnancy.lmp_date)
     : null;
   const profileDaysRemaining =
     activePregnancy && profileEddDate
@@ -434,7 +489,9 @@ export default function HmisRecordProfileScreen() {
   const isOverdue = profileDaysRemaining !== null && profileDaysRemaining < 0;
   const isDueToday = profileDaysRemaining === 0;
   const hasCurrentPregnancyChild = currentPregnancyChildren.length > 0;
-  const addPregnancyDisabled = !!existingDeathRecord || (activePregnancy && !hasCurrentPregnancyChild && !isOverdue);
+  const addPregnancyDisabled =
+    !!existingDeathRecord ||
+    (activePregnancy && !hasCurrentPregnancyChild && !isOverdue);
   const remainingBadgeClass = isOverdue
     ? "bg-rose-50"
     : isDueToday
@@ -449,14 +506,14 @@ export default function HmisRecordProfileScreen() {
     profileDaysRemaining === null
       ? null
       : t("profile.countdown.days_short", {
-        days: toDisplayNumber(Math.abs(profileDaysRemaining), language),
-      });
+          days: toDisplayNumber(Math.abs(profileDaysRemaining), language),
+        });
   const remainingText =
     profileDaysRemaining === null
       ? null
       : isDueToday
         ? t("profile.countdown.today_short")
-        : `${remainingDaysText} ${isOverdue ? t("profile.countdown.overdue_label") : t("profile.countdown.due_label")}`;
+        : `${t("profile.countdown.for_delivery_label")} ${remainingDaysText} ${isOverdue ? t("profile.countdown.overdue_label") : t("profile.countdown.due_label")}`;
   const profileCreatedDate = normalizeDateString(pregnancy?.created_at);
 
   return (
@@ -475,31 +532,31 @@ export default function HmisRecordProfileScreen() {
         }}
       />
 
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 12 }}
-      >
-        <View className="px-4 gap-y-4">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="px-4 pt-5 pb-32 gap-y-4 bg-gray-50">
           {/* Profile Header */}
           <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-
             <View className="px-5 pt-5 pb-4">
               {/* Identity Row */}
               <View className="flex-row">
-                <View className="w-28 h-28 rounded-full bg-gradient-to-b from-slate-50 to-slate-100 border-2 border-slate-100 items-center justify-center overflow-hidden">
-                  {mother?.image ? (
+                {mother?.image &&
+                !mother.image.includes("no-profile-picture-icon") ? (
+                  <View className="w-28 h-28 rounded-full bg-gradient-to-b from-slate-50 to-slate-100 border-2 border-slate-100 items-center justify-center overflow-hidden">
                     <Image
                       source={{ uri: mother.image }}
                       className="w-full h-full"
                       resizeMode="cover"
                     />
-                  ) : (
-                    <View className="items-center justify-center w-full h-full bg-slate-50">
-                      <User size={36} color="#94A3B8" strokeWidth={1.5} />
-                    </View>
-                  )}
-                </View>
+                  </View>
+                ) : (
+                  <View
+                    className={`w-20 h-20 rounded-full items-center justify-center bg-slate-600`}
+                  >
+                    <Text className="text-white text-[19px] font-bold">
+                      {getInitials(record.mother_name || "")}
+                    </Text>
+                  </View>
+                )}
 
                 <View className="flex-1 ml-4 justify-center">
                   <View className="flex-row items-center flex-wrap">
@@ -508,7 +565,9 @@ export default function HmisRecordProfileScreen() {
                     </Text>
                     {!!existingDeathRecord && (
                       <View className="ml-2 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200">
-                        <Text className="text-rose-600 text-xs font-semibold">{t("reports.status.deceased")}</Text>
+                        <Text className="text-rose-600 text-xs font-semibold">
+                          {t("reports.status.deceased")}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -517,7 +576,8 @@ export default function HmisRecordProfileScreen() {
                     <View className="flex-row items-center px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-100">
                       <User size={11} color="#6366F1" />
                       <Text className="text-indigo-700 text-xs font-semibold ml-1">
-                        {toDisplayNumber(record.mother_age ?? 0, language)} {t("profile.identity.years")}
+                        {toDisplayNumber(record.mother_age ?? 0, language)}{" "}
+                        {t("profile.identity.years")}
                       </Text>
                     </View>
                     <View className="flex-row items-center px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100">
@@ -529,14 +589,16 @@ export default function HmisRecordProfileScreen() {
                     {totalChildCount > 0 && (
                       <View className="flex-row items-center px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100">
                         <Baby size={11} color="#D97706" />
-                        <Text className="text-amber-700 text-xs font-semibold ml-1">{totalChildCount}</Text>
+                        <Text className="text-amber-700 text-xs font-semibold ml-1">
+                          {totalChildCount}
+                        </Text>
                       </View>
                     )}
                   </View>
                 </View>
 
                 <TouchableOpacity
-                  className={`w-9 h-9 rounded-full items-center justify-center ${!!existingDeathRecord ? 'bg-slate-50' : 'bg-slate-100'}`}
+                  className={`w-9 h-9 rounded-full items-center justify-center ${!!existingDeathRecord ? "bg-slate-50" : "bg-slate-100"}`}
                   disabled={!!existingDeathRecord}
                   onPress={() =>
                     router.push({
@@ -545,17 +607,38 @@ export default function HmisRecordProfileScreen() {
                     } as any)
                   }
                 >
-                  <Pencil size={14} color={!!existingDeathRecord ? "#CBD5E1" : "#475569"} strokeWidth={2} />
+                  <Pencil
+                    size={14}
+                    color={!!existingDeathRecord ? "#CBD5E1" : "#475569"}
+                    strokeWidth={2}
+                  />
                 </TouchableOpacity>
               </View>
 
               {/* EDD Countdown */}
               {remainingText && (
-                <View className={`mt-4 flex-row items-center px-4 py-3 rounded-xl ${remainingBadgeClass}`}>
-                  <View className={`w-8 h-8 rounded-full items-center justify-center ${isOverdue ? 'bg-rose-100' : isDueToday ? 'bg-emerald-100' : 'bg-indigo-100'}`}>
-                    <Hourglass size={15} color={isOverdue ? "#BE123C" : isDueToday ? "#047857" : "#6366F1"} />
+                <View
+                  className={`mt-4 flex-row items-center px-4 py-3 rounded-xl ${remainingBadgeClass}`}
+                >
+                  <View
+                    className={`w-8 h-8 rounded-full items-center justify-center ${isOverdue ? "bg-rose-100" : isDueToday ? "bg-emerald-100" : "bg-indigo-100"}`}
+                  >
+                    <Hourglass
+                      size={15}
+                      color={
+                        isOverdue
+                          ? "#BE123C"
+                          : isDueToday
+                            ? "#047857"
+                            : "#6366F1"
+                      }
+                    />
                   </View>
-                  <Text className={`text-lg font-semibold ml-3 ${remainingTextClass}`}>{remainingText}</Text>
+                  <Text
+                    className={`text-lg font-semibold ml-3 ${remainingTextClass}`}
+                  >
+                    {remainingText}
+                  </Text>
                 </View>
               )}
 
@@ -566,17 +649,25 @@ export default function HmisRecordProfileScreen() {
                     <View className="flex-1 items-center">
                       <View className="flex-row items-center justify-center mb-1.5">
                         <View className="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-1.5" />
-                        <Text className="text-[12px] text-slate-700 font-semibold uppercase tracking-wider">{t("profile.identity.lmp_date")}</Text>
+                        <Text className="text-[12px] text-slate-700 font-semibold uppercase tracking-wider">
+                          {t("profile.identity.lmp_date")}
+                        </Text>
                       </View>
                       <Text className="text-[15px] text-slate-900 font-semibold">
-                        {formatBsDateDisplay(pregnancy.lmp_date, "BS", language)}
+                        {formatBsDateDisplay(
+                          pregnancy.lmp_date,
+                          "BS",
+                          language,
+                        )}
                       </Text>
                     </View>
                     <View className="w-px bg-slate-200 self-stretch mx-2" />
                     <View className="flex-1 items-center">
                       <View className="flex-row items-center justify-center mb-1.5">
                         <View className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5" />
-                        <Text className="text-[12px] text-slate-700 font-semibold uppercase tracking-wider">{t("profile.identity.edd_date")}</Text>
+                        <Text className="text-[12px] text-slate-700 font-semibold uppercase tracking-wider">
+                          {t("profile.identity.edd_date")}
+                        </Text>
                       </View>
                       <Text className="text-[15px] text-slate-900 font-semibold">
                         {formatBsDateDisplay(profileEddDate, "AD", language)}
@@ -586,10 +677,16 @@ export default function HmisRecordProfileScreen() {
                     <View className="flex-1 items-center">
                       <View className="flex-row items-center justify-center mb-1.5">
                         <View className="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
-                        <Text className="text-[12px] text-slate-700 font-semibold uppercase tracking-wider">{t("profile.quick_stats.reg_date")}</Text>
+                        <Text className="text-[12px] text-slate-700 font-semibold uppercase tracking-wider">
+                          {t("profile.quick_stats.reg_date")}
+                        </Text>
                       </View>
                       <Text className="text-[15px] text-slate-900 font-semibold">
-                        {formatBsDateDisplay(profileCreatedDate, "AD", language)}
+                        {formatBsDateDisplay(
+                          profileCreatedDate,
+                          "AD",
+                          language,
+                        )}
                       </Text>
                     </View>
                   </View>
@@ -597,7 +694,8 @@ export default function HmisRecordProfileScreen() {
               )}
 
               {/* Children */}
-              {(currentPregnancyChildren.length > 0 || otherChildren.length > 0) && (
+              {(currentPregnancyChildren.length > 0 ||
+                otherChildren.length > 0) && (
                 <View className="mt-4">
                   <ScrollView
                     horizontal
@@ -610,7 +708,7 @@ export default function HmisRecordProfileScreen() {
                         onPress={() =>
                           router.push({
                             pathname: "/dashboard/child/child-profile",
-                            params: { id: child.id, from: "profile" }
+                            params: { id: child.id, from: "profile" },
                           } as any)
                         }
                         className="flex-row items-center px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-100"
@@ -621,8 +719,11 @@ export default function HmisRecordProfileScreen() {
                             {child.baby_name}
                           </Text>
                         ) : null}
-                        {child.status === 'dead' && (
-                          <Text className="text-rose-500 text-xs ml-1"> ({t("reports.status.deceased")})</Text>
+                        {child.status === "dead" && (
+                          <Text className="text-rose-500 text-xs ml-1">
+                            {" "}
+                            ({t("reports.status.deceased")})
+                          </Text>
                         )}
                       </TouchableOpacity>
                     ))}
@@ -632,7 +733,7 @@ export default function HmisRecordProfileScreen() {
                         onPress={() =>
                           router.push({
                             pathname: "/dashboard/child/child-profile",
-                            params: { id: child.id, from: "profile" }
+                            params: { id: child.id, from: "profile" },
                           } as any)
                         }
                         className="flex-row items-center px-3.5 py-2 rounded-xl border border-slate-200 bg-white"
@@ -641,7 +742,7 @@ export default function HmisRecordProfileScreen() {
                         <Text className="text-slate-600 text-sm ml-1.5">
                           {child.baby_name}
                         </Text>
-                        {child.status === 'dead' && (
+                        {child.status === "dead" && (
                           <Text className="text-rose-500 text-xs ml-1">✕</Text>
                         )}
                       </TouchableOpacity>
@@ -651,19 +752,30 @@ export default function HmisRecordProfileScreen() {
               )}
 
               {/* Action Buttons */}
-              <View className="mt-4 flex-row gap-3">
+              <View className="mt-8 flex-row gap-3">
                 <TouchableOpacity
                   onPress={() =>
                     router.push({
                       pathname: "/dashboard/record/add-mother",
-                      params: { id: record.id, step: "1", from: "profile", mode: "new" },
+                      params: {
+                        id: record.id,
+                        step: "1",
+                        from: "profile",
+                        mode: "new",
+                      },
                     } as any)
                   }
                   disabled={addPregnancyDisabled}
-                  className={`flex-1 flex-row items-center justify-center py-3 rounded-lg border-2 border-dashed ${addPregnancyDisabled ? 'border-slate-200 opacity-50' : 'border-indigo-200 bg-indigo-50/50'}`}
+                  className={`flex-1 flex-row items-center justify-center rounded-lg ${addPregnancyDisabled ? "border-slate-200 opacity-50" : "bg-white"}`}
                 >
-                  <Plus size={16} color={addPregnancyDisabled ? "#CBD5E1" : "#6366F1"} strokeWidth={3} />
-                  <Text className={`font-semibold text-sm ml-2 ${addPregnancyDisabled ? 'text-slate-300' : 'text-indigo-700'}`}>
+                  <Plus
+                    size={16}
+                    color={addPregnancyDisabled ? "#CBD5E1" : "#475569"}
+                    strokeWidth={3}
+                  />
+                  <Text
+                    className={`font-semibold text-md ml-2 ${addPregnancyDisabled ? "text-slate-300" : "text-[#475569]"}`}
+                  >
                     {t("profile.add_pregnancy")}
                   </Text>
                 </TouchableOpacity>
@@ -674,18 +786,28 @@ export default function HmisRecordProfileScreen() {
                       pathname: "/dashboard/profile/add-child",
                       params: {
                         motherId: record.id,
-                        pregnancyId: (pregnancy && pregnancy.is_current === 1 && !pregnancy.delivered && !pregnancy.ended)
-                          ? pregnancy.id
-                          : undefined,
-                        from: "profile"
+                        pregnancyId:
+                          pregnancy &&
+                          pregnancy.is_current === 1 &&
+                          !pregnancy.delivered &&
+                          !pregnancy.ended
+                            ? pregnancy.id
+                            : undefined,
+                        from: "profile",
                       },
                     } as any)
                   }
                   disabled={!!existingDeathRecord}
-                  className={`flex-1 flex-row items-center justify-center py-3 rounded-lg border-2 border-dashed ${!!existingDeathRecord ? 'border-slate-200 opacity-50' : 'border-amber-200 bg-amber-50/50'}`}
+                  className={`flex-1 flex-row items-center justify-center ${!!existingDeathRecord ? "border-slate-200 opacity-50" : "bg-white"}`}
                 >
-                  <Plus size={16} color={!!existingDeathRecord ? "#CBD5E1" : "#D97706"} strokeWidth={3} />
-                  <Text className={`font-semibold text-sm ml-2 ${!!existingDeathRecord ? 'text-slate-300' : 'text-amber-700'}`}>
+                  <Plus
+                    size={16}
+                    color={!!existingDeathRecord ? "#CBD5E1" : "#475569"}
+                    strokeWidth={3}
+                  />
+                  <Text
+                    className={`font-semibold text-md ml-2 ${!!existingDeathRecord ? "text-slate-300" : "text-[#475569]"}`}
+                  >
                     {t("profile.add_child")}
                   </Text>
                 </TouchableOpacity>
@@ -693,102 +815,28 @@ export default function HmisRecordProfileScreen() {
             </View>
           </View>
 
-          {/* Quick Actions */}
-          <View className="bg-white rounded-3xl border border-slate-100 overflow-hidden">
-            <View className="px-5 pt-4 pb-5">
-              <View className="flex-row items-center mb-4">
-                <View className="w-8 h-8 rounded-lg bg-indigo-50 items-center justify-center mr-3">
-                  <Zap size={16} color="#6366F1" />
-                </View>
-                <Text className="text-slate-800 font-semibold text-lg">
-                  {t("profile.quick_actions")}
-                </Text>
-              </View>
-
-              <View className="flex-row gap-3">
-                {/* Health Issues Toggle */}
-                <TouchableOpacity
-                  onPress={() => setShowHealthIssues(!showHealthIssues)}
-                  activeOpacity={0.75}
-                  className="flex-1 rounded-2xl border p-4"
-                  style={{
-                    backgroundColor: showHealthIssues ? "#FFF1F2" : "#F8FAFC",
-                    borderColor: showHealthIssues ? "#FECDD3" : "#F1F5F9",
-                  }}
-                >
-                  <View className="flex-row items-center justify-between mb-3">
-                    <View
-                      className="w-10 h-10 rounded-full items-center justify-center"
-                      style={{ backgroundColor: showHealthIssues ? "#FFE4E6" : "#E2E8F0" }}
-                    >
-                      <AlertTriangle size={18} color={showHealthIssues ? "#E11D48" : "#64748B"} />
-                    </View>
-                    <View
-                      className="px-3 py-1.5 rounded-full"
-                      style={{ backgroundColor: showHealthIssues ? "#E11D48" : "#059669" }}
-                    >
-                      <Text className="text-white text-[12px] font-bold">
-                        {showHealthIssues ? t("profile.yes") : t("profile.no")}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text
-                    className="text-[13px] font-semibold"
-                    style={{ color: showHealthIssues ? "#9F1239" : "#334155" }}
-                  >
-                    {t("profile.health_issues")}
-                  </Text>
-                  <Text className="text-[11px] text-slate-400 mt-0.5">
-                    {showHealthIssues ? t("profile.add_health_issues") : t("profile.no_health_issues")}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* ANC Visits */}
-                <TouchableOpacity
-                  onPress={() => setAncModalVisible(true)}
-                  activeOpacity={0.75}
-                  className="flex-1 rounded-2xl border border-slate-200 bg-slate-50/50 p-4"
-                >
-                  <View className="flex-row items-center justify-between mb-3">
-                    <View className="w-10 h-10 rounded-full bg-slate-100 items-center justify-center">
-                      <Stethoscope size={18} color="#64748B" />
-                    </View>
-                    <View className="px-3 py-1.5 rounded-full bg-slate-700">
-                      <Text className="text-white text-[12px] font-bold">
-                        {t("profile.view")}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text className="text-slate-800 text-[13px] font-semibold">
-                    {t("profile.anc.title")}
-                  </Text>
-                  <Text className="text-[11px] text-slate-400 mt-0.5">
-                    {ancVisits.length} visit{ancVisits.length !== 1 ? 's' : ''} {t("profile.anc.recorded")}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
-          <CounselingReferralSection key={pregnancy?.id || 'no-pregnancy'} motherId={record.id} disabled={!!existingDeathRecord} />
-          {/* <SupplementsScreen motherId={record.id} disabled={!!existingDeathRecord} /> */}
-
           <View className="bg-white rounded-2xl border border-slate-100 overflow-hidde">
             <SectionTitle
               title={t("profile.family_planning_method")}
               icon={Heart}
             />
             <View className="p-4">
-              <FamilyPlanningSection motherId={record.id} disabled={!!existingDeathRecord} />
+              <FamilyPlanningSection
+                motherId={record.id}
+                disabled={!!existingDeathRecord}
+              />
             </View>
           </View>
 
+          <CounselingReferralSection
+            key={pregnancy?.id || "no-pregnancy"}
+            motherId={record.id}
+            disabled={!!existingDeathRecord}
+          />
+
           {currentPregnancyChildren.length > 0 && (
             <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden ">
-              <SectionTitle
-                title={t("profile.birth_pnc.title")}
-                icon={Baby}
-              />
+              <SectionTitle title={t("profile.birth_pnc.title")} icon={Baby} />
               <View className="p-4">
                 <View className="flex-row flex-wrap justify-between">
                   {[
@@ -817,10 +865,14 @@ export default function HmisRecordProfileScreen() {
                       >
                         {done ? (
                           <View className="flex-row items-center px-2 py-1 rounded-full">
-                            <Text className="text-emerald-700 text-[12px] font-medium">{t("pregnant_form.options.done")}</Text>
+                            <Text className="text-emerald-700 text-[12px] font-medium">
+                              {t("pregnant_form.options.done")}
+                            </Text>
                           </View>
                         ) : (
-                          <Text className={`text-[15px] ${done ? "text-emerald-800 font-bold" : "text-slate-700 font-medium"} mb-1`}>
+                          <Text
+                            className={`text-[15px] ${done ? "text-emerald-800 font-bold" : "text-slate-700 font-medium"} mb-1`}
+                          >
                             {slot.label}
                           </Text>
                         )}
@@ -844,18 +896,32 @@ export default function HmisRecordProfileScreen() {
 
             <View className="p-4 gap-y-3">
               {/* Maternal Death */}
-              <View className={`rounded-2xl border overflow-hidden ${!!existingDeathRecord ? 'border-rose-100' : 'border-slate-100'}`}>
-                <View className={`px-4 py-3.5 ${!!existingDeathRecord ? 'bg-rose-50/50' : 'bg-slate-50'}`}>
+              <View
+                className={`rounded-2xl border overflow-hidden ${!!existingDeathRecord ? "border-rose-100" : "border-slate-100"}`}
+              >
+                <View
+                  className={`px-4 py-3.5 ${!!existingDeathRecord ? "bg-rose-50/50" : "bg-slate-50"}`}
+                >
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center flex-1">
-                      <View className={`w-9 h-9 rounded-full items-center justify-center ${!!existingDeathRecord ? 'bg-rose-100' : 'bg-slate-100'}`}>
-                        <User size={16} color={!!existingDeathRecord ? "#BE123C" : "#64748B"} strokeWidth={1.5} />
+                      <View
+                        className={`w-9 h-9 rounded-full items-center justify-center ${!!existingDeathRecord ? "bg-rose-100" : "bg-slate-100"}`}
+                      >
+                        <User
+                          size={16}
+                          color={!!existingDeathRecord ? "#BE123C" : "#64748B"}
+                          strokeWidth={1.5}
+                        />
                       </View>
                       <View className="ml-3 flex-1">
-                        <Text className={`font-semibold text-[15px] ${!!existingDeathRecord ? 'text-rose-700' : 'text-slate-800'}`}>
+                        <Text
+                          className={`font-semibold text-[15px] ${!!existingDeathRecord ? "text-rose-700" : "text-slate-800"}`}
+                        >
                           {t("profile.mortality.maternal_title")}
                         </Text>
-                        <Text className={`text-[13px] font-medium mt-0.5 ${!!existingDeathRecord ? 'text-rose-400' : 'text-slate-500'}`}>
+                        <Text
+                          className={`text-[13px] font-medium mt-0.5 ${!!existingDeathRecord ? "text-rose-400" : "text-slate-500"}`}
+                        >
                           {t("profile.mortality.maternal_sub")}
                         </Text>
                       </View>
@@ -873,10 +939,11 @@ export default function HmisRecordProfileScreen() {
                   <TouchableOpacity
                     onPress={() => setMaternalDeathModalVisible(true)}
                     disabled={!!existingDeathRecord}
-                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${!!existingDeathRecord
-                      ? 'bg-rose-50 border border-rose-100'
-                      : 'bg-white border-2 border-dashed border-slate-200'
-                      }`}
+                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${
+                      !!existingDeathRecord
+                        ? "bg-rose-50 border border-rose-100"
+                        : "bg-white border-2 border-dashed border-slate-200"
+                    }`}
                   >
                     {!!existingDeathRecord ? (
                       <Text className="text-rose-400 font-semibold text-[13px]">
@@ -895,18 +962,34 @@ export default function HmisRecordProfileScreen() {
               </View>
 
               {/* Newborn Death */}
-              <View className={`rounded-2xl border overflow-hidden ${!!existingNewbornDeathRecord ? 'border-rose-100' : 'border-slate-100'}`}>
-                <View className={`px-4 py-3.5 ${!!existingNewbornDeathRecord ? 'bg-rose-50/50' : 'bg-slate-50'}`}>
+              <View
+                className={`rounded-2xl border overflow-hidden ${!!existingNewbornDeathRecord ? "border-rose-100" : "border-slate-100"}`}
+              >
+                <View
+                  className={`px-4 py-3.5 ${!!existingNewbornDeathRecord ? "bg-rose-50/50" : "bg-slate-50"}`}
+                >
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center flex-1">
-                      <View className={`w-9 h-9 rounded-full items-center justify-center ${!!existingNewbornDeathRecord ? 'bg-rose-100' : 'bg-slate-100'}`}>
-                        <Baby size={16} color={!!existingNewbornDeathRecord ? "#BE123C" : "#64748B"} strokeWidth={1.5} />
+                      <View
+                        className={`w-9 h-9 rounded-full items-center justify-center ${!!existingNewbornDeathRecord ? "bg-rose-100" : "bg-slate-100"}`}
+                      >
+                        <Baby
+                          size={16}
+                          color={
+                            !!existingNewbornDeathRecord ? "#BE123C" : "#64748B"
+                          }
+                          strokeWidth={1.5}
+                        />
                       </View>
                       <View className="ml-3 flex-1">
-                        <Text className={`font-semibold text-[15px] ${!!existingNewbornDeathRecord ? 'text-rose-700' : 'text-slate-800'}`}>
+                        <Text
+                          className={`font-semibold text-[15px] ${!!existingNewbornDeathRecord ? "text-rose-700" : "text-slate-800"}`}
+                        >
                           {t("newborn_death_modal.title")}
                         </Text>
-                        <Text className={`text-[13px] font-medium mt-0.5 ${!!existingNewbornDeathRecord ? 'text-rose-400' : 'text-slate-500'}`}>
+                        <Text
+                          className={`text-[13px] font-medium mt-0.5 ${!!existingNewbornDeathRecord ? "text-rose-400" : "text-slate-500"}`}
+                        >
                           {t("newborn_death_modal.subtitle")}
                         </Text>
                       </View>
@@ -924,10 +1007,11 @@ export default function HmisRecordProfileScreen() {
                   <TouchableOpacity
                     onPress={() => setNewbornDeathModalVisible(true)}
                     disabled={!!existingNewbornDeathRecord}
-                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${!!existingNewbornDeathRecord
-                      ? 'bg-rose-50 border border-rose-100'
-                      : 'bg-white border-2 border-dashed border-slate-200'
-                      }`}
+                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${
+                      !!existingNewbornDeathRecord
+                        ? "bg-rose-50 border border-rose-100"
+                        : "bg-white border-2 border-dashed border-slate-200"
+                    }`}
                   >
                     {!!existingNewbornDeathRecord ? (
                       <Text className="text-rose-400 font-semibold text-[13px]">
@@ -950,10 +1034,7 @@ export default function HmisRecordProfileScreen() {
           {/* Remarks */}
           {record.remarks && (
             <View className="bg-white p-5 rounded-md border border-slate-100 mb-6">
-              <SectionTitle
-                title={t("profile.remarks")}
-                icon={FileText}
-              />
+              <SectionTitle title={t("profile.remarks")} icon={FileText} />
               <View className="p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
                 <Text className="text-slate-600 font-medium leading-relaxed text-[13px]">
                   {record.remarks}
@@ -981,12 +1062,6 @@ export default function HmisRecordProfileScreen() {
               onSuccess={(data) => setExistingNewbornDeathRecord(data)}
               showToast={showToast}
             />
-            <ANCModal
-              visible={ancModalVisible}
-              onClose={() => setAncModalVisible(false)}
-              ancVisits={ancVisits}
-              record={record}
-            />
             <PNCModal
               visible={pncModalVisible}
               onClose={() => setPncModalVisible(false)}
@@ -998,22 +1073,20 @@ export default function HmisRecordProfileScreen() {
                 setIsSavingPnc(true);
                 try {
                   if (selectedPncVisit?.id) {
-                    await updateVisit(selectedPncVisit.id, {
+                    await updatePncVisit(selectedPncVisit.id, {
                       visit_date: bsDate,
                       visit_place: place,
                     });
                   } else {
-                    await createVisit({
+                    await createPncVisit({
                       mother: record.id,
                       name: record.mother_name ?? undefined,
                       visit_date: bsDate,
-                      visit_type: "PNC",
                       visit_place: place,
                     });
                   }
 
-                  const latest = await getVisitsByMotherId(record.id);
-                  const newPnc = latest.filter((v) => v.visit_type === "PNC");
+                  const newPnc = await getPncVisitsByMotherId(record.id);
                   setPncVisits(newPnc);
                   // update record flags
                   setRecord((prev) => {
@@ -1031,7 +1104,10 @@ export default function HmisRecordProfileScreen() {
                   setSelectedPncVisit(null);
                 } catch (e) {
                   console.error(e);
-                  Alert.alert(t("profile.pnc_modal.save_failed_title"), t("profile.pnc_modal.save_failed"));
+                  Alert.alert(
+                    t("profile.pnc_modal.save_failed_title"),
+                    t("profile.pnc_modal.save_failed"),
+                  );
                 } finally {
                   setIsSavingPnc(false);
                 }

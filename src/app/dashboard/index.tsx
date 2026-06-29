@@ -8,6 +8,7 @@ import {
   Activity,
   AlertCircle,
   Baby,
+  Calendar,
   Check,
   Clock,
   Heart,
@@ -29,6 +30,7 @@ import {
 import { AdToBs } from "react-native-nepali-picker";
 import { doSync } from "../../api/services/sync/sync";
 import { getAdolescentIfaCount } from "../../hooks/database/models/AdolescentIfaModel";
+import { getAllDeliveries } from "../../hooks/database/models/DeliveryModel";
 import {
   getAllInfantMonitorings,
   getChildTrend,
@@ -39,6 +41,7 @@ import {
   getMotherCount,
   getMotherTrend,
 } from "../../hooks/database/models/MotherModel";
+import { getAllMothersGroupMeetings } from "../../hooks/database/models/MothersGroupMeetingModel";
 import { getTotalNewbornDeaths } from "../../hooks/database/models/NewbornDeathModel";
 import {
   getPregnancyTrend,
@@ -88,6 +91,8 @@ export default function DashboardScreen() {
   const [under29Days, setUnder29Days] = useState(0);
   const [days29To59Months, setDays29To59Months] = useState(0);
   const [highRiskPregnancyCount, setHighRiskPregnancyCount] = useState(0);
+  const [deliveryCount, setDeliveryCount] = useState(0);
+  const [mothersMeetingCount, setMothersMeetingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isTaskModalVisible, setTaskModalVisible] = useState(false);
   const [isTaskSubmitting, setIsTaskSubmitting] = useState(false);
@@ -176,6 +181,8 @@ export default function DashboardScreen() {
             mTrend,
             mothers,
             adolCount,
+            deliveries,
+            mothersMeetings,
           ] = await Promise.all([
             getMotherCount(),
             getPregnantWomenList(),
@@ -187,6 +194,8 @@ export default function DashboardScreen() {
             getMotherTrend(),
             getAllMothersList(),
             getAdolescentIfaCount(),
+            getAllDeliveries(),
+            getAllMothersGroupMeetings(),
           ]);
 
           const activities: any[] = [];
@@ -260,6 +269,8 @@ export default function DashboardScreen() {
           setAdolescentCount(adolCount);
           setMaternalDeathCount(mDeaths);
           setChildDeathCount(cDeaths);
+          setDeliveryCount(deliveries.length);
+          setMothersMeetingCount(mothersMeetings.length);
 
           const highRisk = pregnancies.filter(
             (p: any) => p.risk_level === "high",
@@ -329,20 +340,8 @@ export default function DashboardScreen() {
           <View>
             {/* Quick Access — 6 flat cards */}
             <View
-              style={{ paddingHorizontal: 20, marginTop: 24, marginBottom: 28 }}
+              style={{ paddingHorizontal: 20, marginTop: 20, marginBottom: 28 }}
             >
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "700",
-                  color: "#0F172A",
-                  marginBottom: 16,
-                  letterSpacing: -0.3,
-                }}
-              >
-                {t("dashboard.quick_actions.title")}
-              </Text>
-
               <View style={{ gap: 12 }}>
                 {/* Row 1 */}
                 <View style={{ flexDirection: "row", gap: 12 }}>
@@ -478,7 +477,7 @@ export default function DashboardScreen() {
                 {/* Row 2 */}
                 <View style={{ flexDirection: "row", gap: 12 }}>
                   <TouchableOpacity
-                    onPress={() => router.push("/dashboard/visit" as any)}
+                    onPress={() => router.push("/dashboard/delivery" as any)}
                     activeOpacity={0.7}
                     style={{
                       flex: 1,
@@ -520,7 +519,9 @@ export default function DashboardScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() =>
-                      router.push("/dashboard/mothers-group/mothers-group-meeting-form" as any)
+                      router.push(
+                        "/dashboard/mothers-group/mothers-group-meeting-form" as any,
+                      )
                     }
                     activeOpacity={0.7}
                     style={{
@@ -610,25 +611,56 @@ export default function DashboardScreen() {
             </View>
 
             {/* Stats Section - Community Pulse */}
-            <Text
-              style={{
-                paddingHorizontal: 20,
-                fontSize: 16,
-                fontWeight: "600",
-                color: "#282c33ff",
-                letterSpacing: 1,
-                marginBottom: 12,
-                textTransform: "uppercase",
-              }}
-            >
-              {t("dashboard.sections.community_pulse")}
-            </Text>
+            <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 4,
+                }}
+              >
+                <View
+                  style={{
+                    width: 3,
+                    height: 20,
+                    backgroundColor: "#0891B2",
+                    borderRadius: 2,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 17,
+                    fontWeight: "700",
+                    color: "#0F172A",
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  {t("dashboard.sections.community_pulse")}
+                </Text>
+              </View>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: "#94A3B8",
+                  fontWeight: "400",
+                  marginLeft: 13,
+                }}
+              >
+                {t(
+                  "dashboard.sections.community_pulse_subtitle",
+                  "Key health indicators at a glance",
+                )}
+              </Text>
+            </View>
+
             <View style={{ paddingHorizontal: 20, gap: 12 }}>
               <View style={{ flexDirection: "row", gap: 12 }}>
                 <StatCard
                   path="/dashboard/report?tab=mother"
                   icon={Users}
                   iconColor="#475569"
+                  iconBg="#F1F5F9"
                   bg="white"
                   value={motherCount}
                   label={t("dashboard.stats_labels.mothers")}
@@ -637,34 +669,57 @@ export default function DashboardScreen() {
                 <StatCard
                   path="/dashboard/report?tab=pregnancy"
                   icon={Baby}
-                  iconColor="#475569"
+                  iconColor="#0891B2"
+                  iconBg="#CFFAFE"
                   bg="white"
                   value={pregnancyCount}
                   label={t("dashboard.stats_labels.pregnant")}
                   delay={100}
                 />
-              </View>
-              <View style={{ flexDirection: "row", gap: 12 }}>
                 <StatCard
                   path="/dashboard/report?tab=child"
                   icon={Smile}
-                  iconColor="#475569"
+                  iconColor="#059669"
+                  iconBg="#D1FAE5"
                   bg="white"
                   value={childCount}
                   label={t("dashboard.stats_labels.children", "Total Children")}
                   delay={200}
                 />
+              </View>
+              <View style={{ flexDirection: "row", gap: 12 }}>
                 <StatCard
                   path="/dashboard/adolescent"
                   icon={Heart}
                   iconColor="#7C3AED"
+                  iconBg="#EDE9FE"
                   bg="white"
                   value={adolescentCount}
                   label={t(
                     "dashboard.stats_labels.adolescents",
                     "Adolescent Girls",
                   )}
-                  delay={250}
+                  delay={300}
+                />
+                <StatCard
+                  path="/dashboard/report?tab=delivery"
+                  icon={Activity}
+                  iconColor="#0284C7"
+                  iconBg="#E0F2FE"
+                  bg="white"
+                  value={deliveryCount}
+                  label={t("dashboard.stats_labels.deliveries")}
+                  delay={500}
+                />
+                <StatCard
+                  path="/dashboard/mothers-group/mothers-group-meeting-form"
+                  icon={Calendar}
+                  iconColor="#D97706"
+                  iconBg="#FEF3C7"
+                  bg="white"
+                  value={mothersMeetingCount}
+                  label={t("dashboard.stats_labels.mothers_meetings")}
+                  delay={600}
                 />
               </View>
               <View style={{ flexDirection: "row", gap: 12 }}>
@@ -672,72 +727,13 @@ export default function DashboardScreen() {
                   path="/dashboard/risk"
                   icon={AlertCircle}
                   iconColor="#E11D48"
+                  iconBg="#FFE4E6"
                   bg="#FFE4E6"
                   value={highRiskPregnancyCount}
                   label={t("dashboard.stats_labels.high_risk")}
-                  delay={300}
+                  delay={400}
                 />
               </View>
-            </View>
-
-            {/* Death Stats - Minimal */}
-            <View
-              style={{
-                paddingHorizontal: 20,
-                flexDirection: "row",
-                gap: 12,
-                marginTop: 20,
-              }}
-            >
-              <StatCard
-                layout="minimal"
-                path="/dashboard/report?tab=dead_mother"
-                iconColor="#E11D48"
-                bg="white"
-                value={maternalDeathCount}
-                label={t("dashboard.stats_labels.mother_deaths")}
-                delay={400}
-              />
-              <StatCard
-                layout="minimal"
-                path="/dashboard/report?tab=dead_child"
-                iconColor="#FCA5A5"
-                bg="white"
-                value={childDeathCount}
-                label={t("dashboard.stats_labels.child_deaths")}
-                delay={500}
-              />
-            </View>
-
-            {/* Health Summary Mini Cards */}
-            <View
-              style={{
-                paddingHorizontal: 20,
-                flexDirection: "column",
-                gap: 12,
-                marginTop: 16,
-              }}
-            >
-              <StatCard
-                layout="compact"
-                path="/dashboard/report/child-monitoring-report"
-                icon={Baby}
-                iconColor="#059669"
-                iconBg="#D1FAE5"
-                value={under29Days}
-                label={t("dashboard.health_summary.under_29_days")}
-                delay={100}
-              />
-              <StatCard
-                layout="compact"
-                path="/dashboard/report/child-monitoring-report"
-                icon={Baby}
-                iconColor="#0284C7"
-                iconBg="#E0F2FE"
-                value={days29To59Months}
-                label={t("dashboard.health_summary.29_to_59_months")}
-                delay={200}
-              />
             </View>
 
             {/* Charts Section */}
@@ -809,6 +805,126 @@ export default function DashboardScreen() {
               </View>
             </View>
 
+            {/* Death Stats */}
+            <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 16,
+                }}
+              >
+                <View
+                  style={{
+                    width: 3,
+                    height: 20,
+                    backgroundColor: "#E11D48",
+                    borderRadius: 2,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 17,
+                    fontWeight: "700",
+                    color: "#0F172A",
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  {t("dashboard.sections.death_stats", "Death Statistics")}
+                </Text>
+              </View>
+            </View>
+            <View
+              style={{
+                paddingHorizontal: 20,
+                flexDirection: "row",
+                gap: 12,
+              }}
+            >
+              <StatCard
+                layout="minimal"
+                path="/dashboard/report?tab=dead_mother"
+                icon={AlertCircle}
+                iconColor="#E11D48"
+                iconBg="#FFE4E6"
+                bg="white"
+                value={maternalDeathCount}
+                label={t("dashboard.stats_labels.mother_deaths")}
+                delay={400}
+              />
+              <StatCard
+                layout="minimal"
+                path="/dashboard/report?tab=dead_child"
+                icon={AlertCircle}
+                iconColor="#F97316"
+                iconBg="#FFF7ED"
+                bg="white"
+                value={childDeathCount}
+                label={t("dashboard.stats_labels.child_deaths")}
+                delay={500}
+              />
+            </View>
+
+            {/* Health Summary */}
+            <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 16,
+                }}
+              >
+                <View
+                  style={{
+                    width: 3,
+                    height: 20,
+                    backgroundColor: "#059669",
+                    borderRadius: 2,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontSize: 17,
+                    fontWeight: "700",
+                    color: "#0F172A",
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  {t("dashboard.sections.health_summary", "Health Summary")}
+                </Text>
+              </View>
+            </View>
+            <View
+              style={{
+                paddingHorizontal: 20,
+                flexDirection: "column",
+                gap: 12,
+              }}
+            >
+              <StatCard
+                layout="compact"
+                path="/dashboard/report/child-monitoring-report"
+                icon={Baby}
+                iconColor="#059669"
+                iconBg="#D1FAE5"
+                value={under29Days}
+                label={t("dashboard.health_summary.under_29_days")}
+                delay={100}
+              />
+              <StatCard
+                layout="compact"
+                path="/dashboard/report/child-monitoring-report"
+                icon={Baby}
+                iconColor="#0284C7"
+                iconBg="#E0F2FE"
+                value={days29To59Months}
+                label={t("dashboard.health_summary.29_to_59_months")}
+                delay={200}
+              />
+            </View>
+
             {/* Recent Activity */}
             <View style={{ marginTop: 32, paddingHorizontal: 20 }}>
               <View
@@ -861,9 +977,9 @@ export default function DashboardScreen() {
                       const timeStr = isToday
                         ? t("dashboard.activity.today")
                         : d.toLocaleDateString("en-GB", {
-                          month: "short",
-                          day: "numeric",
-                        });
+                            month: "short",
+                            day: "numeric",
+                          });
 
                       return (
                         <View
@@ -871,43 +987,75 @@ export default function DashboardScreen() {
                           style={{
                             backgroundColor: "white",
                             borderRadius: 20,
-                            padding: 16,
-                            flexDirection: "row",
-                            alignItems: "center",
+                            borderWidth: 1,
+                            borderColor: "#E2E8F0",
+                            overflow: "hidden",
                           }}
                         >
                           <View
                             style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: 22,
-                              backgroundColor: activity.bg,
+                              padding: 16,
+                              flexDirection: "row",
                               alignItems: "center",
-                              justifyContent: "center",
-                              marginRight: 16,
                             }}
                           >
-                            <Icon size={20} color={activity.color} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text
+                            <View
                               style={{
-                                color: "#0F172A",
-                                fontSize: 14,
-                                fontWeight: "700",
+                                width: 48,
+                                height: 48,
+                                borderRadius: 16,
+                                backgroundColor: activity.bg,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginRight: 14,
                               }}
                             >
-                              {activity.title}
-                            </Text>
-                            <Text
+                              <Icon size={22} color={activity.color} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  color: "#0F172A",
+                                  fontSize: 14,
+                                  fontWeight: "700",
+                                }}
+                                numberOfLines={1}
+                              >
+                                {activity.title}
+                              </Text>
+                              {activity.subtitle ? (
+                                <Text
+                                  style={{
+                                    color: "#64748B",
+                                    fontSize: 12,
+                                    fontWeight: "500",
+                                    marginTop: 3,
+                                  }}
+                                  numberOfLines={1}
+                                >
+                                  {activity.subtitle}
+                                </Text>
+                              ) : null}
+                            </View>
+                            <View
                               style={{
-                                color: "#64748B",
-                                fontSize: 12,
-                                marginTop: 2,
+                                backgroundColor: "#F8FAFC",
+                                paddingHorizontal: 10,
+                                paddingVertical: 4,
+                                borderRadius: 8,
+                                marginLeft: 8,
                               }}
                             >
-                              {activity.subtitle}
-                            </Text>
+                              <Text
+                                style={{
+                                  color: "#94A3B8",
+                                  fontSize: 11,
+                                  fontWeight: "600",
+                                }}
+                              >
+                                {timeStr}
+                              </Text>
+                            </View>
                           </View>
                         </View>
                       );

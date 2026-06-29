@@ -21,10 +21,8 @@ export async function fetchMothersFromServer(
     });
 
     const payload = res.data;
-   
-    const results = Array.isArray(payload)
-      ? payload
-      : payload.results ?? [];
+
+    const results = Array.isArray(payload) ? payload : (payload.results ?? []);
 
     if (!Array.isArray(payload)) {
       isEOR = payload.next === null;

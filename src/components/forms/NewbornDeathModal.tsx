@@ -1,12 +1,8 @@
 import { X } from "lucide-react-native";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View
-} from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { CalendarPicker } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HmisRecordStoreType } from "../../hooks/database/types/hmisRecordModal";
 import { InfantMonitoringStoreType } from "../../hooks/database/types/infantMonitoringModal";
@@ -32,41 +28,82 @@ export default function NewbornDeathModal({
   initialChildId,
   initialChildName,
   onSuccess,
-  showToast
+  showToast,
 }: NewbornDeathModalProps) {
   const { t } = useTranslation();
 
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <SafeAreaView className="flex-1 bg-white">
-        <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100">
-          <View className="flex-1 mr-3">
-            <Text className="text-slate-800 text-[18px] font-semibold">{t("newborn_death_modal.title")}</Text>
-          </View>
-          <Pressable onPress={onClose} className="bg-slate-50 p-2 rounded-full border border-slate-100">
-            <X size={20} color="#64748B" />
-          </Pressable>
-        </View>
+  // ── Lifted CalendarPicker state (fixes nested-Modal bug) ──────────────────
+  const [showDeathDatePicker, setShowDeathDatePicker] = useState(false);
+  const [currentDeathBsDate, setCurrentDeathBsDate] = useState<string | undefined>(undefined);
+  // Ref to the form's applyDeathDate callback, registered on form mount.
+  const applyDeathDateRef = useRef<((bsDate: string) => void) | null>(null);
 
-        <ScrollView showsVerticalScrollIndicator={false} className="px-5 flex-1 mt-3">
-          <NewbornDeathForm
-            record={record}
-            children={initialChildren}
-            initialChildId={initialChildId}
-            initialChildName={initialChildName}
-            onSuccess={(updatedDeath) => {
-              onSuccess(updatedDeath);
-              onClose();
-            }}
-            showToast={showToast}
-          />
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
+  return (
+    <>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={visible}
+        onRequestClose={onClose}
+      >
+        <SafeAreaView className="flex-1 bg-white">
+          <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100">
+            <View className="flex-1 mr-3">
+              <Text className="text-slate-800 text-[18px] font-semibold">
+                {t("newborn_death_modal.title")}
+              </Text>
+            </View>
+            <Pressable
+              onPress={onClose}
+              className="bg-slate-50 p-2 rounded-full border border-slate-100"
+            >
+              <X size={20} color="#64748B" />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            className="px-5 flex-1 pt-3"
+            keyboardShouldPersistTaps="handled"
+          >
+            <NewbornDeathForm
+              record={record}
+              children={initialChildren}
+              initialChildId={initialChildId}
+              initialChildName={initialChildName}
+              onSuccess={(updatedDeath) => {
+                onSuccess(updatedDeath);
+                onClose();
+              }}
+              showToast={showToast}
+              // ── Lifted CalendarPicker props (fixes nested-Modal bug) ───────
+              onRequestOpenDeathDatePicker={() =>
+                setShowDeathDatePicker(true)
+              }
+              registerDeathDateSetter={(setter) => {
+                applyDeathDateRef.current = setter;
+              }}
+            />
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* CalendarPicker lives OUTSIDE the Modal so it renders at window level */}
+      {showDeathDatePicker && (
+        <CalendarPicker
+          visible={true}
+          onClose={() => setShowDeathDatePicker(false)}
+          onDateSelect={(bsDate) => {
+            setShowDeathDatePicker(false);
+            setCurrentDeathBsDate(bsDate);
+            applyDeathDateRef.current?.(bsDate);
+          }}
+          language="np"
+          theme="light"
+          brandColor="#E11D48"
+          date={currentDeathBsDate}
+        />
+      )}
+    </>
   );
 }

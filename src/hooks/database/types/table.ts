@@ -3,8 +3,8 @@ type TableType =
   | "mother_staging"
   | "visit"
   | "visit_staging"
-  | "anc_visit"
-  | "anc_visit_staging"
+  | "pnc_visit"
+  | "pnc_visit_staging"
   | "todo"
   | "todo_staging"
   | "pregnancy"
@@ -28,13 +28,15 @@ type TableType =
   | "child_counseling"
   | "child_counseling_staging"
   | "child_vaccination"
-  | "child_vaccination_staging";
+  | "child_vaccination_staging"
+  | "delivery"
+  | "delivery_staging";
 
 type SyncTableType = Extract<
   TableType,
   | "mother"
   | "visit"
-  | "anc_visit"
+  | "pnc_visit"
   | "todo"
   | "pregnancy"
   | "mothers_group_meetings"
@@ -47,6 +49,7 @@ type SyncTableType = Extract<
   | "counseling_referral"
   | "child_counseling"
   | "child_vaccination"
+  | "delivery"
 >;
 
 type RunAsync = (sql: string, params?: any[]) => Promise<any>;

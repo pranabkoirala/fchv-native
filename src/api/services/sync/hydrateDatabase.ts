@@ -12,6 +12,8 @@ import { fetchChildCounselingFromServer } from "../childCounseling/queries";
 import { fetchChildVaccinationFromServer } from "../childVaccination/queries";
 import { fetchTodosFromServer } from "../todo/queries";
 import { fetchVisitsFromServer } from "../visit/queries";
+import { fetchPncVisitsFromServer } from "../pnc_visit/queries";
+import { fetchDeliveriesFromServer } from "../delivery/queries";
 import {
   getTablesWithTimestamp,
   setSyncTimestamp,
@@ -22,6 +24,7 @@ const HYDRATION_TABLES: SyncTableType[] = [
   "mother",
   "pregnancy",
   "visit",
+  "pnc_visit",
   "child_monitoring",
   "supplements",
   "family_planning",
@@ -33,12 +36,14 @@ const HYDRATION_TABLES: SyncTableType[] = [
   "adolescent_ifa",
   "mothers_group_meetings",
   "todo",
+  "delivery",
 ];
 
 const HYDRATORS: Record<SyncTableType, () => Promise<void>> = {
   mother: () => fetchMothersFromServer(),
   pregnancy: () => fetchPregnanciesFromServer(),
   visit: () => fetchVisitsFromServer(),
+  pnc_visit: () => fetchPncVisitsFromServer(),
   child_monitoring: () => fetchChildMonitoringFromServer(),
   supplements: () => fetchSupplementsFromServer(),
   family_planning: () => fetchFamilyPlanningFromServer(),
@@ -50,6 +55,7 @@ const HYDRATORS: Record<SyncTableType, () => Promise<void>> = {
   adolescent_ifa: () => fetchAdolescentIfaFromServer(),
   mothers_group_meetings: () => fetchMothersGroupMeetingsFromServer(),
   todo: () => fetchTodosFromServer(),
+  delivery: () => fetchDeliveriesFromServer(),
 };
 
 let hydrationPromise: Promise<void> | null = null;

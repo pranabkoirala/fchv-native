@@ -1,9 +1,11 @@
-import {
+import * as FileSystem from "expo-file-system";
+const {
   EncodingType,
   readAsStringAsync,
+  // @ts-ignore
   StorageAccessFramework,
   writeAsStringAsync,
-} from "expo-file-system/legacy";
+} = FileSystem;
 import * as Print from "expo-print";
 import * as Share from "expo-sharing";
 import { Platform } from "react-native";

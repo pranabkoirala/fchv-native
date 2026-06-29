@@ -28,7 +28,9 @@
     "delete": "हटाउनुहोस्",
     "save": "सुरक्षित गर्नुहोस्",
     "unnamed_mother": "अनाम आमा",
-    "loading": "लोड हुँदैछ..."
+    "loading": "लोड हुँदैछ...",
+    "mother": "आमा",
+    "child": "बच्चा"
   },
   "dashboard": {
     "title": "FCHV डैशबोर्ड",
@@ -65,6 +67,7 @@
     },
     "sections": {
       "community_pulse": "समुदाय स्वास्थ्य तथ्याङ्क",
+      "community_pulse_subtitle": "एक नजरमा प्रमुख स्वास्थ्य सूचकहरू",
       "recent_activity": "हालैका गतिविधिहरू",
       "tasks_today": "आजका कार्यहरू",
       "view_all": "सबै हेर्नुहोस्"
@@ -73,13 +76,15 @@
       "mothers": "आमाहरू",
       "pregnant": "गर्भवती",
       "children": "बालबालिका",
+      "deliveries": "सुत्केरी",
       "high_risk": "उच्च जोखिम",
       "mat_death": "मातृ मृत्यु",
       "child_death": "बाल मृत्यु",
       "mother_deaths": "मातृ मृत्यु",
       "child_deaths": "बाल मृत्यु",
+      "mothers_meetings": "आमा समूह",
       "pending_tasks": "बाँकी कार्यहरू",
-      "adolescents": "आइरन सेवन किशोरीहरू"
+      "adolescents": "किशोरीहरू"
     },
     "charts": {
       "monthly_trend": "मासिक प्रवृत्ति",
@@ -485,6 +490,7 @@
       "edd": "EDD: {{date}}",
       "due_label": "बाँकी",
       "overdue_label": "नाघ्यो",
+      "for_delivery_label": "सुत्केरी हुन",
       "today_label": "आज",
       "days_short": "{{days}} दिन",
       "today_short": "आज"
@@ -543,7 +549,10 @@
       "mother": "आमा",
       "dead_mother": "मृत आमा",
       "dead_child": "मृत बालबालिका",
-      "pregnancy": "गर्भवती"
+      "pregnancy": "गर्भवती",
+      "delivery": "सुत्केरी",
+      "mother_meeting": "आमा समूह बैठक",
+      "visit": "भ्रमण"
     },
     "search_by_name_ward": "नाम खोज्नुहोस्...",
     "select_month": "महिना छान्नुहोस्",
@@ -552,7 +561,7 @@
     "last_2_months": "२ महिना",
     "ward_no": "वडा नं.",
     "reg_date": "दर्ता:",
-    "unnamed_baby": "अनाम शिशु",
+    "unnamed_baby": "वजात शिशु",
     "unknown": "अज्ञात",
     "status": {
       "normal": "सामान्य",
@@ -560,6 +569,10 @@
       "moderate": "मध्यम",
       "pending": "पेन्डिङ",
       "deceased": "मृत"
+    },
+    "visit": {
+      "type": "प्रकार",
+      "attendees": "सहभागीहरू"
     },
     "no_results": "कुनै नतिजा भेटिएन",
     "try_different": "अर्को खोज प्रयास गर्नुहोस्",
@@ -721,6 +734,7 @@
     "section_details": "बच्चाको विवरण",
     "section_additional": "थप विवरण",
     "manual_override": "उमेर एकाइ परिवर्तन",
+    "choose_date": "मिति छान्नुहोस्",
     "death_date": "मृत्यु मिति",
     "after_added": "दर्ता भइसक्यो",
     "subtitle": "नवजात तथा बाल मृत्यु (०–५९ महिना)",
@@ -729,9 +743,10 @@
     "choose_baby": "बच्चा छान्नुहोस्",
     "choose_baby_placeholder": "बच्चा छान्नुहोस्",
     "select_child_error": "कृपया बच्चा छान्नुहोस्।",
+    "select_mother_first": "कृपया पहिले आमा छान्नुहोस्।",
     "loading_children": "बच्चाहरू लोड हुँदै...",
     "no_children": "यस आमाको लागि कुनै बच्चा दर्ता गरिएको छैन।",
-    "unnamed_child": "नाम नखुलेको बच्चा",
+    "unnamed_child": "वजात शिशु",
     "gender": "बच्चाको लिङ्ग",
     "male": "छोरा",
     "female": "छोरी",
@@ -1091,7 +1106,7 @@
     "subtitle": "बालबालिकाहरूको स्वास्थ्य रेकर्ड व्यवस्थापन गर्नुहोस्",
     "add_new": "नयाँ थप्नुहोस्",
     "search_placeholder": "नामबाट खोज्नुहोस्...",
-    "unnamed_baby": "अनाम शिशु",
+    "unnamed_baby": "वजात शिशु",
     "mother": "आमा",
     "unknown": "अज्ञात",
     "bs": "(वि.सं.)",
@@ -1260,6 +1275,7 @@
     "zinc_tablet_other": "चक्की",
     "records": "रेकर्डहरू",
     "no_records": "कुनै रेकर्ड छैन",
+    "no_records_desc": "भ्रमणको समयमा परामर्श रेकर्ड गरिनेछ",
     "status_completed": "सम्पन्न",
     "status_pending": "बाँकी",
     "status_not_started": "सुरु नभएको",
@@ -1269,7 +1285,10 @@
     "prenatal_register_title": "गर्भ दर्ता परामर्श",
     "prenatal_register_subtitle": "दर्ताको समयमा दिइएको परामर्श रेकर्ड गर्नुहोस्",
     "skip": "छोड्नुहोस्",
-    "save_continue": "सुरक्षित गर्नुहोस् "
+    "save_continue": "सुरक्षित गर्नुहोस् ",
+    "referral_counseling": "रेफरल परामर्श",
+    "general_counseling": "सामान्य परामर्श",
+    "recorded_dates": "रेकर्ड मितिहरू"
   },
   "mothers_group_meeting": {
     "title": "आमा समूहको बैठक",
@@ -1349,6 +1368,7 @@
     "address_ward_short": "वडा",
     "address_locality_short": "टोल",
     "date": "भ्रमण मिति (वि.सं.)",
+    "visit_number": "भ्रमण नम्बर",
     "type": "भ्रमणको किसिम",
     "types": {
       "anc": "गर्भवती महिला - नियमित भेट",
@@ -1357,34 +1377,74 @@
     },
     "recipient": "सेवाग्राही",
     "recipient_placeholder": "सेवाग्राही छान्नुहोस्",
+    "section_visit_info": "भ्रमण जानकारी",
+    "section_recipient": "सेवाग्राही विवरण",
+    "no_address": "ठेगाना उपलब्ध छैन",
     "address": "ठेगाना",
-    "observations": "अवलोकन / सेवा",
-    "obs": {
-      "pregnancy_info": "गर्भवती अवस्थाको जानकारी लियो",
-      "danger_signs": "खतराको लक्षणबारे परामर्श दियो",
-      "iron_tablets": "आइरन चक्की खाइरहेकी छिन्",
-      "delivery_counseling": "संस्थागत प्रसवका लागि परामर्श दियो",
-      "referred": "रिफर गरिएको"
-    },
-    "health_facility": "स्वास्थ्य संस्था",
-    "health_facility_placeholder": "स्वास्थ्य संस्था छान्नुहोस्",
-    "facilities": {
-      "chhatrabas": "छात्राबास",
-      "phc": "प्राथमिक स्वास्थ्य केन्द्र",
-      "district_hospital": "जिल्ला अस्पताल",
-      "zonal_hospital": "अञ्चल अस्पताल"
-    },
+    "referral_questions": "भ्रमणमा सोधिएका रिफरल कारणहरू",
+    "counseling_questions": "भ्रमणमा सोधिएका परामर्श प्रश्नहरू",
+    "section_notes": "नोटहरू",
     "remarks": "कैफियत",
     "remarks_placeholder": "यहाँ लेख्नुहोस्...",
     "save": "सेभ गर्नुहोस्",
+    "select_recipient_first": "कृपया पहिले सेवाग्राही चयन गर्नुहोस्",
     "validation": {
       "date_required": "भ्रमण मिति आवश्यक छ",
       "mother_required": "सेवाग्राही आवश्यक छ",
-      "facility_required": "रिफर गर्दा स्वास्थ्य संस्था आवश्यक छ"
+      "facility_required": "रिफर गर्दा स्वास्थ्य संस्था आवश्यक छ",
+      "fill_required": "कृपया सबै आवश्यक फिल्डहरू भर्नुहोस्"
     },
     "messages": {
       "save_success": "भ्रमण सफलतापूर्वक सुरक्षित गरियो",
       "save_failed": "भ्रमण सुरक्षित गर्न असफल भयो"
+    },
+    "quantity_title": "मात्रा प्रविष्ट गर्नुहोस्",
+    "quantity_save": "सुरक्षित गर्नुहोस्",
+    "quantity_cancel": "रद्द गर्नुहोस्",
+    "invalid_quantity": "कृपया ० र {max} को बीचमा मान्य मात्रा प्रविष्ट गर्नुहोस्"
+  },
+  "delivery": {
+    "title": "सुत्केरी दर्ता",
+    "save": "सुत्केरी दर्ता गर्नुहोस्",
+    "select_mother": "आमा",
+    "select_mother_placeholder": "आमा छान्नुहोस्",
+    "delivery_date": "सुत्केरी भएको मिति",
+    "select_date": "मिति चयन गर्नुहोस्",
+    "gender": "बच्चाको लिङ्ग",
+    "birth_place": "सुत्केरी भएको स्थान",
+    "select_birth_place": "सुत्केरी भएको स्थान चयन गर्नुहोस्",
+    "skilled_birth_attended": "दक्ष जन्म सहायक उपस्थित",
+    "fchv_present": "स्वास्थ्य स्वयंसेविका उपस्थित",
+    "child_status": "बच्चाको अवस्था",
+    "baby_weight": "बच्चाको तौल",
+    "select_weight": "तौल चयन गर्नुहोस्",
+    "asphyxiated_newborn": "श्वासप्रश्वास समस्या भएको नवजात",
+    "newborn_care": "नवजात शिशु हेरचाह अभ्यासहरू",
+    "remarks": "कैफियत",
+    "remarks_placeholder": "यहाँ लेख्नुहोस्...",
+    "options": {
+      "normal": "सामान्य",
+      "low": "कम",
+      "very_low": "धेरै कम",
+      "male": "छोरा",
+      "female": "छोरी"
+    },
+    "link_to_pregnancy": {
+      "title": "गर्भावस्थासँग लिङ्क गर्नुहोस्",
+      "yes": "हो",
+      "no": "होइन",
+      "linked_description": "प्रसूति हालको गर्भावस्था रेकर्डसँग लिङ्क गरिनेछ।",
+      "unlinked_description": "प्रसूति गर्भावस्थासँग लिङ्क नगरी दर्ता गरिनेछ।"
+    },
+    "validation": {
+      "mother_required": "आमा आवश्यक छ",
+      "delivery_date_required": "सुत्केरी मिति आवश्यक छ",
+      "gender_required": "लिङ्ग आवश्यक छ",
+      "error": "त्रुटि"
+    },
+    "messages": {
+      "save_success": "प्रसूति सफलतापूर्वक दर्ता गरियो",
+      "save_failed": "प्रसूति दर्ता गर्न असफल भयो।"
     }
   }
 }

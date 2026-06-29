@@ -1,22 +1,22 @@
 import { Calendar, ChevronDown } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Alert,
-  Pressable,
-  Text,
-  TextInput,
-  View
-} from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import { getInfantMonitoringsByMother } from "../../hooks/database/models/InfantMonitoringModel";
-import { getAllMothersList, MotherListDbItem } from "../../hooks/database/models/MotherModel";
+import {
+  getAllMothersList,
+  MotherListDbItem,
+} from "../../hooks/database/models/MotherModel";
 import { createNewbornDeath } from "../../hooks/database/models/NewbornDeathModel";
 import { HmisRecordStoreType } from "../../hooks/database/types/hmisRecordModal";
 import { InfantMonitoringStoreType } from "../../hooks/database/types/infantMonitoringModal";
 import { NewbornDeathStoreType } from "../../hooks/database/types/newbornDeathModal";
+import { toNepaliNumbers } from "../../utils/dateHelper";
 import { Button } from "../button";
+import { FieldLabel } from "../FormElements";
 import { ProfilePicker } from "../ProfilePicker";
+import TextArea from "../TextArea";
 
 interface NewbornDeathFormProps {
   record?: HmisRecordStoreType;
@@ -25,6 +25,13 @@ interface NewbornDeathFormProps {
   initialChildName?: string;
   onSuccess: (updatedDeath: NewbornDeathStoreType) => void;
   showToast: (msg: string) => void;
+  /** When the form is rendered inside a Modal, pass this so the parent can
+   *  lift CalendarPicker outside the Modal (fixes nested-Modal bug). */
+  onRequestOpenDeathDatePicker?: () => void;
+  /** Called by the parent to push a selected BS date back into this form. */
+  onDeathDateSelected?: (bsDate: string) => void;
+  /** Expose a setter so the parent can register the callback imperatively. */
+  registerDeathDateSetter?: (setter: (bsDate: string) => void) => void;
 }
 
 export default function NewbornDeathForm({
@@ -33,55 +40,67 @@ export default function NewbornDeathForm({
   initialChildId,
   initialChildName,
   onSuccess,
-  showToast
+  showToast,
+  onRequestOpenDeathDatePicker,
+  registerDeathDateSetter,
 }: NewbornDeathFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  // Mothers list for standalone mode
   const [mothersList, setMothersList] = useState<MotherListDbItem[]>([]);
-  const [selectedMotherId, setSelectedMotherId] = useState<string>('');
+  const [selectedMotherId, setSelectedMotherId] = useState<string>("");
   const [loadingMothers, setLoadingMothers] = useState(false);
   const [errMother, setErrMother] = useState(false);
 
-  // Form values
-  const [motherChildren, setMotherChildren] = useState<InfantMonitoringStoreType[]>(initialChildren || []);
+  const [motherChildren, setMotherChildren] = useState<
+    InfantMonitoringStoreType[]
+  >(initialChildren || []);
   const [loadingChildren, setLoadingChildren] = useState(false);
-  const [selectedChildId, setSelectedChildId] = useState(initialChildId || '');
-  const [birthCondition, setBirthCondition] = useState('');
-  const [birthConditionOther, setBirthConditionOther] = useState('');
-  const [causeOfDeath, setCauseOfDeath] = useState('');
-  const [causeOfDeathOther, setCauseOfDeathOther] = useState('');
-  const [deathPlace, setDeathPlace] = useState('');
-  const [deathPlaceOther, setDeathPlaceOther] = useState('');
+  const [selectedChildId, setSelectedChildId] = useState(initialChildId || "");
+  const [birthCondition, setBirthCondition] = useState("");
+  const [birthConditionOther, setBirthConditionOther] = useState("");
+  const [causeOfDeath, setCauseOfDeath] = useState("");
+  const [causeOfDeathOther, setCauseOfDeathOther] = useState("");
+  const [deathPlace, setDeathPlace] = useState("");
+  const [deathPlaceOther, setDeathPlaceOther] = useState("");
   const [deathAgeValue, setDeathAgeValue] = useState(0);
-  const [deathAgeUnit, setDeathAgeUnit] = useState<'days' | 'months'>('days');
+  const [deathAgeUnit, setDeathAgeUnit] = useState<"days" | "months">("days");
 
-  // Birth Date
   const [birthDay, setBirthDay] = useState(new Date().getDate());
   const [birthMonth, setBirthMonth] = useState(new Date().getMonth() + 1);
   const [birthYear, setBirthYear] = useState(new Date().getFullYear());
 
-  // Death Date
-  const [deathDay, setDeathDay] = useState(new Date().getDate());
-  const [deathMonth, setDeathMonth] = useState(new Date().getMonth() + 1);
-  const [deathYear, setDeathYear] = useState(new Date().getFullYear());
+  const [deathDay, setDeathDay] = useState(0);
+  const [deathMonth, setDeathMonth] = useState(0);
+  const [deathYear, setDeathYear] = useState(0);
 
-  const getAdString = (y: number, m: number, d: number) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-  const toNepali = (y: number, m: number, d: number) => {
-    try { return AdToBs(getAdString(y, m, d)); } catch { return getAdString(y, m, d); }
+  const getAdString = (y: number, m: number, d: number) =>
+    `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const adToBsStr = (y: number, m: number, d: number) => {
+    try {
+      return AdToBs(getAdString(y, m, d));
+    } catch {
+      return getAdString(y, m, d);
+    }
+  };
+  const formatDate = (y: number, m: number, d: number) => {
+    try {
+      const ad = getAdString(y, m, d);
+      if (i18n.language === "np") return toNepaliNumbers(AdToBs(ad));
+      return ad;
+    } catch {
+      return getAdString(y, m, d);
+    }
   };
 
-  const [gender, setGender] = useState<'Male' | 'Female' | ''>('');
-  const [remarks, setRemarks] = useState('');
+  const [gender, setGender] = useState<"Male" | "Female" | "">("");
+  const [remarks, setRemarks] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Derived: is this a newborn (<28 days)?
   const isNewborn = useMemo(() => {
-    if (deathAgeUnit === 'months') return false;
+    if (deathAgeUnit === "months") return false;
     return deathAgeValue < 28;
   }, [deathAgeUnit, deathAgeValue]);
 
-  // Inline errors
   const [errBirthCondition, setErrBirthCondition] = useState(false);
   const [errBirthConditionOther, setErrBirthConditionOther] = useState(false);
   const [errCauseOfDeath, setErrCauseOfDeath] = useState(false);
@@ -89,11 +108,29 @@ export default function NewbornDeathForm({
   const [errDeathPlace, setErrDeathPlace] = useState(false);
   const [errDeathPlaceOther, setErrDeathPlaceOther] = useState(false);
   const [errGender, setErrGender] = useState(false);
-  const [errChild, setErrChild] = useState('');
+  const [errChild, setErrChild] = useState("");
 
   const [showDeathDatePicker, setShowDeathDatePicker] = useState(false);
 
-  // Load mothers if record is not provided
+  // Allow a parent Modal to push a selected BS date back into this form.
+  const applyDeathDate = (bsDate: string) => {
+    try {
+      const adDate = BsToAd(bsDate);
+      const parts = adDate.split("-");
+      setDeathYear(parseInt(parts[0], 10));
+      setDeathMonth(parseInt(parts[1], 10));
+      setDeathDay(parseInt(parts[2], 10));
+    } catch (e) {
+      console.error("applyDeathDate error", e);
+    }
+  };
+
+  // Register the setter with the parent once on mount.
+  useEffect(() => {
+    registerDeathDateSetter?.(applyDeathDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (!record) {
       const loadMothers = async () => {
@@ -114,7 +151,7 @@ export default function NewbornDeathForm({
   const motherOptions = useMemo(() => {
     return mothersList.map((m) => ({
       value: m.id,
-      label: m.name || t("common.unnamed_mother")
+      label: m.name || t("common.unnamed_mother"),
     }));
   }, [mothersList, t]);
 
@@ -155,10 +192,9 @@ export default function NewbornDeathForm({
   const childOptions = useMemo(
     () =>
       motherChildren
-        .filter((child) => child.status !== 'dead')
+        .filter((child) => child.status !== "dead")
         .map((child, index) => {
           const unnamedChild = t("newborn_death_modal.unnamed_child");
-
           return {
             value: child.id,
             label: child.baby_name?.trim() || `${unnamedChild} ${index + 1}`,
@@ -169,24 +205,25 @@ export default function NewbornDeathForm({
 
   const handleChildChange = (childId: string) => {
     setSelectedChildId(childId);
-    setErrChild('');
+    setErrChild("");
   };
 
-  // Sync child details when selectedChildId or motherChildren changes
   useEffect(() => {
     if (!selectedChildId || motherChildren.length === 0) return;
 
-    const selectedChild = motherChildren.find((child) => child.id === selectedChildId);
+    const selectedChild = motherChildren.find(
+      (child) => child.id === selectedChildId,
+    );
     if (selectedChild) {
-      // Robust gender sync
       if (selectedChild.gender) {
-        const g = selectedChild.gender.charAt(0).toUpperCase() + selectedChild.gender.slice(1).toLowerCase();
-        if (g === 'Male' || g === 'Female') {
+        const g =
+          selectedChild.gender.charAt(0).toUpperCase() +
+          selectedChild.gender.slice(1).toLowerCase();
+        if (g === "Male" || g === "Female") {
           setGender(g);
         }
       }
 
-      // Robust birth date sync
       if (selectedChild.date_of_birth) {
         const parts = selectedChild.date_of_birth.split(/[-/T ]/);
         if (parts.length >= 3) {
@@ -204,16 +241,21 @@ export default function NewbornDeathForm({
     }
   }, [selectedChildId, motherChildren]);
 
-  // Sync initialChildId to selectedChildId
   useEffect(() => {
     if (initialChildId) {
       setSelectedChildId(initialChildId);
     }
   }, [initialChildId]);
 
-  // Auto-calculate age
   useEffect(() => {
-    if (birthYear && birthMonth && birthDay && deathYear && deathMonth && deathDay) {
+    if (
+      birthYear &&
+      birthMonth &&
+      birthDay &&
+      deathYear > 0 &&
+      deathMonth > 0 &&
+      deathDay > 0
+    ) {
       const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
       const deathDate = new Date(deathYear, deathMonth - 1, deathDay);
 
@@ -227,24 +269,24 @@ export default function NewbornDeathForm({
 
       if (diffDays < 28) {
         setDeathAgeValue(diffDays);
-        setDeathAgeUnit('days');
+        setDeathAgeUnit("days");
       } else {
         const months = Math.floor(diffDays / 30);
         setDeathAgeValue(months || 1);
-        setDeathAgeUnit('months');
+        setDeathAgeUnit("months");
       }
     }
   }, [birthYear, birthMonth, birthDay, deathYear, deathMonth, deathDay]);
 
-  const handleAgeUnitChange = (unit: 'days' | 'months') => {
+  const handleAgeUnitChange = (unit: "days" | "months") => {
     setDeathAgeUnit(unit);
-    setCauseOfDeath('');
-    setCauseOfDeathOther('');
+    setCauseOfDeath("");
+    setCauseOfDeathOther("");
     setErrCauseOfDeath(false);
     setErrCauseOfDeathOther(false);
-    if (unit === 'months') {
-      setBirthCondition('');
-      setBirthConditionOther('');
+    if (unit === "months") {
+      setBirthCondition("");
+      setBirthConditionOther("");
       setErrBirthCondition(false);
       setErrBirthConditionOther(false);
     }
@@ -264,28 +306,68 @@ export default function NewbornDeathForm({
       setErrChild(t("newborn_death_modal.select_child_error"));
       hasError = true;
     } else {
-      setErrChild('');
+      setErrChild("");
     }
 
     if (isNewborn) {
-      if (!birthCondition) { setErrBirthCondition(true); hasError = true; } else { setErrBirthCondition(false); }
-      if (birthCondition === 'Other' && !birthConditionOther.trim()) { setErrBirthConditionOther(true); hasError = true; } else { setErrBirthConditionOther(false); }
+      if (!birthCondition) {
+        setErrBirthCondition(true);
+        hasError = true;
+      } else {
+        setErrBirthCondition(false);
+      }
+      if (birthCondition === "Other" && !birthConditionOther.trim()) {
+        setErrBirthConditionOther(true);
+        hasError = true;
+      } else {
+        setErrBirthConditionOther(false);
+      }
     } else {
       setErrBirthCondition(false);
       setErrBirthConditionOther(false);
     }
 
-    if (!causeOfDeath) { setErrCauseOfDeath(true); hasError = true; } else { setErrCauseOfDeath(false); }
-    if (causeOfDeath === 'Other' && !causeOfDeathOther.trim()) { setErrCauseOfDeathOther(true); hasError = true; } else { setErrCauseOfDeathOther(false); }
-    if (!deathPlace) { setErrDeathPlace(true); hasError = true; } else { setErrDeathPlace(false); }
-    if (deathPlace === 'Other' && !deathPlaceOther.trim()) { setErrDeathPlaceOther(true); hasError = true; } else { setErrDeathPlaceOther(false); }
-    if (!gender) { setErrGender(true); hasError = true; } else { setErrGender(false); }
-
-    const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
-    const deathDate = new Date(deathYear, deathMonth - 1, deathDay);
-    if (deathDate < birthDate) {
-      Alert.alert(t("newborn_death_modal.error_title"), t("newborn_death_modal.date_error"));
+    if (!causeOfDeath) {
+      setErrCauseOfDeath(true);
       hasError = true;
+    } else {
+      setErrCauseOfDeath(false);
+    }
+    if (causeOfDeath === "Other" && !causeOfDeathOther.trim()) {
+      setErrCauseOfDeathOther(true);
+      hasError = true;
+    } else {
+      setErrCauseOfDeathOther(false);
+    }
+    if (!deathPlace) {
+      setErrDeathPlace(true);
+      hasError = true;
+    } else {
+      setErrDeathPlace(false);
+    }
+    if (deathPlace === "Other" && !deathPlaceOther.trim()) {
+      setErrDeathPlaceOther(true);
+      hasError = true;
+    } else {
+      setErrDeathPlaceOther(false);
+    }
+    if (!gender) {
+      setErrGender(true);
+      hasError = true;
+    } else {
+      setErrGender(false);
+    }
+
+    if (deathYear === 0 || deathMonth === 0 || deathDay === 0) {
+      showToast(t("newborn_death_modal.date_error"));
+      hasError = true;
+    } else {
+      const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+      const deathDate = new Date(deathYear, deathMonth - 1, deathDay);
+      if (deathDate < birthDate) {
+        showToast(t("newborn_death_modal.date_error"));
+        hasError = true;
+      }
     }
 
     if (hasError) return;
@@ -296,19 +378,21 @@ export default function NewbornDeathForm({
       let targetMotherName = record?.mother_name;
 
       if (!record) {
-        const m = mothersList.find(x => x.id === selectedMotherId);
+        const m = mothersList.find((x) => x.id === selectedMotherId);
         targetMotherId = m?.id;
         targetMotherName = m?.name;
       }
 
-      const selectedChild = motherChildren.find((child) => child.id === selectedChildId);
+      const selectedChild = motherChildren.find(
+        (child) => child.id === selectedChildId,
+      );
       const payload = {
         mother: targetMotherId,
         mother_name: targetMotherName,
         child_id: selectedChildId,
         baby_name: selectedChild?.baby_name?.trim() || "",
-        birth_condition: isNewborn ? birthCondition : '',
-        birth_condition_other: isNewborn ? birthConditionOther : '',
+        birth_condition: isNewborn ? birthCondition : "",
+        birth_condition_other: isNewborn ? birthConditionOther : "",
         cause_of_death: causeOfDeath,
         cause_of_death_other: causeOfDeathOther,
         death_place: deathPlace,
@@ -328,19 +412,18 @@ export default function NewbornDeathForm({
       await createNewbornDeath(payload);
       showToast(t("newborn_death_modal.success"));
 
-      // Reset
-      if (!record) setSelectedMotherId('');
-      setSelectedChildId('');
-      setBirthCondition('');
-      setBirthConditionOther('');
-      setCauseOfDeath('');
-      setCauseOfDeathOther('');
-      setDeathPlace('');
-      setDeathPlaceOther('');
+      if (!record) setSelectedMotherId("");
+      setSelectedChildId("");
+      setBirthCondition("");
+      setBirthConditionOther("");
+      setCauseOfDeath("");
+      setCauseOfDeathOther("");
+      setDeathPlace("");
+      setDeathPlaceOther("");
       setDeathAgeValue(1);
-      setDeathAgeUnit('days');
-      setGender('');
-      setRemarks('');
+      setDeathAgeUnit("days");
+      setGender("");
+      setRemarks("");
       setErrBirthCondition(false);
       setErrBirthConditionOther(false);
       setErrCauseOfDeath(false);
@@ -348,316 +431,446 @@ export default function NewbornDeathForm({
       setErrDeathPlace(false);
       setErrDeathPlaceOther(false);
       setErrGender(false);
-      setErrChild('');
+      setErrChild("");
       setErrMother(false);
 
       onSuccess(payload as NewbornDeathStoreType);
     } catch (error) {
-      Alert.alert(t("newborn_death_modal.error_title"), t("newborn_death_modal.error"));
+      showToast(t("newborn_death_modal.error"));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const FieldLabel = ({ label, hasError, required = true }: { label: string; hasError: boolean; required?: boolean }) => (
-    <View className="flex-row items-center mb-2.5">
-      <Text className="text-[16px] text-slate-700 font-semibold">{label}</Text>
-      {required && <Text className="text-red-500 ml-1">*</Text>}
-    </View>
+  const radio = (
+    value: string,
+    label: string,
+    selected: string,
+    onSelect: (v: string) => void,
+    hasError: boolean,
+  ) => (
+    <Pressable
+      key={value}
+      onPress={() => onSelect(value)}
+      className={`flex-row items-center py-3 px-4 rounded-xl border ${
+        selected === value
+          ? "bg-slate-50 border-slate-700"
+          : hasError
+            ? "bg-rose-50 border-rose-300"
+            : "bg-white border-slate-200"
+      }`}
+    >
+      <View
+        className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-2.5 ${
+          selected === value
+            ? "border-slate-700"
+            : hasError
+              ? "border-rose-300"
+              : "border-slate-300"
+        }`}
+      >
+        {selected === value && (
+          <View className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+        )}
+      </View>
+      <Text
+        className={`text-[15px] ${
+          selected === value ? "text-slate-800 font-semibold" : "text-slate-600"
+        }`}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 
   const causeOptions = useMemo(() => {
     if (isNewborn) {
       return [
-        { v: 'Asphyxia', l: t("newborn_death_modal.asphyxia") },
-        { v: 'Hypothermia', l: t("newborn_death_modal.hypothermia") },
-        { v: 'Infection', l: t("newborn_death_modal.infection") },
-        { v: 'Other', l: t("newborn_death_modal.other") }
+        { v: "Asphyxia", l: t("newborn_death_modal.asphyxia") },
+        { v: "Hypothermia", l: t("newborn_death_modal.hypothermia") },
+        { v: "Infection", l: t("newborn_death_modal.infection") },
+        { v: "Other", l: t("newborn_death_modal.other") },
       ];
     }
     return [
-      { v: 'Pneumonia', l: t("newborn_death_modal.pneumonia") },
-      { v: 'Diarrhea', l: t("newborn_death_modal.diarrhea") },
-      { v: 'Malnutrition', l: t("newborn_death_modal.malnutrition") },
-      { v: 'Other', l: t("newborn_death_modal.other") }
+      { v: "Pneumonia", l: t("newborn_death_modal.pneumonia") },
+      { v: "Diarrhea", l: t("newborn_death_modal.diarrhea") },
+      { v: "Malnutrition", l: t("newborn_death_modal.malnutrition") },
+      { v: "Other", l: t("newborn_death_modal.other") },
     ];
   }, [isNewborn, t]);
 
   return (
-    <View className="flex-1 bg-white pt-2">
-      <View className="gap-y-7 pb-32">
-
-        {/* Mother Selection */}
+    <View className="flex-1 pt-2">
+      <View className="gap-y-5 pb-32">
         {!record && (
-          <View>
-            <FieldLabel label={t("maternal_death_modal.choose_mother")} hasError={errMother} />
-            <ProfilePicker
-              label=""
-              placeholder={
-                loadingMothers
-                  ? t("common.loading")
-                  : t("maternal_death_modal.choose_mother_placeholder")
-              }
-              selectedValue={selectedMotherId}
-              onValueChange={(val) => { setSelectedMotherId(val); setErrMother(false); setSelectedChildId(''); }}
-              options={motherOptions}
-              error={errMother ? t("maternal_death_modal.mother_error") : ''}
-              isSearchable
-            />
-          </View>
-        )}
-
-        {/* Child Selection */}
-        <View className="-mt-5">
-          <FieldLabel label={t("newborn_death_modal.choose_baby")} hasError={!!errChild} />
           <ProfilePicker
-            label=""
+            label={t("maternal_death_modal.choose_mother")}
             placeholder={
-              loadingChildren
-                ? t("newborn_death_modal.loading_children")
-                : t("newborn_death_modal.choose_baby_placeholder")
+              loadingMothers
+                ? t("common.loading")
+                : t("maternal_death_modal.choose_mother_placeholder")
             }
-            selectedValue={initialChildId && initialChildName ? initialChildId : selectedChildId}
-            onValueChange={handleChildChange}
-            options={childOptions}
-            error={errChild}
+            selectedValue={selectedMotherId}
+            onValueChange={(val) => {
+              setSelectedMotherId(val);
+              setErrMother(false);
+              setSelectedChildId("");
+            }}
+            options={motherOptions}
+            error={errMother ? t("maternal_death_modal.mother_error") : ""}
             isSearchable
-            disabled={!!initialChildId && !!initialChildName}
+            required
           />
-        </View>
+        )}
+        {(() => {
+          const canSelectChild = !!(
+            record ||
+            selectedMotherId ||
+            initialChildren?.length
+          );
+          return (
+            <View className="gap-y-1.5 -mt-6">
+              <View className="relative">
+                <ProfilePicker
+                  label={t("newborn_death_modal.choose_baby")}
+                  placeholder={
+                    loadingChildren
+                      ? t("newborn_death_modal.loading_children")
+                      : t("newborn_death_modal.choose_baby_placeholder")
+                  }
+                  selectedValue={
+                    initialChildId && initialChildName
+                      ? initialChildId
+                      : selectedChildId
+                  }
+                  onValueChange={handleChildChange}
+                  options={childOptions}
+                  error={errChild}
+                  isSearchable
+                  disabled={
+                    !canSelectChild ||
+                    loadingChildren ||
+                    !!(initialChildId && initialChildName)
+                  }
+                  required
+                />
+                {!canSelectChild && (
+                  <Pressable
+                    onPress={() =>
+                      showToast(t("newborn_death_modal.select_mother_first"))
+                    }
+                    className="absolute inset-0 z-10"
+                  />
+                )}
+              </View>
+              {loadingChildren && (
+                <Text className="text-slate-400 text-[12px] ml-1">
+                  {t("newborn_death_modal.loading_children")}
+                </Text>
+              )}
+            </View>
+          );
+        })()}
 
-        {/* Gender */}
-        <View className="-mt-5">
-          <FieldLabel label={t("newborn_death_modal.gender")} hasError={errGender} />
-          <View className="flex-row gap-3 mt-1">
+        <View className="gap-y-1.5 -mt-6">
+          <FieldLabel label={t("newborn_death_modal.gender")} required />
+          <View className="flex-row gap-3">
             {[
-              { v: 'Male', l: t("newborn_death_modal.male") },
-              { v: 'Female', l: t("newborn_death_modal.female") }
+              { v: "Male", l: t("newborn_death_modal.male") },
+              { v: "Female", l: t("newborn_death_modal.female") },
             ].map((g) => (
               <Pressable
                 key={g.v}
-                onPress={() => { setGender(g.v as any); setErrGender(false); }}
-                className={`flex-1 py-3.5 px-4 rounded-xl border flex-row items-center justify-center ${gender === g.v
-                  ? 'bg-slate-50 border-[#475569]'
-                  : errGender ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
-                  }`}
+                onPress={() => {
+                  setGender(g.v as any);
+                  setErrGender(false);
+                }}
+                className={`flex-1 h-14 rounded-xl border flex-row items-center justify-center ${
+                  gender === g.v
+                    ? "bg-slate-50 border-slate-700"
+                    : errGender
+                      ? "bg-rose-50 border-rose-300"
+                      : "bg-white border-slate-200"
+                }`}
               >
-                <View className={`w-5 h-5 rounded-full border-2 mr-2.5 items-center justify-center ${gender === g.v ? 'border-[#475569]' : errGender ? 'border-red-300' : 'border-slate-300'
-                  }`}>
-                  {gender === g.v && <View className="w-2.5 h-2.5 rounded-full bg-[#475569]" />}
+                <View
+                  className={`w-5 h-5 rounded-full border-2 mr-2 items-center justify-center ${
+                    gender === g.v
+                      ? "border-slate-700"
+                      : errGender
+                        ? "border-rose-300"
+                        : "border-slate-300"
+                  }`}
+                >
+                  {gender === g.v && (
+                    <View className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+                  )}
                 </View>
-                <Text className={`text-[14px] font-semibold ${gender === g.v ? 'text-[#475569]' : 'text-slate-600'
-                  }`}>{g.l}</Text>
+                <Text
+                  className={`text-[15px] ${
+                    gender === g.v
+                      ? "text-slate-800 font-semibold"
+                      : "text-slate-600"
+                  }`}
+                >
+                  {g.l}
+                </Text>
               </Pressable>
             ))}
           </View>
         </View>
 
-        {/* Dates Row */}
         <View className="flex-row gap-4">
-          <View className="flex-1">
-            <FieldLabel label={t("newborn_death_modal.birth_date")} hasError={false} />
-            <View className="bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl flex-row items-center justify-between">
-              <Text className="text-slate-500 text-[14px] font-semibold" numberOfLines={1}>
-                {toNepali(birthYear, birthMonth, birthDay)}
+          <View className="flex-1 gap-y-1.5">
+            <FieldLabel label={t("newborn_death_modal.birth_date")} required />
+            <View className="h-14 bg-white border border-slate-200 px-4 rounded-xl flex-row items-center justify-between">
+              <Text
+                className="text-slate-500 text-[16px] font-semibold"
+                numberOfLines={1}
+              >
+                {formatDate(birthYear, birthMonth, birthDay)}
               </Text>
-              <Calendar size={16} color="#94A3B8" />
+              <Calendar size={18} color="#94A3B8" />
             </View>
           </View>
-          <View className="flex-1">
-            <FieldLabel label={t("newborn_death_modal.death_date")} hasError={false} />
-            <Pressable
-              onPress={() => setShowDeathDatePicker(true)}
-              className="bg-white border border-slate-200 px-4 py-2.5 rounded-xl flex-row items-center justify-between active:bg-slate-50"
-            >
-              <Text className="text-slate-800 text-[14px] font-semibold" numberOfLines={1}>
-                {toNepali(deathYear, deathMonth, deathDay)}
-              </Text>
-              <View className="bg-rose-50 p-1.5 rounded-full">
-                <Calendar size={16} color="#E11D48" />
+          <View className="flex-1 gap-y-1.5">
+            <FieldLabel label={t("newborn_death_modal.death_date")} required />
+            <Pressable onPress={() => setShowDeathDatePicker(true)}>
+              <View className="h-14 bg-white border border-slate-200 px-4 rounded-xl flex-row items-center justify-between">
+                <Text
+                  className={`text-[16px] font-normal ${
+                    deathYear > 0 ? "text-slate-800" : "text-slate-400"
+                  }`}
+                  numberOfLines={1}
+                >
+                  {deathYear > 0
+                    ? formatDate(deathYear, deathMonth, deathDay)
+                    : t("newborn_death_modal.choose_date")}
+                </Text>
+                <Calendar size={18} color="#94A3B8" />
               </View>
             </Pressable>
           </View>
         </View>
 
-        <CalendarPicker
-          visible={showDeathDatePicker}
-          onClose={() => setShowDeathDatePicker(false)}
-          onDateSelect={(bsDate) => {
-            setShowDeathDatePicker(false);
-            try {
-              const adDate = BsToAd(bsDate);
-              const parts = adDate.split('-');
-              setDeathYear(parseInt(parts[0], 10));
-              setDeathMonth(parseInt(parts[1], 10));
-              setDeathDay(parseInt(parts[2], 10));
-            } catch (e) { console.error(e); }
-          }}
-          language="np" theme="light" brandColor="#E11D48"
-          date={toNepali(deathYear, deathMonth, deathDay)}
-        />
+        {showDeathDatePicker && (
+          <CalendarPicker
+            visible={true}
+            onClose={() => setShowDeathDatePicker(false)}
+            onDateSelect={(bsDate) => {
+              setShowDeathDatePicker(false);
+              applyDeathDate(bsDate);
+            }}
+            language="np"
+            theme="light"
+            brandColor="#E11D48"
+            date={
+              deathYear > 0
+                ? adToBsStr(deathYear, deathMonth, deathDay)
+                : undefined
+            }
+            dayTextStyle={{ fontWeight: "normal" }}
+            weekTextStyle={{ fontWeight: "normal" }}
+            titleTextStyle={{ fontWeight: "normal" }}
+          />
+        )}
 
-        {/* Age Display */}
-        <View>
-          <FieldLabel label={t("newborn_death_modal.death_age")} hasError={false} />
-          <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 justify-between">
-            <View>
-              <Text className="text-[#475569] font-bold text-[18px]">
-                {deathAgeValue} {deathAgeUnit === 'days' ? t("newborn_death_modal.age_unit_days") : t("newborn_death_modal.age_unit_months")}
-              </Text>
-            </View>
+        <View className="gap-y-1.5">
+          <FieldLabel label={t("newborn_death_modal.death_age")} />
+          <View className="h-14 flex-row items-center bg-white border border-slate-200 rounded-xl px-4 justify-between">
+            <Text className="text-slate-800 font-bold text-[16px]">
+              {deathAgeValue}{" "}
+              {deathAgeUnit === "days"
+                ? t("newborn_death_modal.age_unit_days")
+                : t("newborn_death_modal.age_unit_months")}
+            </Text>
             <Pressable
               onPress={() => {
-                Alert.alert(
-                  t("newborn_death_modal.death_age"),
-                  t("newborn_death_modal.manual_override"),
-                  [
-                    { text: t("newborn_death_modal.age_unit_days"), onPress: () => handleAgeUnitChange('days') },
-                    { text: t("newborn_death_modal.age_unit_months"), onPress: () => handleAgeUnitChange('months') },
-                    { text: t("reports.common.cancel"), style: "cancel" }
-                  ]
-                );
+                const newUnit = deathAgeUnit === "days" ? "months" : "days";
+                handleAgeUnitChange(newUnit);
               }}
-              className="bg-white px-3 py-2 rounded-lg border border-slate-200 flex-row items-center active:bg-slate-50"
+              className="bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-200 flex-row items-center"
             >
-              <Text className="text-[12px] font-bold text-[#475569] mr-2 uppercase tracking-wider">
-                {deathAgeUnit === 'days' ? t("newborn_death_modal.age_unit_days") : t("newborn_death_modal.age_unit_months")}
+              <Text className="text-[11px] font-bold text-slate-700 mr-1 uppercase tracking-wider">
+                {deathAgeUnit === "days"
+                  ? t("newborn_death_modal.age_unit_days")
+                  : t("newborn_death_modal.age_unit_months")}
               </Text>
-              <ChevronDown size={14} color="#475569" />
+              <ChevronDown size={12} color="#475569" />
             </Pressable>
           </View>
         </View>
 
         {isNewborn && (
-          <View>
-            <FieldLabel label={t("newborn_death_modal.birth_condition")} hasError={errBirthCondition} />
-            <View className="flex-row flex-wrap gap-3 mt-1">
+          <View className="gap-y-1.5">
+            <FieldLabel
+              label={t("newborn_death_modal.birth_condition")}
+              required
+            />
+            <View className="flex-row flex-wrap gap-2">
               {[
-                { v: 'Preterm', l: t("newborn_death_modal.preterm") },
-                { v: 'LowWeight', l: t("newborn_death_modal.low_weight") },
-                { v: 'Normal', l: t("newborn_death_modal.normal") },
-                { v: 'Other', l: t("newborn_death_modal.other") }
+                { v: "Preterm", l: t("newborn_death_modal.preterm") },
+                { v: "LowWeight", l: t("newborn_death_modal.low_weight") },
+                { v: "Normal", l: t("newborn_death_modal.normal") },
+                { v: "Other", l: t("newborn_death_modal.other") },
               ].map((c) => (
-                <Pressable
-                  key={c.v}
-                  onPress={() => { setBirthCondition(c.v); setErrBirthCondition(false); }}
-                  className={`flex-1 min-w-[45%] py-3.5 px-3 rounded-xl border flex-row items-center justify-center ${birthCondition === c.v
-                    ? 'bg-slate-50 border-[#475569]'
-                    : errBirthCondition ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
-                    }`}
-                >
-                  <View className={`w-5 h-5 rounded-full border-2 mr-2.5 items-center justify-center ${birthCondition === c.v ? 'border-[#475569]' : errBirthCondition ? 'border-red-300' : 'border-slate-300'
-                    }`}>
-                    {birthCondition === c.v && <View className="w-2.5 h-2.5 rounded-full bg-[#475569]" />}
-                  </View>
-                  <Text className={`text-[14px] font-semibold ${birthCondition === c.v ? 'text-[#475569]' : 'text-slate-600'
-                    }`}>{c.l}</Text>
-                </Pressable>
+                <View className="w-[48%]" key={c.v}>
+                  {radio(
+                    c.v,
+                    c.l,
+                    birthCondition,
+                    (v) => {
+                      setBirthCondition(v);
+                      setErrBirthCondition(false);
+                    },
+                    errBirthCondition,
+                  )}
+                </View>
               ))}
             </View>
-            {birthCondition === 'Other' && (
-              <View className="mt-3">
-                <TextInput
-                  placeholder={t("newborn_death_modal.specify_condition")}
-                  className={`bg-white border p-4 rounded-xl text-slate-900 text-[15px] ${errBirthConditionOther ? 'border-red-400' : 'border-slate-200'
-                    }`}
-                  onChangeText={(v) => { setBirthConditionOther(v); if (v.trim()) setErrBirthConditionOther(false); }}
-                  value={birthConditionOther}
-                />
+            {birthCondition === "Other" && (
+              <View className="gap-y-1.5 mt-1.5">
+                <View
+                  className={`h-14 flex-row items-center rounded-xl px-4 border ${
+                    errBirthConditionOther
+                      ? "border-rose-400 bg-rose-50"
+                      : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <TextInput
+                    placeholder={t("newborn_death_modal.specify_condition")}
+                    placeholderTextColor="#94a3b8"
+                    className="flex-1 text-slate-800 text-[16px] h-full"
+                    onChangeText={(v) => {
+                      setBirthConditionOther(v);
+                      if (v.trim()) setErrBirthConditionOther(false);
+                    }}
+                    value={birthConditionOther}
+                  />
+                </View>
+                {errBirthConditionOther && (
+                  <Text className="text-rose-500 text-xs ml-1 font-semibold">
+                    {t("newborn_death_modal.specify_condition_error")}
+                  </Text>
+                )}
               </View>
             )}
           </View>
         )}
 
-        {/* Cause of Death */}
-        <View>
-          <FieldLabel label={t("newborn_death_modal.cause_of_death")} hasError={errCauseOfDeath} />
-          <View className="flex-row flex-wrap gap-3 mt-1">
-            {causeOptions.map((c) => (
-              <Pressable
-                key={c.v}
-                onPress={() => { setCauseOfDeath(c.v); setErrCauseOfDeath(false); }}
-                className={`flex-1 min-w-[45%] py-3.5 px-3 rounded-xl border flex-row items-center justify-center ${causeOfDeath === c.v
-                  ? 'bg-slate-50 border-[#475569]'
-                  : errCauseOfDeath ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
-                  }`}
-              >
-                <View className={`w-5 h-5 rounded-full border-2 mr-2.5 items-center justify-center ${causeOfDeath === c.v ? 'border-[#475569]' : errCauseOfDeath ? 'border-red-300' : 'border-slate-300'
-                  }`}>
-                  {causeOfDeath === c.v && <View className="w-2.5 h-2.5 rounded-full bg-[#475569]" />}
-                </View>
-                <Text className={`text-[14px] font-semibold ${causeOfDeath === c.v ? 'text-[#475569]' : 'text-slate-600'
-                  }`}>{c.l}</Text>
-              </Pressable>
-            ))}
-          </View>
-          {causeOfDeath === 'Other' && (
-            <View className="mt-3">
-              <TextInput
-                placeholder={t("newborn_death_modal.specify_cause")}
-                className={`bg-white border p-4 rounded-xl text-slate-900 text-[15px] ${errCauseOfDeathOther ? 'border-red-400' : 'border-slate-200'
-                  }`}
-                onChangeText={(v) => { setCauseOfDeathOther(v); if (v.trim()) setErrCauseOfDeathOther(false); }}
-                value={causeOfDeathOther}
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Place of Death */}
-        <View>
-          <FieldLabel label={t("newborn_death_modal.death_place")} hasError={errDeathPlace} />
-          <View className="flex-row flex-wrap gap-3 mt-1">
-            {[
-              { value: 'Home', label: t("newborn_death_modal.home") },
-              { value: 'Institution', label: t("newborn_death_modal.institution") },
-              { value: 'Other', label: t("newborn_death_modal.other") }
-            ].map((c) => (
-              <Pressable
-                key={c.value}
-                onPress={() => { setDeathPlace(c.value); setErrDeathPlace(false); }}
-                className={`flex-1 min-w-[30%] py-3.5 px-3 rounded-xl border flex-row items-center justify-center ${deathPlace === c.value
-                  ? 'bg-slate-50 border-[#475569]'
-                  : errDeathPlace ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'
-                  }`}
-              >
-                <View className={`w-5 h-5 rounded-full border-2 mr-2.5 items-center justify-center ${deathPlace === c.value ? 'border-[#475569]' : errDeathPlace ? 'border-red-300' : 'border-slate-300'
-                  }`}>
-                  {deathPlace === c.value && <View className="w-2.5 h-2.5 rounded-full bg-[#475569]" />}
-                </View>
-                <Text className={`text-[14px] font-semibold ${deathPlace === c.value ? 'text-[#475569]' : 'text-slate-600'
-                  }`}>{c.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-          {deathPlace === 'Other' && (
-            <View className="mt-3">
-              <TextInput
-                placeholder={t("newborn_death_modal.specify_place")}
-                className={`bg-white border p-4 rounded-xl text-slate-900 text-[15px] ${errDeathPlaceOther ? 'border-red-400' : 'border-slate-200'
-                  }`}
-                onChangeText={(v) => { setDeathPlaceOther(v); if (v.trim()) setErrDeathPlaceOther(false); }}
-                value={deathPlaceOther}
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Remarks */}
-        <View>
-          <FieldLabel label={t("newborn_death_modal.remarks")} hasError={false} required={false} />
-          <TextInput
-            placeholder={t("newborn_death_modal.remarks_placeholder")}
-            className="bg-white border border-slate-200 p-4 rounded-xl text-slate-900 min-h-[100px] text-[15px] leading-5"
-            multiline
-            placeholderTextColor="#94A3B8"
-            textAlignVertical="top"
-            onChangeText={setRemarks}
-            value={remarks}
+        <View className="gap-y-1.5">
+          <FieldLabel
+            label={t("newborn_death_modal.cause_of_death")}
+            required
           />
+          <View className="flex-row flex-wrap gap-2">
+            {causeOptions.map((c) => (
+              <View className="w-[48%]" key={c.v}>
+                {radio(
+                  c.v,
+                  c.l,
+                  causeOfDeath,
+                  (v) => {
+                    setCauseOfDeath(v);
+                    setErrCauseOfDeath(false);
+                  },
+                  errCauseOfDeath,
+                )}
+              </View>
+            ))}
+          </View>
+          {causeOfDeath === "Other" && (
+            <View className="gap-y-1.5 mt-1.5">
+              <View
+                className={`h-14 flex-row items-center rounded-xl px-4 border ${
+                  errCauseOfDeathOther
+                    ? "border-rose-400 bg-rose-50"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <TextInput
+                  placeholder={t("newborn_death_modal.specify_cause")}
+                  placeholderTextColor="#94a3b8"
+                  className="flex-1 text-slate-800 text-[16px] h-full"
+                  onChangeText={(v) => {
+                    setCauseOfDeathOther(v);
+                    if (v.trim()) setErrCauseOfDeathOther(false);
+                  }}
+                  value={causeOfDeathOther}
+                />
+              </View>
+              {errCauseOfDeathOther && (
+                <Text className="text-rose-500 text-xs ml-1 font-semibold">
+                  {t("newborn_death_modal.specify_cause_error")}
+                </Text>
+              )}
+            </View>
+          )}
         </View>
 
-        {/* Submit */}
+        <View className="gap-y-1.5">
+          <FieldLabel label={t("newborn_death_modal.death_place")} required />
+          <View className="flex-row flex-wrap gap-2">
+            {[
+              { value: "Home", label: t("newborn_death_modal.home") },
+              {
+                value: "Institution",
+                label: t("newborn_death_modal.institution"),
+              },
+              { value: "Other", label: t("newborn_death_modal.other") },
+            ].map((c) => (
+              <View className="w-[31%]" key={c.value}>
+                {radio(
+                  c.value,
+                  c.label,
+                  deathPlace,
+                  (v) => {
+                    setDeathPlace(v);
+                    setErrDeathPlace(false);
+                  },
+                  errDeathPlace,
+                )}
+              </View>
+            ))}
+          </View>
+          {deathPlace === "Other" && (
+            <View className="gap-y-1.5 mt-1.5">
+              <View
+                className={`h-14 flex-row items-center rounded-xl px-4 border ${
+                  errDeathPlaceOther
+                    ? "border-rose-400 bg-rose-50"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <TextInput
+                  placeholder={t("newborn_death_modal.specify_place")}
+                  placeholderTextColor="#94a3b8"
+                  className="flex-1 text-slate-800 text-[16px] h-full"
+                  onChangeText={(v) => {
+                    setDeathPlaceOther(v);
+                    if (v.trim()) setErrDeathPlaceOther(false);
+                  }}
+                  value={deathPlaceOther}
+                />
+              </View>
+              {errDeathPlaceOther && (
+                <Text className="text-rose-500 text-xs ml-1 font-semibold">
+                  {t("newborn_death_modal.specify_place_error")}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+
+        <TextArea
+          label={t("newborn_death_modal.remarks")}
+          placeholder={t("newborn_death_modal.remarks_placeholder")}
+          value={remarks}
+          onChangeText={setRemarks}
+          numberOfLines={4}
+        />
+
         <View className="pt-2">
           <Button
             onPress={handleSave}
@@ -665,7 +878,6 @@ export default function NewbornDeathForm({
             title={t("newborn_death_modal.save")}
           />
         </View>
-
       </View>
     </View>
   );

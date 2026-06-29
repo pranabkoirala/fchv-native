@@ -2,18 +2,18 @@ import { API_LIST } from "@/api/API_LIST";
 import { httpClient } from "@/api/client/httpClient";
 import { clearTable } from "@/hooks/database/models/CommonModal";
 import {
-  insertToTempAncVisitTable,
-  moveTempToRealAncVisitTable,
-} from "@/hooks/database/models/AncVisitModel";
+  insertToTempPncVisitTable,
+  moveTempToRealPncVisitTable,
+} from "@/hooks/database/models/PncVisitModel";
 import { PaginationType } from "../types/global_api";
 
-const fetchAncVisitsFromServer = async (
+const fetchPncVisitsFromServer = async (
   params: { sync_timestamp?: string | null } = {},
 ) => {
-  let URL = `${API_LIST.anc_visits.get}?page=1&page_size=200`;
+  let URL = `${API_LIST.pnc_visits.get}?page=1&page_size=200`;
   let isEOR = false;
 
-  await clearTable("anc_visit_staging");
+  await clearTable("pnc_visit_staging");
 
   while (!isEOR) {
     const res = await httpClient.get<PaginationType<any> | any[]>(URL, {
@@ -35,12 +35,12 @@ const fetchAncVisitsFromServer = async (
     }
 
     if (results.length) {
-      await insertToTempAncVisitTable(results);
+      await insertToTempPncVisitTable(results);
     }
   }
 
-  await moveTempToRealAncVisitTable();
-  await clearTable("anc_visit_staging");
+  await moveTempToRealPncVisitTable();
+  await clearTable("pnc_visit_staging");
 };
 
-export { fetchAncVisitsFromServer };
+export { fetchPncVisitsFromServer };

@@ -1,12 +1,6 @@
 import { X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View
-} from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HmisRecordStoreType } from "../../hooks/database/types/hmisRecordModal";
 import { MaternalDeathStoreType } from "../../hooks/database/types/maternalDeathModal";
@@ -20,7 +14,13 @@ interface MaternalDeathModalProps {
   showToast: (msg: string) => void;
 }
 
-export default function MaternalDeathModal({ visible, onClose, record, onSuccess, showToast }: MaternalDeathModalProps) {
+export default function MaternalDeathModal({
+  visible,
+  onClose,
+  record,
+  onSuccess,
+  showToast,
+}: MaternalDeathModalProps) {
   const { t } = useTranslation();
 
   return (
@@ -34,14 +34,22 @@ export default function MaternalDeathModal({ visible, onClose, record, onSuccess
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 py-4 bg-white border-b border-slate-100">
           <View>
-            <Text className="text-slate-800 text-xl font-semibold">{t("maternal_death_modal.title")}</Text>
+            <Text className="text-slate-800 text-xl font-semibold">
+              {t("maternal_death_modal.title")}
+            </Text>
           </View>
-          <Pressable onPress={onClose} className="bg-slate-50 p-2 rounded-full border border-slate-100">
+          <Pressable
+            onPress={onClose}
+            className="bg-slate-50 p-2 rounded-full border border-slate-100"
+          >
             <X size={20} color="#64748B" />
           </Pressable>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} className="px-5 flex-1 mt-5">
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          className="px-5 flex-1 pt-6"
+        >
           <MaternalDeathForm
             record={record}
             onSuccess={(updatedDeath) => {

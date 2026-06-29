@@ -1,6 +1,12 @@
+import { API_LIST } from "@/api/API_LIST";
+import { httpClient } from "@/api/client/httpClient";
+import { doSync } from "@/api/services/sync/sync";
 import { Button } from "@/components/button";
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, STAFF_ID_KEY } from "@/constants/token";
+import storage from "@/utils/storage";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { jwtDecode } from "jwt-decode";
 import { Eye, EyeOff, Lock, User } from "lucide-react-native";
 import { useState } from "react";
 import {
@@ -12,7 +18,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -33,65 +39,67 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    router.replace("/dashboard");
     // Validation
-    // if (!phone.trim() || !pin.trim()) {
-    //   setErrorMessage(
-    //     t("login.error_required") || "Username and password are required.",
-    //   );
-    //   return;
-    // }
+    if (!phone.trim() || !pin.trim()) {
+      setErrorMessage(
+        t("login.error_required") || "Username and password are required.",
+      );
+      return;
+    }
 
-    // setIsLoading(true);
-    // setErrorMessage("");
+    setIsLoading(true);
+    setErrorMessage("");
 
-    // try {
-    //   const response = await httpClient.post<LoginResponse>(
-    //     API_LIST.token.post,
-    //     { username: phone.trim(), password: pin },
-    //   );
+    try {
+      const response = await httpClient.post<LoginResponse>(
+        API_LIST.token.post,
+        { username: phone.trim(), password: pin },
+      );
 
-    //   const { access, refresh } = response.data;
+      const { access, refresh } = response.data;
 
-    //   // Store both tokens in AsyncStorage
-    //   await storage.set(ACCESS_TOKEN_KEY, access);
-    //   await storage.set(REFRESH_TOKEN_KEY, refresh);
+      const decoded = jwtDecode<{ staff_id: string }>(access);
 
-    //   try {
-    //     await doSync({ throwOnError: true });
-    //   } catch (syncError) {
-    //     console.error("Initial database sync failed:", syncError);
-    //     setErrorMessage(
-    //       "Login successful, but database sync failed. Please try again.",
-    //     );
-    //     return;
-    //   }
+      // Store both tokens in AsyncStorage
+      await storage.set(ACCESS_TOKEN_KEY, access);
+      await storage.set(REFRESH_TOKEN_KEY, refresh);
+      await storage.set(STAFF_ID_KEY, decoded?.staff_id)
 
-    //   // Navigate to dashboard
-    //   router.replace("/dashboard");
-    // } catch (error: any) {
-    //   if (error?.response) {
-    //     const status = error.response.status;
-    //     if (status === 401 || status === 400) {
-    //       setErrorMessage(
-    //         t("login.error_invalid") || "Invalid username or password.",
-    //       );
-    //     } else {
-    //       setErrorMessage(`Server error (${status}). Please try again later.`);
-    //     }
-    //   } else if (
-    //     error?.code === "ERR_NETWORK" ||
-    //     error?.message?.includes("Network")
-    //   ) {
-    //     setErrorMessage(
-    //       "Cannot reach the server. Check your internet connection.",
-    //     );
-    //   } else {
-    //     setErrorMessage("Something went wrong. Please try again.");
-    //   }
-    // } finally {
-    //   setIsLoading(false);
-    // }
+      try {
+        await doSync({ throwOnError: true });
+      } catch (syncError) {
+        console.error("Initial database sync failed:", syncError);
+        setErrorMessage(
+          "Login successful, but database sync failed. Please try again.",
+        );
+        return;
+      }
+
+      // Navigate to dashboard
+      router.replace("/dashboard");
+    } catch (error: any) {
+      if (error?.response) {
+        const status = error.response.status;
+        if (status === 401 || status === 400) {
+          setErrorMessage(
+            t("login.error_invalid") || "Invalid username or password.",
+          );
+        } else {
+          setErrorMessage(`Server error (${status}). Please try again later.`);
+        }
+      } else if (
+        error?.code === "ERR_NETWORK" ||
+        error?.message?.includes("Network")
+      ) {
+        setErrorMessage(
+          "Cannot reach the server. Check your internet connection.",
+        );
+      } else {
+        setErrorMessage("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

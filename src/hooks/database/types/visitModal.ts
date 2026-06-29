@@ -1,4 +1,4 @@
-export type VisitType = 'ANC' | 'PNC';
+export type VisitType = 'ANC' | 'PNC' | 'OTHER';
 
 export type VisitStoreType = {
   id: string;
@@ -9,6 +9,7 @@ export type VisitStoreType = {
   visit_date: string;
   visit_type: VisitType;
   visit_place: string | null;
+  visit_number?: number | null;
   reg_year?: number | null;
   reg_month: number | null;
   created_at: string;
@@ -22,5 +23,6 @@ export type CreateVisitPayload = {
   visit_date: string;
   visit_type: VisitType;
   visit_place?: string;
+  visit_number?: number;
   is_synced?: boolean;
 };

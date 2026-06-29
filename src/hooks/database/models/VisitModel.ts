@@ -15,8 +15,8 @@ export async function createVisit(
 
   await db.runAsync(
     `INSERT OR REPLACE INTO visit 
-      (id, mother, name, visit_date, visit_type, visit_place, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      (id, mother, name, visit_date, visit_type, visit_place, visit_number, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       id,
       payload.mother,
@@ -24,6 +24,7 @@ export async function createVisit(
       payload.visit_date,
       payload.visit_type,
       payload.visit_place ?? null,
+      payload.visit_number ?? 1,
       payload.is_synced ? 1 : 0,
       0,
       currentYear,
@@ -40,6 +41,7 @@ export async function createVisit(
     visit_date: payload.visit_date,
     visit_type: payload.visit_type,
     visit_place: payload.visit_place ?? null,
+    visit_number: payload.visit_number ?? 1,
     is_synced: payload.is_synced ? 1 : 0,
     is_deleted: 0,
     reg_year: currentYear,
@@ -76,6 +78,10 @@ export async function updateVisit(
   if (payload.visit_place !== undefined) {
     sets.push("visit_place = ?");
     values.push(payload.visit_place);
+  }
+  if (payload.visit_number !== undefined) {
+    sets.push("visit_number = ?");
+    values.push(payload.visit_number);
   }
   if (payload.is_synced !== undefined) {
     values[1] = payload.is_synced ? 1 : 0;
@@ -165,6 +171,15 @@ export async function getVisitsByMotherId(
   );
 }
 
+export async function getMaxVisitNumberByMother(motherId: string): Promise<number> {
+  const db = await getDb();
+  const result = await db.getFirstAsync<{ max: number | null }>(
+    `SELECT MAX(visit_number) as max FROM visit WHERE mother = ? AND is_deleted = 0`,
+    [motherId],
+  );
+  return result?.max ?? 0;
+}
+
 export async function insertToTempVisitTable(apiRes: any[]) {
   if (!apiRes.length) return;
 
@@ -176,6 +191,7 @@ export async function insertToTempVisitTable(apiRes: any[]) {
     "visit_date",
     "visit_type",
     "visit_place",
+    "visit_number",
     "reg_year",
     "reg_month",
     "is_synced",
@@ -202,6 +218,7 @@ export async function insertToTempVisitTable(apiRes: any[]) {
           item.visit_date,
           item.visit_type,
           item.visit_place ?? item.visit_notes ?? null,
+          item.visit_number ?? 1,
           item.reg_year ?? null,
           item.reg_month ?? null,
           1,
@@ -225,15 +242,16 @@ export async function moveTempToRealVisitTable() {
     await db.runAsync(
       `
       INSERT INTO visit
-        (id, mother, name, visit_date, visit_type, visit_place, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
+        (id, mother, name, visit_date, visit_type, visit_place, visit_number, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
       VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         mother = excluded.mother,
         name = excluded.name,
         visit_date = excluded.visit_date,
         visit_type = excluded.visit_type,
         visit_place = excluded.visit_place,
+        visit_number = excluded.visit_number,
         reg_year = excluded.reg_year,
         reg_month = excluded.reg_month,
         is_synced = excluded.is_synced,
@@ -250,6 +268,7 @@ export async function moveTempToRealVisitTable() {
         item.visit_date,
         item.visit_type,
         item.visit_place ?? null,
+        item.visit_number ?? 1,
         item.reg_year ?? null,
         item.reg_month ?? null,
         1,

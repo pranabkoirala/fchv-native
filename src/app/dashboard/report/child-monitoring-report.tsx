@@ -9,7 +9,7 @@ import {
   StatusBar,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "../../../components/CustomHeader";
@@ -129,7 +129,7 @@ export default function ChildMonitoringReportScreen() {
                 activeOpacity={0.7}
                 onPress={() =>
                   router.push({
-                    pathname: "/dashboard/report/child-monitoring-details",
+                    pathname: "/dashboard/child/child-profile",
                     params: { id: item.id },
                   })
                 }

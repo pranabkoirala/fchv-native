@@ -1,8 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Baby, User } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, StatusBar, Text, TouchableOpacity, View } from "react-native";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {
+  Animated,
+  Dimensions,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "../../../components/CustomHeader";
 import MotherForm from "../../../components/MotherForm";
@@ -57,7 +64,12 @@ const TabIndicator = ({
 export default function AddMotherScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { id, step: initialStep, from, mode } = useLocalSearchParams<{
+  const {
+    id,
+    step: initialStep,
+    from,
+    mode,
+  } = useLocalSearchParams<{
     id: string;
     step?: string;
     from?: string;
@@ -95,7 +107,7 @@ export default function AddMotherScreen() {
           } else if (step === 1 && !id) {
             setStep(0);
           } else {
-            router.back();
+            router.replace("/dashboard");
           }
         }}
       />

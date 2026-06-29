@@ -313,7 +313,7 @@ export default function PregnancyDetailsScreen() {
                                         </View>
                                         <View>
                                             <Text className="font-semibold text-slate-800 text-[15px]">
-                                                {child.baby_name || (language === "np" ? "नाम नखुलेको" : "Unnamed")}
+                                                {child.baby_name || (language === "np" ? "वजात शिशु" : "Unnamed")}
                                             </Text>
                                             <Text className="text-[12px] text-slate-400 mt-0.5">
                                                 {child.gender || "-"} | DOB: {child.date_of_birth || "-"}

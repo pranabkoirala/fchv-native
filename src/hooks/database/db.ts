@@ -27,7 +27,7 @@ async function initSyncDefaultColumns(): Promise<void> {
     [
       "mother",
       "visit",
-      "anc_visit",
+      "pnc_visit",
       "todo",
       "pregnancy",
       "adolescent_ifa",
@@ -40,6 +40,7 @@ async function initSyncDefaultColumns(): Promise<void> {
       "counseling_referral",
       "child_counseling",
       "child_vaccination",
+      "delivery",
     ],
   );
 }
@@ -180,18 +181,17 @@ export async function initDatabase(): Promise<void> {
 }
 
 export async function clearDatabase(): Promise<void> {
-  const db = await getDb();
-
-  const tables = await db.getAllAsync<{ name: string }>(
-    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'android_metadata'"
-  );
-
-  for (const table of tables) {
-    await db.execAsync(`DELETE FROM ${table.name};`);
+  if (dbPromise) {
+    const db = await dbPromise;
+    await db.closeAsync();
+    dbPromise = null;
   }
 
-  // Re-seed sync tracking so new sessions can sync without app restart.
-  await initSyncDefaultColumns();
+  initPromise = null;
 
-  console.log("ALL TABLE ERASED");
+  await SQLite.deleteDatabaseAsync("myapp.db");
+
+  await initDatabase();
+
+  console.log("DATABASE FULLY RESET");
 }

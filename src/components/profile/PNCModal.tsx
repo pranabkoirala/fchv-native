@@ -1,5 +1,5 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { VisitStoreType } from "@/hooks/database/types/visitModal";
+import { PncVisitStoreType } from "@/hooks/database/types/pncVisitModal";
 import { Calendar as CalendarIcon, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
@@ -10,8 +10,8 @@ interface PNCModalProps {
   onClose: () => void;
   motherId: string;
   slotIndex: number; // 0..3
-  existingVisits: VisitStoreType[];
-  editingVisit?: VisitStoreType | null;
+  existingVisits: PncVisitStoreType[];
+  editingVisit?: PncVisitStoreType | null;
   onDone: (dateBs: string, place: "home" | "health_post") => void;
 }
 

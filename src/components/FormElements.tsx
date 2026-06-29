@@ -4,7 +4,7 @@ import { X, ChevronDown, Save } from "lucide-react-native";
 import Dropdown from "react-native-input-select";
 
 export const FieldLabel = ({ label, required }: { label: string, required?: boolean }) => (
-  <Text className="text-gray-800 text-[16px] mb-2">
+  <Text className="text-gray-800 text-[16px]">
     {label}
     {required && <Text className="text-red-500"> *</Text>}
   </Text>

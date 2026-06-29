@@ -1,8 +1,14 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
-import Colors from '../constants/Colors';
+import { useRouter } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
+import React from "react";
+import {
+  StyleProp,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
+import Colors from "../constants/Colors";
 
 type CustomHeaderProps = {
   title: string;
@@ -13,13 +19,13 @@ type CustomHeaderProps = {
   onBackPress?: () => void;
 };
 
-export default function CustomHeader({ 
-  title, 
+export default function CustomHeader({
+  title,
   subtitle,
-  rightNode, 
+  rightNode,
   containerStyle,
-  className = "pt-4 pb-4 px-5",
-  onBackPress
+  className = "pt-2 pb-2 px-5",
+  onBackPress,
 }: CustomHeaderProps) {
   const router = useRouter();
 
@@ -35,19 +41,23 @@ export default function CustomHeader({
   };
 
   return (
-    <View 
-      className={`flex-row items-center justify-between bg-white px-5 border-b border-gray-200 ${className}`}
+    <View
+      className={`flex-row items-center justify-between bg-white px-5 border-b border-gray-100 ${className}`}
       style={containerStyle}
     >
       <View className="flex-row items-center flex-1">
-        <TouchableOpacity 
-          onPress={handleBack} 
-          className="mr-1 p-2 rounded-xl"
-        >
-          <ChevronLeft size={22} color={Colors.textPrimary || "#1E293B"} strokeWidth={2.5} />
+        <TouchableOpacity onPress={handleBack} className="mr-1 p-2 rounded-xl">
+          <ChevronLeft
+            size={22}
+            color={Colors.textPrimary || "#1E293B"}
+            strokeWidth={2.5}
+          />
         </TouchableOpacity>
         <View className="flex-1">
-          <Text className="font-semibold text-[19px]" style={{ color: Colors.textPrimary || "#1E293B" }}>
+          <Text
+            className="font-semibold text-[18px]"
+            style={{ color: Colors.textPrimary || "#1E293B" }}
+          >
             {title}
           </Text>
           {subtitle && (
@@ -57,14 +67,8 @@ export default function CustomHeader({
           )}
         </View>
       </View>
-      
-      {rightNode ? (
-        <View>
-          {rightNode}
-        </View>
-      ) : (
-        <View className="w-10" /> 
-      )}
+
+      {rightNode ? <View>{rightNode}</View> : <View className="w-10" />}
     </View>
   );
 }

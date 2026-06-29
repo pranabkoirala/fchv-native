@@ -1,5 +1,5 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { VisitStoreType } from "@/hooks/database/types/visitModal";
+import { PncVisitStoreType } from "@/hooks/database/types/pncVisitModal";
 import { formatBsDate } from "@/utils/dateHelper";
 import { Pencil, X } from "lucide-react-native";
 import { Modal, Pressable, Text, View } from "react-native";
@@ -7,7 +7,7 @@ import { Modal, Pressable, Text, View } from "react-native";
 interface PNCDetailModalProps {
   visible: boolean;
   onClose: () => void;
-  visit: VisitStoreType | null;
+  visit: PncVisitStoreType | null;
   onEdit: () => void;
 }
 
