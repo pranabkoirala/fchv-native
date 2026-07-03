@@ -157,14 +157,6 @@ export const ALL_QUESTIONS: CounselingQuestion[] = [
     frequency: "one_time",
   },
   {
-    id: "bathed_after_24_hours",
-    en: "Did you bathe the baby only after 24 hours of birth?",
-    ne: "बच्चा जन्मिएको २४ घण्टा पूरा भएपछि मात्र नुहाउनुभएको थियो?",
-    type: "counseling",
-    category: "postpartum",
-    frequency: "one_time",
-  },
-  {
     id: "vitamin_a_given",
     en: "Did you give Vitamin A to the mother?",
     ne: "आमालाई भिटामिन ए दिनुभयो?",

@@ -71,6 +71,26 @@ import {
   sendUnsyncedDeliveriesToServer,
 } from "./syncDelivery";
 import {
+  getUnsyncedChildBirthRegistrationsFromServer,
+  sendUnsyncedChildBirthRegistrationsToServer,
+} from "./syncChildBirthRegistration";
+import {
+  getUnsyncedChildDeathRegistrationsFromServer,
+  sendUnsyncedChildDeathRegistrationsToServer,
+} from "./syncChildDeathRegistration";
+import {
+  getUnsyncedFchvCounselingFromServer,
+  sendUnsyncedFchvCounselingToServer,
+} from "./syncFchvCounseling";
+import {
+  getUnsyncedChildNutritionFromServer,
+  sendUnsyncedChildNutritionToServer,
+} from "./syncChildNutrition";
+import {
+  getUnsyncedAbortionsFromServer,
+  sendUnsyncedAbortionsToServer,
+} from "./syncAbortion";
+import {
   hasPendingDatabaseHydration,
   hydrateDatabaseFromServer,
 } from "./hydrateDatabase";
@@ -110,6 +130,16 @@ const SYNCERS: Partial<
     getUnsyncedChildVaccinationFromServer(last_synced_at),
   delivery: (last_synced_at: string | null) =>
     getUnsyncedDeliveriesFromServer(last_synced_at),
+  child_birth_registration: (last_synced_at: string | null) =>
+    getUnsyncedChildBirthRegistrationsFromServer(last_synced_at),
+  child_death_registration: (last_synced_at: string | null) =>
+    getUnsyncedChildDeathRegistrationsFromServer(last_synced_at),
+  fchv_counseling: (last_synced_at: string | null) =>
+    getUnsyncedFchvCounselingFromServer(last_synced_at),
+  child_nutrition: (last_synced_at: string | null) =>
+    getUnsyncedChildNutritionFromServer(last_synced_at),
+  abortion: (last_synced_at: string | null) =>
+    getUnsyncedAbortionsFromServer(last_synced_at),
 };
 
 export let isGlobalSyncRunning = false;
@@ -172,6 +202,11 @@ const runSync = async ({ sendOnly, throwOnError }: SyncOptions) => {
     await sendUnsyncedChildCounselingToServer();
     await sendUnsyncedChildVaccinationToServer();
     await sendUnsyncedDeliveriesToServer();
+    await sendUnsyncedChildBirthRegistrationsToServer();
+    await sendUnsyncedChildDeathRegistrationsToServer();
+    await sendUnsyncedFchvCounselingToServer();
+    await sendUnsyncedChildNutritionToServer();
+    await sendUnsyncedAbortionsToServer();
 
     if (await hasPendingDatabaseHydration()) {
       await hydrateDatabaseFromServer();
@@ -206,9 +241,19 @@ const runSync = async ({ sendOnly, throwOnError }: SyncOptions) => {
                           ? "child_counseling"
                           : table === "child-vaccination" || table === "child_vaccinations"
                             ? "child_vaccination"
-                            : table === "deliveries"
-                              ? "delivery"
-                              : table;
+                        : table === "deliveries"
+                          ? "delivery"
+                          : table === "child_birth_registrations" || table === "child-birth-registrations"
+                            ? "child_birth_registration"
+                            : table === "child_death_registrations" || table === "child-death-registrations"
+                              ? "child_death_registration"
+                      : table === "fchv_counseling" || table === "fchv_counselings" || table === "fchv-counseling" || table === "fchv-counselings"
+                        ? "fchv_counseling"
+                        : table === "child_nutrition" || table === "child_nutritions" || table === "child-nutrition" || table === "child-nutritions"
+                          ? "child_nutrition"
+                        : table === "abortion" || table === "abortions"
+                          ? "abortion"
+                          : table;
       const fn = SYNCERS[tableName as SyncTableType];
       if (!fn) continue;
 

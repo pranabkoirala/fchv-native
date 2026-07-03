@@ -82,6 +82,13 @@ export default function DashboardLayout() {
             drawerItemStyle: { display: "none" },
           }}
         />
+        <Drawer.Screen
+          name="fchv-counseling"
+          options={{
+            title: "FCHV Counseling",
+            drawerItemStyle: { display: "none" },
+          }}
+        />
       </Drawer>
       <BottomNavigation />
     </View>

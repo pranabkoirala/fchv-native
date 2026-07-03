@@ -41,7 +41,8 @@ export const ProfilePicker = ({
           if (typeof option === 'object' && option !== null && 'value' in option) {
             return {
               label: option.label || getOptionLabel?.(option.value) || option.value,
-              value: option.value
+              value: option.value,
+              disabled: option.disabled,
             };
           }
           return {

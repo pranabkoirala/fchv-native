@@ -39,6 +39,13 @@ export async function getFamilyPlanningByMother(
   return result || null;
 }
 
+export async function getAllFamilyPlanning(): Promise<FamilyPlanningStoreType[]> {
+  const db = await getDb();
+  return await db.getAllAsync<FamilyPlanningStoreType>(
+    `SELECT * FROM family_planning WHERE is_deleted = 0 ORDER BY created_at DESC`,
+  );
+}
+
 export async function saveFamilyPlanning(payload: {
   id?: string;
   mother: string;

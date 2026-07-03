@@ -56,7 +56,7 @@
       "title": "छिटो पहुँच",
       "register_mother": "गर्भवती महिला दर्ता",
       "register_child": "बालबालिका दर्ता",
-      "add_adolescent": "किशोरी आइरन वितरण",
+      "add_adolescent": "आइरन वितरण",
       "pregnant_woman": "गर्भवती महिला",
       "newborn": "नवजात शिशु",
       "pnc_visit": "सुत्केरी भेट",
@@ -64,7 +64,40 @@
       "death_report": "मृत्यु विवरण",
       "children": "बालबालिका",
       "delivery": "सुत्केरी दर्ता",
-      "follow_up": "फलो-अप"
+      "follow_up": "फलो-अप",
+      "fchv_council": "एफ सीए चभी",
+      "nutrition": "बाल पोषण"
+    },
+    "nutrition_page": {
+      "title": "बाल पोषण र बालभिटा",
+      "select_mother": "सुत्केरी आमा चयन गर्नुहोस्",
+      "select_mother_placeholder": "आमा छान्नुहोस्",
+      "no_mothers_found": "कुनै पनि योग्य आमा फेला परेनन्",
+      "child_info": "बालबालिकाको विवरण",
+      "child_name": "बच्चाको नाम",
+      "child_age": "बच्चाको उमेर",
+      "months": "महिना",
+      "nutrition_names": "पोषण सामग्रीहरू",
+      "add_nutrition": "पोषण थप्नुहोस्",
+      "nutrition_placeholder": "जस्तै: भिटामिन ए, आइरन सिरप",
+      "balvita_packets": "बालभिटा प्याकेटको संख्या",
+      "balvita_placeholder": "प्याकेट संख्या प्रविष्ट गर्नुहोस्",
+      "save": "सेभ गर्नुहोस्",
+      "saving": "सेभ हुँदै...",
+      "success": "पोषण रेकर्ड सफलतापूर्वक सेभ गरियो",
+      "error": "पोषण रेकर्ड सेभ गर्न असफल",
+      "select_mother_first": "कृपया पहिले आमा चयन गर्नुहोस्",
+      "add_nutrition_first": "कृपया कम्तीमा एउटा पोषण सामग्री थप्नुहोस्",
+      "balvita_required": "कृपया बालभिटा प्याकेटको संख्या प्रविष्ट गर्नुहोस्",
+      "child_not_found": "यस आमाको १८ महिना भन्दा कम उमेरको बच्चा फेला परेन",
+      "mother_not_delivered": "यस आमाको सुत्केरी विवरण छैन",
+      "child_age_group": "बच्चाको उमेर समूह",
+      "child_age_group_placeholder": "उमेर समूह चयन गर्नुहोस्",
+      "times_per_month": "प्रति महिना पटक",
+      "times_per_month_placeholder": "पटक चयन गर्नुहोस्",
+      "already_given": "यस बच्चालाई यस महिना पोषण दिइसकिएको छ",
+      "remaining_slots": "बाँकी: %{count} पटक यस महिना",
+      "subtitle": "१८ महिना मुनिका बालबालिकालाई पोषण सामग्री र बालभिटा प्रदान गर्नुहोस्"
     },
     "sections": {
       "quick_forms": "फारम दर्ता",
@@ -73,7 +106,9 @@
       "community_pulse_subtitle": "एक नजरमा प्रमुख स्वास्थ्य सूचकहरू",
       "recent_activity": "हालैका गतिविधिहरू",
       "tasks_today": "आजका कार्यहरू",
-      "view_all": "सबै हेर्नुहोस्"
+      "view_all": "सबै हेर्नुहोस्",
+      "death_stats": "मृत्यु तथ्याङ्क",
+      "health_summary": "स्वास्थ्य सारांश"
     },
     "stats_labels": {
       "mothers": "आमाहरू",
@@ -95,7 +130,10 @@
       "pregnancy_title": "गर्भावस्था प्रवृत्ति",
       "pregnancy_sub": "मासिक दर्ताहरू",
       "child_title": "शिशु जन्म प्रवृत्ति",
-      "child_sub": "मासिक जन्महरू"
+      "child_sub": "मासिक जन्महरू",
+      "mothers": "आमाहरू",
+      "pregnancies": "गर्भावस्थाहरू",
+      "children": "बालबालिका"
     },
     "health_summary": {
       "under_29_days": "२९ दिनभन्दा कम बच्चाहरू",
@@ -501,7 +539,19 @@
     "remarks": "कैफियत",
     "add_pregnancy": "गर्भावस्था थप्नुहोस्",
     "add_child": "बच्चा थप्नुहोस्",
-    "family_planning_method": "परिवार नियोजन साधन प्रयोग"
+    "family_planning_method": "परिवार नियोजन साधन प्रयोग",
+    "abortion": {
+      "title": "गर्भपतन",
+      "question": "के महिलाले गर्भपतन गराइन्?",
+      "yes": "गर्भपतन भएको",
+      "confirm_title": "गर्भपतन पुष्टि गर्नुहोस्",
+      "confirm_message": "के आमाले गर्भपतन गराउनुभएको हो? यसले हालको गर्भावस्था रेकर्ड समाप्त गर्नेछ।",
+      "confirm_action": "गर्भपतन थप्नुहोस्",
+      "add_action": "गर्भपतन थप्नुहोस्",
+      "save_success": "गर्भपतन विवरण सफलतापूर्वक सुरक्षित गरियो",
+      "save_error": "गर्भपतन विवरण सुरक्षित गर्न असफल भयो",
+      "already_recorded": "रेकर्ड गरियो"
+    }
   },
   "anc_modal": {
     "subtitle": "गर्भावस्था जाँच तालिका",
@@ -555,6 +605,7 @@
       "pregnancy": "गर्भवती",
       "delivery": "सुत्केरी",
       "mother_meeting": "आमा समूह बैठक",
+      "adolescent": "किशोरीहरू",
       "visit": "भ्रमण"
     },
     "search_by_name_ward": "नाम खोज्नुहोस्...",
@@ -856,6 +907,7 @@
     "validation": {
       "mother_req": "कृपया आमा चयन गर्नुहोस्",
       "gravida_req": "गर्भावस्था संख्या आवश्यक छ",
+      "gravida_min": "गर्भावस्था संख्या १ वा सोभन्दा बढी हुनुपर्छ",
       "parity_req": "जन्म संख्या आवश्यक छ",
       "lmp_req": "LMP मिति आवश्यक छ",
       "caretaker_name_req": "श्रीमानको नाम आवश्यक छ",
@@ -1028,7 +1080,7 @@
     "language_sub": "तपाईंको मनपर्ने भाषा चयन गर्नुहोस्",
     "data_sync": "तथ्याङ्क सिङ्क्रोनाइजेसन",
     "last_synced": "अन्तिम सिङ्क: आज, बिहान १०:३०",
-    "sync_now": "अहिले सिङ्क गर्नुहोस्",
+    "sync_now": "सिङ्क गर्नुहोस्",
     "syncing": "सिङ्क हुँदैछ...",
     "db_inspector": "डाटाबेस इन्स्पेक्टर",
     "db_inspector_sub": "स्थानीय भण्डारण विवरणहरू हेर्नुहोस्",
@@ -1049,12 +1101,44 @@
     "export_error_msg": "PDF प्रतिवेदन डाउनलोड गर्न सकिएन।",
     "download_reports": "प्रतिवेदन डाउनलोड",
     "download_all": "सबै प्रतिवेदन डाउनलोड गर्नुहोस्",
+    "download_collected_data": "मासिक / वार्षिक संकलित तथ्याङ्क",
+    "download_collected_data_subtitle": "वर्ष वा महिनाअनुसार सारांश तालिका डाउनलोड गर्नुहोस्",
     "report_pregnancy": "गर्भवती विवरण",
     "report_maternal_death": "मातृ मृत्यु विवरण",
     "report_newborn_death": "नवजात शिशु मृत्यु",
     "report_child_death": "बाल मृत्यु (२८ दिन–५९ महिना)",
     "report_infant_care": "शिशु स्याहार",
-    "report_adolescent_ifa": "आइरन सेवन किशोरी"
+    "report_adolescent_ifa": "आइरन सेवन किशोरी",
+    "municipality_label": "नगरपालिका",
+    "org_code_label": "संस्था कोड",
+    "ward_label": "वडा",
+    "active": "सक्रिय",
+    "personal_details": "व्यक्तिगत विवरण",
+    "phone": "फोन",
+    "date_of_birth": "जन्म मिति",
+    "training_date": "तालिम मिति",
+    "about_me": "मेरो बारेमा",
+    "organization": "संस्था",
+    "contact_person": "सम्पर्क व्यक्ति",
+    "address_details": "ठेगाना विवरण",
+    "organization_address": "संस्थाको ठेगाना",
+    "fchv_address": "स्वयंसेविकाको ठेगाना",
+    "province": "प्रदेश",
+    "district": "जिल्ला",
+    "municipality": "गाउँपालिका/नगरपालिका",
+    "municipality_locality": "गाउँपालिका/नगरपालिका, टोल",
+    "ward": "वडा",
+    "settings": "सेटिङ्गहरू",
+    "nepali": "नेपाली",
+    "english": "English",
+    "select_month": "महिना छान्नुहोस्",
+    "select_month_subtitle": "रिपोर्ट डाउनलोड गर्न महिना चयन गर्नुहोस्",
+    "select_collected_period": "अवधि छान्नुहोस्",
+    "select_collected_period_subtitle": "नेपाली वर्ष वा कुनै एक महिना चयन गर्नुहोस्",
+    "download_all_data": "सबै डाटा डाउनलोड",
+    "download_all_data_subtitle": "सम्पूर्ण रिपोर्टहरू एकै पटक डाउनलोड गर्नुहोस्",
+    "download_yearly_collected_data": "वार्षिक तथ्याङ्क डाउनलोड",
+    "download_yearly_collected_data_subtitle": "चयन गरिएको नेपाली वर्षका सबै महिनाको तालिका डाउनलोड गर्नुहोस्"
   },
   "adolescent_page": {
     "title": "किशोरी आइरन वितरण",
@@ -1194,6 +1278,7 @@
       "mother_required": "आमा छनौट गर्न आवश्यक छ",
       "baby_name_required": "शिशुको नाम आवश्यक छ",
       "birth_date_required": "जन्म मिति आवश्यक छ",
+      "gender_required": "लिङ्ग आवश्यक छ",
       "fill_fields": "कृपया सबै आवश्यक क्षेत्रहरू भर्नुहोस्",
       "error": "त्रुटि"
     },
@@ -1293,7 +1378,24 @@
     "save_continue": "सुरक्षित गर्नुहोस् ",
     "referral_counseling": "रेफरल परामर्श",
     "general_counseling": "सामान्य परामर्श",
-    "recorded_dates": "रेकर्ड मितिहरू"
+    "recorded_dates": "रेकर्ड मितिहरू",
+    "birth_registration_counseling": "नवजात शिशुको ३५ दिनभित्र जन्म दर्ताका लागि परामर्श दिएको परिवार संख्या (परिवार)",
+    "death_registration_counseling": "मृत्यु भएको ३५ दिनभित्र मृत्यु दर्ताका लागि परामर्श दिएको परिवार संख्या (परिवार)",
+    "reg_counseling_title": "दर्ता सम्बन्धी परामर्श"
+  },
+  "birth_registration": {
+    "title": "जन्म दर्ता",
+    "registered": "दर्ता भयो",
+    "not_recorded": "दर्ता भएको छैन",
+    "marked_done": "दर्ता भएको चिन्ह लगाइयो",
+    "marked_not_done": "दर्ता नभएको चिन्ह लगाइयो"
+  },
+  "death_registration": {
+    "title": "मृत्यु दर्ता",
+    "registered": "दर्ता भयो",
+    "not_recorded": "दर्ता भएको छैन",
+    "marked_done": "दर्ता भएको चिन्ह लगाइयो",
+    "marked_not_done": "दर्ता नभएको चिन्ह लगाइयो"
   },
   "mothers_group_meeting": {
     "title": "आमा समूहको बैठक",
@@ -1407,7 +1509,15 @@
     "quantity_title": "मात्रा प्रविष्ट गर्नुहोस्",
     "quantity_save": "सुरक्षित गर्नुहोस्",
     "quantity_cancel": "रद्द गर्नुहोस्",
-    "invalid_quantity": "कृपया ० र {max} को बीचमा मान्य मात्रा प्रविष्ट गर्नुहोस्"
+    "invalid_quantity": "कृपया ० र {max} को बीचमा मान्य मात्रा प्रविष्ट गर्नुहोस्",
+    "child_counseling_title": "बाल परामर्श",
+    "child_unnamed": "बच्चा",
+    "sections": {
+      "one_time_counseling": "एक पटक परामर्श",
+      "routine_counseling": "नियमित परामर्श",
+      "health_status_counseling": "स्वास्थ्य अवस्था परामर्श",
+      "registration_counseling": "दर्ता परामर्श"
+    }
   },
   "delivery": {
     "title": "सुत्केरी दर्ता",
@@ -1451,6 +1561,45 @@
     "messages": {
       "save_success": "प्रसूति सफलतापूर्वक दर्ता गरियो",
       "save_failed": "प्रसूति दर्ता गर्न असफल भयो।"
+    }
+  },
+  "fchv_counseling": {
+    "page_title": "FCHV परामर्श",
+    "additional_information": "अतिरिक्त जानकारी",
+    "enter_name": "नाम प्रविष्ट गर्नुहोस्",
+    "add_name": "नाम थप्नुहोस्",
+    "save": "सुरक्षित गर्नुहोस्",
+    "update": "अपडेट गर्नुहोस्",
+    "save_success": "FCHV परामर्श सफलतापूर्वक सुरक्षित गरियो",
+    "save_failed": "FCHV परामर्श सुरक्षित गर्न असफल भयो",
+    "field_labels": {
+      "adolescent_referred_count": "स्वास्थ्य संस्थामा प्रेषण गरिएका किशोर-किशोरीको संख्या",
+      "adolescent_referred_names": "प्रेषण गरिएका किशोर-किशोरीहरूको नाम",
+      "cough_referred_count": "२ हप्ता वा सोभन्दा बढी समयदेखि खोकी लागेर प्रेषण गरिएका बिरामीको संख्या",
+      "cough_referred_names": "प्रेषण गरिएका खोकीका बिरामीहरूको नाम",
+      "first_aid_count": "प्राथमिक उपचार पाएका व्यक्तिको संख्या",
+      "first_aid_names": "प्राथमिक उपचार पाएका व्यक्तिहरूको नाम",
+      "first_aid_referred_count": "प्राथमिक उपचारपछि प्रेषण गरिएका बिरामीको संख्या",
+      "first_aid_referred_names": "प्राथमिक उपचारपछि प्रेषण गरिएका बिरामीहरूको नाम",
+      "child_health_education_count": "बाल स्वास्थ्य शिक्षामा सहभागी बालबालिकाको संख्या",
+      "child_health_education_names": "बाल स्वास्थ्य शिक्षामा सहभागी बालबालिकाहरूको नाम",
+      "ncd_health_education_count": "नसर्ने रोगका जोखिम र रोकथाम सम्बन्धी स्वास्थ्य शिक्षा पाएका व्यक्तिको संख्या",
+      "ncd_health_education_names": "स्वास्थ्य शिक्षा पाएका व्यक्तिहरूको नाम",
+      "ncd_beneficiaries_count": "नसर्ने रोग सम्बन्धी स्वास्थ्य शिक्षाबाट लाभान्वित व्यक्तिको संख्या",
+      "ncd_beneficiaries_names": "लाभान्वित व्यक्तिहरूको नाम",
+      "tb_referred_count": "शंकास्पद क्षयरोगका प्रेषण गरिएका बिरामीको संख्या",
+      "tb_referred_names": "प्रेषण गरिएका शंकास्पद क्षयरोगका बिरामीहरूको नाम",
+      "leprosy_referred_count": "शंकास्पद कुष्ठरोगका प्रेषण गरिएका बिरामीको संख्या",
+      "leprosy_referred_names": "प्रेषण गरिएका शंकास्पद कुष्ठरोगका बिरामीहरूको नाम",
+      "ncd_referred_count": "नसर्ने रोगका प्रेषण गरिएका बिरामीको संख्या",
+      "ncd_referred_names": "प्रेषण गरिएका नसर्ने रोगका बिरामीहरूको नाम",
+      "mental_health_referred_count": "मानसिक स्वास्थ्य समस्या भई प्रेषण गरिएका बिरामीको संख्या",
+      "mental_health_referred_names": "प्रेषण गरिएका मानसिक स्वास्थ्यका बिरामीहरूको नाम",
+      "elderly_referred_count": "स्वास्थ्य समस्या भई प्रेषण गरिएका ज्येष्ठ नागरिकको संख्या",
+      "elderly_referred_names": "प्रेषण गरिएका ज्येष्ठ नागरिकहरूको नाम",
+      "fchv_fund_amount": "म.स्वा.स्व. कोषमा जम्मा भएको रकम (रु.)",
+      "immunization_cleanliness_sessions": "खोप क्लिनिक वा सरसफाइ सेसनमा सहभागिता (पटक)",
+      "village_clinic_support": "गाउँघर क्लिनिक सञ्चालनमा सहयोग गरेको (पटक)"
     }
   }
 }

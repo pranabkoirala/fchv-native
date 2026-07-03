@@ -64,7 +64,40 @@
       "death_report": "Death Report",
       "children": "Children",
       "delivery": "Delivery",
-      "follow_up": "Follow-up"
+      "follow_up": "Follow-up",
+      "fchv_council": "FCHV Council",
+      "nutrition": "Child Nutrition"
+    },
+    "nutrition_page": {
+      "title": "Child Nutrition & Balvita",
+      "select_mother": "Select Delivered Mother",
+      "select_mother_placeholder": "Choose a mother",
+      "no_mothers_found": "No eligible mothers found",
+      "child_info": "Child Details",
+      "child_name": "Child Name",
+      "child_age": "Child Age",
+      "months": "months",
+      "nutrition_names": "Add Nutrition",
+      "add_nutrition": "Add Nutrition Item",
+      "nutrition_placeholder": "e.g. Vitamin A, Iron Syrup",
+      "balvita_packets": "Number of Balvita Packets",
+      "balvita_placeholder": "Enter number of packets",
+      "save": "Save Record",
+      "saving": "Saving...",
+      "success": "Nutrition record saved successfully",
+      "error": "Failed to save nutrition record",
+      "select_mother_first": "Please select a mother first",
+      "add_nutrition_first": "Please add at least one nutrition item",
+      "balvita_required": "Please enter number of Balvita packets",
+      "child_not_found": "No eligible child (under 18 months) found for this mother",
+      "mother_not_delivered": "This mother has no delivery records",
+      "child_age_group": "Child Age Group",
+      "child_age_group_placeholder": "Select age group",
+      "times_per_month": "Times Per Month",
+      "times_per_month_placeholder": "Select times",
+      "already_given": "This child has already been given nutrition",
+      "remaining_slots": "Remaining: %{count} time(s) this month",
+      "subtitle": "Provide nutrition supplements and Balvita to children under 18 months"
     },
     "sections": {
       "quick_forms": "Form Registration",
@@ -73,7 +106,9 @@
       "community_pulse_subtitle": "Key health indicators at a glance",
       "recent_activity": "Recent Activity",
       "tasks_today": "Tasks Today",
-      "view_all": "View All"
+      "view_all": "View All",
+      "death_stats": "Death Statistics",
+      "health_summary": "Health Summary"
     },
     "stats_labels": {
       "mothers": "Mothers",
@@ -95,7 +130,10 @@
       "pregnancy_title": "Pregnancy Trends",
       "pregnancy_sub": "Monthly registrations",
       "child_title": "Child Birth Trends",
-      "child_sub": "Monthly births"
+      "child_sub": "Monthly births",
+      "mothers": "Mothers",
+      "pregnancies": "Pregnancies",
+      "children": "Children"
     },
     "health_summary": {
       "under_29_days": "Children Under 29 Days",
@@ -503,7 +541,19 @@
     "remarks": "Remarks",
     "add_pregnancy": "Add Pregnancy",
     "add_child": "Add Child",
-    "family_planning_method": "Family Planning Method"
+    "family_planning_method": "Family Planning Method",
+    "abortion": {
+      "title": "Abortion",
+      "question": "Did the woman abort the baby?",
+      "yes": "Aborted",
+      "confirm_title": "Confirm Abortion",
+      "confirm_message": "Did the mother undergo an abortion? This will end the current pregnancy record.",
+      "confirm_action": "Yes, Aborted",
+      "add_action": "Add Abortion",
+      "save_success": "Abortion record saved successfully",
+      "save_error": "Failed to save abortion record",
+      "already_recorded": "Recorded"
+    }
   },
   "anc_modal": {
     "subtitle": "Pregnancy checkup schedule",
@@ -557,6 +607,7 @@
       "pregnancy": "Pregnancies",
       "delivery": "Deliveries",
       "mother_meeting": "Mother Meetings",
+      "adolescent": "Adolescents",
       "visit": "Visits"
     },
     "search_by_name_ward": "Search by name...",
@@ -858,6 +909,7 @@
     "validation": {
       "mother_req": "Please select a mother",
       "gravida_req": "Gravida is required",
+      "gravida_min": "Gravida must be 1 or greater",
       "parity_req": "Parity is required",
       "caretaker_name_req": "Caretaker's name is required",
       "caretaker_phone_req": "Caretaker's phone number is required",
@@ -1051,12 +1103,44 @@
     "export_error_msg": "Could not export database data.",
     "download_reports": "Download Reports",
     "download_all": "Download All Reports",
+    "download_collected_data": "Monthly / Yearly Collected Data",
+    "download_collected_data_subtitle": "Download the summary table by year or month",
     "report_pregnancy": "Pregnancy Records",
     "report_maternal_death": "Maternal Death",
     "report_newborn_death": "Newborn Death",
     "report_child_death": "Child Death (28d–59m)",
     "report_infant_care": "Infant Care",
-    "report_adolescent_ifa": "Iron-consuming adolescent"
+    "report_adolescent_ifa": "Iron-consuming adolescent",
+    "municipality_label": "Municipality",
+    "org_code_label": "Org Code",
+    "ward_label": "Ward",
+    "active": "Active",
+    "personal_details": "Personal Details",
+    "phone": "Phone",
+    "date_of_birth": "Date of Birth",
+    "training_date": "Training Date",
+    "about_me": "About Me",
+    "organization": "Organization",
+    "contact_person": "Contact Person",
+    "address_details": "Address Details",
+    "organization_address": "Organization Address",
+    "fchv_address": "FCHV Address",
+    "province": "Province",
+    "district": "District",
+    "municipality": "Municipality",
+    "municipality_locality": "Municipality, Locality",
+    "ward": "Ward",
+    "settings": "Settings",
+    "nepali": "नेपाली",
+    "english": "English",
+    "select_month": "Select Month",
+    "select_month_subtitle": "Choose a month to download the report",
+    "select_collected_period": "Select Period",
+    "select_collected_period_subtitle": "Choose a Nepali year or a single month",
+    "download_all_data": "Download All Data",
+    "download_all_data_subtitle": "Export every report at once",
+    "download_yearly_collected_data": "Download Yearly Data",
+    "download_yearly_collected_data_subtitle": "Export all months for the selected Nepali year"
   },
   "adolescent_page": {
     "title": "Adolescent Girls IFA",
@@ -1196,6 +1280,7 @@
       "mother_required": "Mother is required",
       "baby_name_required": "Baby name is required",
       "birth_date_required": "Birth date is required",
+      "gender_required": "Gender is required",
       "fill_fields": "Please fill all required fields",
       "error": "Error"
     },
@@ -1295,7 +1380,24 @@
     "save_continue": "Save & Continue",
     "referral_counseling": "Referral Counseling",
     "general_counseling": "General Counseling",
-    "recorded_dates": "Recorded Dates"
+    "recorded_dates": "Recorded Dates",
+    "birth_registration_counseling": "Number of families counseled for birth registration within 35 days of birth",
+    "death_registration_counseling": "Number of families counseled for death registration within 35 days of death",
+    "reg_counseling_title": "Registration Counseling"
+  },
+  "birth_registration": {
+    "title": "Birth Registration",
+    "registered": "Registered",
+    "not_recorded": "Not registered",
+    "marked_done": "Marked as registered",
+    "marked_not_done": "Marked as not registered"
+  },
+  "death_registration": {
+    "title": "Death Registration",
+    "registered": "Registered",
+    "not_recorded": "Not registered",
+    "marked_done": "Marked as registered",
+    "marked_not_done": "Marked as not registered"
   },
   "mothers_group_meeting": {
     "title": "Mothers' Group Meeting",
@@ -1409,7 +1511,15 @@
     "quantity_title": "Enter Quantity",
     "quantity_save": "Save",
     "quantity_cancel": "Cancel",
-    "invalid_quantity": "Please enter a valid quantity between 0 and {max}"
+    "invalid_quantity": "Please enter a valid quantity between 0 and {max}",
+    "child_counseling_title": "Child Counseling",
+    "child_unnamed": "Child",
+    "sections": {
+      "one_time_counseling": "One-Time Counseling",
+      "routine_counseling": "Routine Counseling",
+      "health_status_counseling": "Health Condition Counseling",
+      "registration_counseling": "Registration Counseling"
+    }
   },
   "delivery": {
     "title": "Delivery Registration",
@@ -1453,6 +1563,45 @@
     "messages": {
       "save_success": "Delivery registered successfully",
       "save_failed": "Failed to register delivery."
+    }
+  },
+  "fchv_counseling": {
+    "page_title": "FCHV Counseling",
+    "additional_information": "Additional Information",
+    "enter_name": "Enter name",
+    "add_name": "Add Name",
+    "save": "Save",
+    "update": "Update",
+    "save_success": "FCHV Counseling saved successfully",
+    "save_failed": "Failed to save FCHV counseling",
+    "field_labels": {
+      "adolescent_referred_count": "Number of adolescents referred to a health facility",
+      "adolescent_referred_names": "Names of referred adolescents",
+      "cough_referred_count": "Number of patients referred for cough lasting 2 weeks or more",
+      "cough_referred_names": "Names of referred patients (cough)",
+      "first_aid_count": "Number of people who received first aid",
+      "first_aid_names": "Names of people who received first aid",
+      "first_aid_referred_count": "Number of patients referred after first aid",
+      "first_aid_referred_names": "Names of patients referred after first aid",
+      "child_health_education_count": "Number of children who received child health education",
+      "child_health_education_names": "Names of children who received child health education",
+      "ncd_health_education_count": "Number of people who received health education on NCD risk factors and prevention",
+      "ncd_health_education_names": "Names of people who received health education",
+      "ncd_beneficiaries_count": "Number of beneficiaries of NCD health education",
+      "ncd_beneficiaries_names": "Names of beneficiaries",
+      "tb_referred_count": "Number of suspected TB patients referred",
+      "tb_referred_names": "Names of referred TB patients",
+      "leprosy_referred_count": "Number of suspected leprosy patients referred",
+      "leprosy_referred_names": "Names of referred leprosy patients",
+      "ncd_referred_count": "Number of NCD patients referred",
+      "ncd_referred_names": "Names of referred NCD patients",
+      "mental_health_referred_count": "Number of patients with mental health problems referred",
+      "mental_health_referred_names": "Names of referred patients",
+      "elderly_referred_count": "Number of elderly people with health problems referred",
+      "elderly_referred_names": "Names of referred elderly people",
+      "fchv_fund_amount": "Amount deposited in FCHV fund (NPR)",
+      "immunization_cleanliness_sessions": "Participation in immunization/cleanliness sessions (times)",
+      "village_clinic_support": "Assisted at village clinic (times)"
     }
   }
 }

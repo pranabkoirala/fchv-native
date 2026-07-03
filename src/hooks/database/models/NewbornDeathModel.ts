@@ -93,10 +93,26 @@ export async function createNewbornDeath(
 
 export async function getAllNewbornDeaths(): Promise<NewbornDeathStoreType[]> {
   const db = await getDb();
-  const rows = await db.getAllAsync<NewbornDeathStoreType>(
-    `SELECT * FROM hmis_newborn_death WHERE is_deleted = 0 ORDER BY created_at DESC`,
+  const rows = await db.getAllAsync<any>(
+    `SELECT nd.*, m.date_of_birth
+     FROM hmis_newborn_death nd
+     LEFT JOIN mother m ON nd.mother = m.id
+     WHERE nd.is_deleted = 0
+     ORDER BY nd.created_at DESC`,
   );
-  return rows;
+  return rows.map((row) => {
+    let mother_age = 0;
+    if (row.date_of_birth) {
+      const birthDate = new Date(row.date_of_birth);
+      const today = new Date();
+      mother_age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        mother_age--;
+      }
+    }
+    return { ...row, mother_age };
+  });
 }
 
 export async function getNewbornDeathByMother(

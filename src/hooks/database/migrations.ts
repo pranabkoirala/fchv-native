@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 79;
+export const SCHEMA_VERSION = 85;
 
 type Migration = {
   version: number;
@@ -2434,6 +2434,325 @@ export const MIGRATIONS: Migration[] = [
         `);
       } catch (e) {
         console.log("Migration 79: creating fchv_profile table failed:", e);
+      }
+    },
+  },
+  {
+    version: 80,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS child_birth_registration (
+            id TEXT PRIMARY KEY,
+            child TEXT NOT NULL,
+            certificate_number TEXT,
+            issued_date TEXT,
+            issued_district TEXT,
+            issued_municipality TEXT,
+            remarks TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(child) REFERENCES child_monitoring(id),
+            UNIQUE(child)
+          );
+          CREATE INDEX IF NOT EXISTS idx_child_birth_registration_child ON child_birth_registration(child);
+
+          CREATE TABLE IF NOT EXISTS child_birth_registration_staging (
+            id TEXT PRIMARY KEY,
+            child TEXT,
+            certificate_number TEXT,
+            issued_date TEXT,
+            issued_district TEXT,
+            issued_municipality TEXT,
+            remarks TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+
+          CREATE TABLE IF NOT EXISTS child_death_registration (
+            id TEXT PRIMARY KEY,
+            child TEXT NOT NULL,
+            certificate_number TEXT,
+            death_date TEXT,
+            cause_of_death TEXT,
+            issued_date TEXT,
+            remarks TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(child) REFERENCES child_monitoring(id),
+            UNIQUE(child)
+          );
+          CREATE INDEX IF NOT EXISTS idx_child_death_registration_child ON child_death_registration(child);
+
+          CREATE TABLE IF NOT EXISTS child_death_registration_staging (
+            id TEXT PRIMARY KEY,
+            child TEXT,
+            certificate_number TEXT,
+            death_date TEXT,
+            cause_of_death TEXT,
+            issued_date TEXT,
+            remarks TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 80: creating registration certificate tables failed:", e);
+      }
+
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["child_birth_registration"],
+        );
+      } catch (e) {
+        console.log("Migration 80: child_birth_registration sync row failed:", e);
+      }
+
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["child_death_registration"],
+        );
+      } catch (e) {
+        console.log("Migration 80: child_death_registration sync row failed:", e);
+      }
+    },
+  },
+  {
+    version: 81,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          DROP TABLE IF EXISTS child_birth_registration_staging;
+          DROP TABLE IF EXISTS child_birth_registration;
+          DROP TABLE IF EXISTS child_death_registration_staging;
+          DROP TABLE IF EXISTS child_death_registration;
+
+          CREATE TABLE IF NOT EXISTS child_birth_registration (
+            id TEXT PRIMARY KEY,
+            child TEXT NOT NULL,
+            birth_status INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(child) REFERENCES child_monitoring(id),
+            UNIQUE(child)
+          );
+          CREATE INDEX IF NOT EXISTS idx_child_birth_registration_child ON child_birth_registration(child);
+
+          CREATE TABLE IF NOT EXISTS child_birth_registration_staging (
+            id TEXT PRIMARY KEY,
+            child TEXT,
+            birth_status INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+
+          CREATE TABLE IF NOT EXISTS child_death_registration (
+            id TEXT PRIMARY KEY,
+            child TEXT NOT NULL,
+            death_status INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(child) REFERENCES child_monitoring(id),
+            UNIQUE(child)
+          );
+          CREATE INDEX IF NOT EXISTS idx_child_death_registration_child ON child_death_registration(child);
+
+          CREATE TABLE IF NOT EXISTS child_death_registration_staging (
+            id TEXT PRIMARY KEY,
+            child TEXT,
+            death_status INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 81: recreate registration tables failed:", e);
+      }
+    },
+  },
+  {
+    version: 82,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS fchv_counseling (
+            id TEXT PRIMARY KEY,
+            fchv_name TEXT,
+            fchv_id TEXT,
+            data TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+
+          CREATE TABLE IF NOT EXISTS fchv_counseling_staging (
+            id TEXT PRIMARY KEY,
+            fchv_name TEXT,
+            fchv_id TEXT,
+            data TEXT,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 82: fchv_counseling tables creation failed:", e);
+      }
+    },
+  },
+  {
+    version: 83,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS child_nutrition (
+            id TEXT PRIMARY KEY,
+            mother_id TEXT NOT NULL,
+            child_id TEXT NOT NULL,
+            nutrition_names TEXT NOT NULL,
+            balvita_packets INTEGER DEFAULT 0,
+            child_age_group TEXT,
+            times_per_month INTEGER DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(mother_id) REFERENCES mother(id),
+            FOREIGN KEY(child_id) REFERENCES child_monitoring(id)
+          );
+
+          CREATE TABLE IF NOT EXISTS child_nutrition_staging (
+            id TEXT PRIMARY KEY,
+            mother_id TEXT,
+            child_id TEXT,
+            nutrition_names TEXT,
+            balvita_packets INTEGER DEFAULT 0,
+            child_age_group TEXT,
+            times_per_month INTEGER DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 83: child_nutrition tables creation failed:", e);
+      }
+    },
+  },
+  {
+    version: 84,
+    up: async (db) => {
+      try {
+        const hasAgeGroup = await tableHasColumn(db, "child_nutrition", "child_age_group");
+        if (!hasAgeGroup) {
+          await db.execAsync(`ALTER TABLE child_nutrition ADD COLUMN child_age_group TEXT;`);
+        }
+        const hasTimesPerMonth = await tableHasColumn(db, "child_nutrition", "times_per_month");
+        if (!hasTimesPerMonth) {
+          await db.execAsync(`ALTER TABLE child_nutrition ADD COLUMN times_per_month INTEGER DEFAULT 0;`);
+        }
+        const hasStagingAgeGroup = await tableHasColumn(db, "child_nutrition_staging", "child_age_group");
+        if (!hasStagingAgeGroup) {
+          await db.execAsync(`ALTER TABLE child_nutrition_staging ADD COLUMN child_age_group TEXT;`);
+        }
+        const hasStagingTimesPerMonth = await tableHasColumn(db, "child_nutrition_staging", "times_per_month");
+        if (!hasStagingTimesPerMonth) {
+          await db.execAsync(`ALTER TABLE child_nutrition_staging ADD COLUMN times_per_month INTEGER DEFAULT 0;`);
+        }
+      } catch (e) {
+        console.log("Migration 84: add child_age_group and times_per_month columns failed:", e);
+      }
+    },
+  },
+  {
+    version: 85,
+    up: async (db) => {
+      try {
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS abortion (
+            id TEXT PRIMARY KEY,
+            mother TEXT NOT NULL,
+            pregnancy TEXT,
+            aborted INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(mother) REFERENCES mother(id),
+            FOREIGN KEY(pregnancy) REFERENCES pregnancy(id)
+          );
+
+          CREATE TABLE IF NOT EXISTS abortion_staging (
+            id TEXT PRIMARY KEY,
+            mother TEXT,
+            pregnancy TEXT,
+            aborted INTEGER NOT NULL DEFAULT 0,
+            reg_year INTEGER,
+            reg_month INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0,
+            is_deleted INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+        `);
+      } catch (e) {
+        console.log("Migration 85: creating abortion tables failed:", e);
+      }
+
+      try {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO sync (table_name, last_synced_at) VALUES (?, NULL);`,
+          ["abortion"],
+        );
+      } catch (e) {
+        console.log("Migration 85: seeding sync for abortion failed:", e);
       }
     },
   },

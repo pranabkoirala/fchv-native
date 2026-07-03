@@ -5,6 +5,12 @@ import { ProfilePicker } from "@/components/ProfilePicker";
 import TextArea from "@/components/TextArea";
 import { Button } from "@/components/button";
 import {
+  CHILD_COUNSELING_QUESTIONS,
+  CHILD_HEALTH_COUNSELLING_QUESTIONS,
+  ONE_TIME_CHILD_COUNSELING_QUESTIONS,
+  REGISTRATION_COUNSELING_QUESTIONS,
+} from "@/constants/ChildCounselingQuestions";
+import {
   CounselingQuestion,
   getQuestionById,
   getQuestionsForVisitType,
@@ -12,10 +18,16 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/context/ToastContext";
 import {
+  getChildCounselingByChild,
+  getChildCounselingHistory,
+  saveChildCounseling,
+} from "@/hooks/database/models/ChildCounselingModel";
+import {
   getCounselingReferralByMother,
   getCounselingReferralHistory,
   saveCounselingReferral,
 } from "@/hooks/database/models/CounselingReferralModel";
+import { getInfantMonitoringsByMother } from "@/hooks/database/models/InfantMonitoringModel";
 import {
   getAllMothersList,
   getDeliveredMotherIds,
@@ -34,6 +46,7 @@ import {
   createVisit,
   getMaxVisitNumberByMother,
 } from "@/hooks/database/models/VisitModel";
+import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
 import { getCurrentNepaliDate, toNepaliNumbers } from "@/utils/dateHelper";
 import { useRouter } from "expo-router";
 import { Calendar, Check, Minus, Plus } from "lucide-react-native";
@@ -376,6 +389,15 @@ const StepSlider = ({
   );
 };
 
+const ONE_TIME_IDS = new Set(
+  ONE_TIME_CHILD_COUNSELING_QUESTIONS.map((q) => q.id),
+);
+
+const CHILD_QUANTITY_DEFAULTS: Record<string, number> = {
+  ors_for_child: 1,
+  zinc_for_child: 1,
+};
+
 export default function VisitScreen() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -391,6 +413,13 @@ export default function VisitScreen() {
   const [selectedMotherId, setSelectedMotherId] = useState("");
   const [selectedMotherDetails, setSelectedMotherDetails] = useState<any>(null);
   const [pregnancyId, setPregnancyId] = useState<string | null>(null);
+  const [children, setChildren] = useState<InfantMonitoringStoreType[]>([]);
+  const [childCounselingAnswers, setChildCounselingAnswers] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
+  const [childOneTimeAnswered, setChildOneTimeAnswered] = useState<
+    Record<string, Set<string>>
+  >({});
 
   const [visitDateBs, setVisitDateBs] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -444,6 +473,8 @@ export default function VisitScreen() {
   useEffect(() => {
     setCheckedQuestions({});
     setQuestionQuantities({});
+    setChildCounselingAnswers({});
+    setChildOneTimeAnswered({});
   }, [visitType, selectedMotherId]);
 
   // Fetch initial data
@@ -531,6 +562,23 @@ export default function VisitScreen() {
     fetchMotherDetails();
   }, [selectedMotherId, t, language]);
 
+  // Fetch children when mother selected and visit type is PNC
+  useEffect(() => {
+    if (!selectedMotherId || visitType !== "PNC") {
+      setChildren([]);
+      return;
+    }
+    const fetchChildren = async () => {
+      try {
+        const childList = await getInfantMonitoringsByMother(selectedMotherId);
+        setChildren(childList);
+      } catch (e) {
+        console.error("Failed to load children:", e);
+      }
+    };
+    fetchChildren();
+  }, [selectedMotherId, visitType]);
+
   // Seed checkedQuestions with previously answered one-time questions
   useEffect(() => {
     if (answeredOneTimeIds.size > 0) {
@@ -543,6 +591,41 @@ export default function VisitScreen() {
       });
     }
   }, [answeredOneTimeIds]);
+
+  // Load child counseling history for one-time question detection per child
+  useEffect(() => {
+    if (!selectedMotherId || visitType !== "PNC" || children.length === 0) {
+      setChildOneTimeAnswered({});
+      return;
+    }
+    const fetchChildHistory = async () => {
+      const oneTimeMap: Record<string, Set<string>> = {};
+      for (const child of children) {
+        const answered = new Set<string>();
+        try {
+          const history = await getChildCounselingHistory(child.id);
+          history.forEach((record) => {
+            if (record.answers) {
+              try {
+                const parsed = JSON.parse(record.answers);
+                ONE_TIME_CHILD_COUNSELING_QUESTIONS.forEach((q) => {
+                  const val = parsed[q.id];
+                  if (Array.isArray(val) && val.length > 0) {
+                    answered.add(q.id);
+                  }
+                });
+              } catch (e) {}
+            }
+          });
+        } catch (e) {
+          console.error("Failed to load child counseling history:", e);
+        }
+        oneTimeMap[child.id] = answered;
+      }
+      setChildOneTimeAnswered(oneTimeMap);
+    };
+    fetchChildHistory();
+  }, [selectedMotherId, visitType, children]);
 
   // Auto-calculate visit number based on mother and visit type
   useEffect(() => {
@@ -729,6 +812,74 @@ export default function VisitScreen() {
           reg_month: regMonth,
         });
       }
+
+      // Save child counseling answers for PNC visits
+      if (visitType === "PNC") {
+        let regYear = getCurrentNepaliDate().year;
+        let regMonth = getCurrentNepaliDate().month;
+        if (visitDateBs) {
+          const parts = visitDateBs.split("-");
+          if (parts.length >= 2) {
+            regYear = parseInt(parts[0], 10);
+            regMonth = parseInt(parts[1], 10);
+          }
+        }
+        const childIds = Object.keys(childCounselingAnswers);
+        for (const childId of childIds) {
+          const answers = childCounselingAnswers[childId];
+          const checkedChildKeys = Object.keys(answers).filter(
+            (k) => answers[k],
+          );
+          if (checkedChildKeys.length === 0) continue;
+
+          let existingChildRecord = null;
+          try {
+            existingChildRecord = await getChildCounselingByChild(
+              childId,
+              regYear,
+              regMonth,
+            );
+          } catch (dbErr) {
+            console.error("Error fetching existing child counseling:", dbErr);
+          }
+
+          let existingChildAnswers: Record<string, any> = {};
+          if (existingChildRecord?.answers) {
+            try {
+              existingChildAnswers = JSON.parse(existingChildRecord.answers);
+            } catch (e) {
+              console.error("Failed to parse child answers:", e);
+            }
+          }
+
+          const newChildAnswers = { ...existingChildAnswers };
+          const currentTime = new Date().toISOString();
+
+          checkedChildKeys.forEach((key) => {
+            const logs = Array.isArray(newChildAnswers[key])
+              ? [...newChildAnswers[key]]
+              : [];
+
+            const entry: Record<string, any> = {
+              date: currentTime,
+              value: true,
+            };
+            if (CHILD_QUANTITY_DEFAULTS[key] !== undefined) {
+              entry.value = CHILD_QUANTITY_DEFAULTS[key];
+            }
+            logs.push(entry);
+            newChildAnswers[key] = logs;
+          });
+
+          await saveChildCounseling({
+            id: existingChildRecord?.id,
+            child: childId,
+            answers: JSON.stringify(newChildAnswers),
+            reg_year: regYear,
+            reg_month: regMonth,
+          });
+        }
+      }
       router.navigate("/dashboard");
       showToast(t("visit.messages.save_success"));
       setSelectedMotherId("");
@@ -739,6 +890,8 @@ export default function VisitScreen() {
       setVisitNumber(1);
       setCheckedQuestions({});
       setQuestionQuantities({});
+      setChildCounselingAnswers({});
+      setChildOneTimeAnswered({});
       setErrors({});
     } catch (e) {
       console.error("Failed to save visit:", e);
@@ -933,6 +1086,148 @@ export default function VisitScreen() {
             answeredOneTimeIds={answeredOneTimeIds}
             questionQuantities={questionQuantities}
           />
+
+          {/* Child Counseling (PNC only) */}
+          {visitType === "PNC" && children.length > 0 && (
+            <View className="border-t border-slate-200 pt-4">
+              <Text className="text-slate-800 font-bold text-[18px]">
+                {t("visit.child_counseling_title")}
+              </Text>
+              {children.map((child) => {
+                const childAnswers = childCounselingAnswers[child.id] || {};
+                const oneTimeAnswered =
+                  childOneTimeAnswered[child.id] || new Set();
+
+                const isConditionBad = !!childAnswers["good_health_condition"];
+                const hasDiarrhea = !!childAnswers["has_diarrhea"];
+                const hasBreathingProblems =
+                  !!childAnswers["has_breathing_problems"];
+
+                const filterHealthQuestions = (q: any) => {
+                  if (q.id === "good_health_condition") return true;
+                  if (!isConditionBad) return false;
+                  if (
+                    q.id === "diarrhea_treated_with_ors_zinc" ||
+                    q.id === "ors_for_child" ||
+                    q.id === "zinc_for_child"
+                  ) {
+                    return hasDiarrhea;
+                  }
+                  if (
+                    q.id === "has_pneumonia" ||
+                    q.id === "referred_breathing_problems" ||
+                    q.id === "home_treatment_cold"
+                  ) {
+                    return hasBreathingProblems;
+                  }
+                  return true;
+                };
+
+                const sections =
+                  child.status === "dead"
+                    ? [
+                        {
+                          key: "registration",
+                          title: t("visit.sections.registration_counseling", {
+                            defaultValue: "Registration Counseling",
+                          }),
+                          questions: REGISTRATION_COUNSELING_QUESTIONS.filter(
+                            (q) => q.id === "death_registration_counseling",
+                          ),
+                        },
+                      ]
+                    : [
+                        {
+                          key: "one_time",
+                          title: t("visit.sections.one_time_counseling", {
+                            defaultValue: "One-Time Counseling",
+                          }),
+                          questions: ONE_TIME_CHILD_COUNSELING_QUESTIONS.filter(
+                            (q) => !oneTimeAnswered.has(q.id),
+                          ),
+                        },
+                        {
+                          key: "routine",
+                          title: t("visit.sections.routine_counseling", {
+                            defaultValue: "Routine Counseling",
+                          }),
+                          questions: CHILD_COUNSELING_QUESTIONS.filter(
+                            (q) => !ONE_TIME_IDS.has(q.id),
+                          ),
+                        },
+                        {
+                          key: "health",
+                          title: t("visit.sections.health_status_counseling", {
+                            defaultValue: "Health Condition Counseling",
+                          }),
+                          questions: CHILD_HEALTH_COUNSELLING_QUESTIONS.filter(
+                            filterHealthQuestions,
+                          ),
+                        },
+                        {
+                          key: "registration",
+                          title: t("visit.sections.registration_counseling", {
+                            defaultValue: "Registration Counseling",
+                          }),
+                          questions: REGISTRATION_COUNSELING_QUESTIONS.filter(
+                            (q) => q.id === "birth_registration_counseling",
+                          ),
+                        },
+                      ];
+
+                return (
+                  <View key={child.id} className="mb-5 bg-white rounded-2xl">
+                    <View className="flex-row items-center justify-between mb-3">
+                      {child.status === "dead" && (
+                        <View className="bg-rose-50 border border-rose-100 px-2.5 py-0.5 rounded-full">
+                          <Text className="text-rose-600 font-bold text-[11px] uppercase tracking-wider">
+                            {t("reports.status.deceased")}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View className="gap-y-1">
+                      {sections.flatMap((section) =>
+                        section.questions.map((q: any) => {
+                          const isOneTime =
+                            section.key === "one_time" &&
+                            oneTimeAnswered.has(q.id);
+                          const qty = CHILD_QUANTITY_DEFAULTS[q.id];
+                          return (
+                            <ObservationItem
+                              key={q.id}
+                              checked={!!childAnswers[q.id]}
+                              onToggle={() => {
+                                if (isOneTime || child.status === "dead")
+                                  return;
+                                setChildCounselingAnswers((prev) => {
+                                  const current = { ...(prev[child.id] || {}) };
+                                  if (current[q.id]) {
+                                    delete current[q.id];
+                                  } else {
+                                    current[q.id] = true;
+                                  }
+                                  return { ...prev, [child.id]: current };
+                                });
+                              }}
+                              label={language === "np" ? q.ne : q.en}
+                              disabled={isOneTime || child.status === "dead"}
+                              quantity={
+                                childAnswers[q.id] && qty !== undefined
+                                  ? qty
+                                  : undefined
+                              }
+                            />
+                          );
+                        }),
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* Remarks */}
           <TextArea

@@ -5,7 +5,6 @@ export interface ChildCounselingQuestion {
 }
 
 export const ONE_TIME_CHILD_COUNSELING_QUESTIONS = [
-
   {
     id: "bathed_after_24_hours",
     en: "Did you bathe the baby only after 24 hours of birth?",
@@ -21,8 +20,7 @@ export const ONE_TIME_CHILD_COUNSELING_QUESTIONS = [
     en: "Did you bathe within 24 hours after giving birth?",
     ne: "बच्चा जन्मेपछि २४ घण्टाभित्र नुहाउनुभएको थियो?",
   },
-]
-
+];
 
 export const CHILD_COUNSELING_QUESTIONS: ChildCounselingQuestion[] = [
   {
@@ -90,16 +88,81 @@ export const CHILD_HEALTH_COUNSELLING_QUESTIONS = [
   },
 ];
 
+export const PNC_CHILD_COUNSELING_QUESTIONS: ChildCounselingQuestion[] = [
+  {
+    id: "exclusive_breastfeeding",
+    en: "Did you counsel on exclusive breastfeeding?",
+    ne: "केवल स्तनपान गराउन परामर्श दिनुभयो?",
+  },
+  {
+    id: "baby_warmth",
+    en: "Did you counsel on keeping the baby warm?",
+    ne: "बच्चालाई न्यानो राख्न परामर्श दिनुभयो?",
+  },
+  {
+    id: "cord_care",
+    en: "Did you counsel on cord care?",
+    ne: "नाइटो हेरचाहको बारेमा परामर्श दिनुभयो?",
+  },
+  {
+    id: "danger_signs",
+    en: "Did you counsel on danger signs (difficulty breathing, fever, hypothermia, etc.)?",
+    ne: "खतरा संकेतहरू (सास फेर्न गाह्रो, ज्वरो, शरीर चिसो हुनु, आदि) बारे परामर्श दिनुभयो?",
+  },
+  {
+    id: "immunization_counseling",
+    en: "Did you counsel on immunization schedule?",
+    ne: "खोप तालिकाको बारेमा परामर्श दिनुभयो?",
+  },
+  {
+    id: "growth_monitoring_counseling",
+    en: "Did you counsel on growth monitoring?",
+    ne: "वृद्धि निगरानीको बारेमा परामर्श दिनुभयो?",
+  },
+];
+
+export const REGISTRATION_COUNSELING_QUESTIONS = [
+  {
+    id: "birth_registration_counseling",
+    en: "Did you counsel the family to register the newborn's birth within 35 days?",
+    ne: "के तपाईंले नवजात शिशुको ३५ दिनभित्र जन्म दर्ता गराउन परिवारलाई परामर्श दिनुभयो?",
+  },
+  {
+    id: "death_registration_counseling",
+    en: "Did you counsel the family to register the death within 35 days?",
+    ne: "के तपाईंले मृत्यु भएको ३५ दिनभित्र मृत्यु दर्ता गराउन परिवारलाई परामर्श दिनुभयो?",
+  },
+];
+
 export const MALNUTRITION_CONTENT = {
   title: { en: "Malnutrition", ne: "कुपोषण" },
-  main_question: { id: "has_malnutrition", en: "Does the child have malnutrition?", ne: "बच्चालाई कुपोषण लागेको छ?" },
+  main_question: {
+    id: "has_malnutrition",
+    en: "Does the child have malnutrition?",
+    ne: "बच्चालाई कुपोषण लागेको छ?",
+  },
   severity_medium: { en: "Medium", ne: "मध्यम" },
   severity_high: { en: "High", ne: "कडा" },
   sub_questions: [
-    { id: "malnutrition_cured", en: "Cured after treatment?", ne: "उपचारपछि निको भएको हो?" },
-    { id: "malnutrition_not_cured", en: "Not cured after treatment?", ne: "उपचारपछि निको भएको छैन?" },
-    { id: "malnutrition_dropped_out", en: "Stopped going to health facility during treatment?", ne: "उपचार गर्दा गर्दै स्वास्थ्य संस्था जान छोडेको हो?" },
-    { id: "malnutrition_no_weight_gain", en: "No weight gain even after treatment?", ne: "उपचार गर्दा पनि तौल वृद्धि भएको छैन?" },
-  ]
+    {
+      id: "malnutrition_cured",
+      en: "Cured after treatment?",
+      ne: "उपचारपछि निको भएको हो?",
+    },
+    {
+      id: "malnutrition_not_cured",
+      en: "Not cured after treatment?",
+      ne: "उपचारपछि निको भएको छैन?",
+    },
+    {
+      id: "malnutrition_dropped_out",
+      en: "Stopped going to health facility during treatment?",
+      ne: "उपचार गर्दा गर्दै स्वास्थ्य संस्था जान छोडेको हो?",
+    },
+    {
+      id: "malnutrition_no_weight_gain",
+      en: "No weight gain even after treatment?",
+      ne: "उपचार गर्दा पनि तौल वृद्धि भएको छैन?",
+    },
+  ],
 };
-

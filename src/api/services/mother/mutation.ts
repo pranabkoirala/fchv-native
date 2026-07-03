@@ -1,6 +1,9 @@
 import { API_LIST } from "@/api/API_LIST";
 import { httpClient } from "@/api/client/httpClient";
-import { CreateMotherPayload, MotherSyncPayload } from "@/hooks/database/types/motherModal";
+import {
+  CreateMotherPayload,
+  MotherSyncPayload,
+} from "@/hooks/database/types/motherModal";
 
 const postBulkMother = async (data: CreateMotherPayload[]) => {
   const syncPayload: MotherSyncPayload[] = data.map((item) => ({
@@ -33,14 +36,11 @@ const postBulkMother = async (data: CreateMotherPayload[]) => {
     deleted: false,
   }));
 
-  console.log(syncPayload[0].address,"hellooooooo")
-
   // The fchv-sync endpoint expects an array of records
   const response = await httpClient.post<MotherSyncPayload[]>(
     API_LIST.mother.mother_sync,
-    syncPayload
+    syncPayload,
   );
-
 
   return response.data;
 };

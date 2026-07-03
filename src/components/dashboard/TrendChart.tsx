@@ -1,3 +1,4 @@
+import { useLanguage } from "@/context/LanguageContext";
 import React, { useEffect, useState } from "react";
 import { Dimensions, Text, View } from "react-native";
 import Animated, { Easing, useAnimatedProps, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
@@ -18,6 +19,7 @@ interface TrendChartProps {
 }
 
 const TrendChart = ({ pregnancyData, childData, motherData }: TrendChartProps) => {
+  const { t } = useLanguage();
   const [containerWidth, setContainerWidth] = useState(Dimensions.get("window").width - 88);
   const height = 220;
   const paddingBottom = 40;
@@ -160,15 +162,15 @@ const TrendChart = ({ pregnancyData, childData, motherData }: TrendChartProps) =
       <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4, paddingHorizontal: paddingLeft }}>
         <View style={{ flexDirection: "row", alignItems: "center", marginRight: 24 }}>
           <View style={{ width: 14, height: 14, marginRight: 8, backgroundColor: "#10B981", borderRadius: 7 }} />
-          <Text style={{ color: "#334155", fontSize: 13, fontWeight: "500" }}>Mothers</Text>
+          <Text style={{ color: "#334155", fontSize: 13, fontWeight: "500" }}>{t("dashboard.charts.mothers")}</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", marginRight: 24 }}>
           <View style={{ width: 14, height: 14, marginRight: 8, backgroundColor: "#475569", borderRadius: 7 }} />
-          <Text style={{ color: "#334155", fontSize: 13, fontWeight: "500" }}>Pregnancies</Text>
+          <Text style={{ color: "#334155", fontSize: 13, fontWeight: "500" }}>{t("dashboard.charts.pregnancies")}</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View style={{ width: 14, height: 14, marginRight: 8, backgroundColor: "#87CEEB", borderRadius: 7 }} />
-          <Text style={{ color: "#334155", fontSize: 13, fontWeight: "500" }}>Children</Text>
+          <Text style={{ color: "#334155", fontSize: 13, fontWeight: "500" }}>{t("dashboard.charts.children")}</Text>
         </View>
       </View>
     </View>

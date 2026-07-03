@@ -15,13 +15,14 @@ export async function createPncVisit(
 
   await db.runAsync(
     `INSERT OR REPLACE INTO pnc_visit 
-      (id, mother, name, visit_date, visit_place, visit_number, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      (id, mother, name, visit_date, visit_type, visit_place, visit_number, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       id,
       payload.mother,
       payload.name ?? null,
       payload.visit_date,
+      payload.visit_type ?? "PNC",
       payload.visit_place ?? null,
       payload.visit_number ?? 1,
       payload.is_synced ? 1 : 0,
@@ -38,6 +39,7 @@ export async function createPncVisit(
     mother: payload.mother,
     name: payload.name ?? null,
     visit_date: payload.visit_date,
+    visit_type: payload.visit_type ?? "PNC",
     visit_place: payload.visit_place ?? null,
     visit_number: payload.visit_number ?? 1,
     is_synced: payload.is_synced ? 1 : 0,
@@ -180,6 +182,7 @@ export async function insertToTempPncVisitTable(apiRes: any[]) {
     "mother",
     "name",
     "visit_date",
+    "visit_type",
     "visit_place",
     "visit_number",
     "reg_year",
@@ -206,6 +209,7 @@ export async function insertToTempPncVisitTable(apiRes: any[]) {
           item.mother ?? null,
           item.name ?? null,
           item.visit_date,
+          item.visit_type ?? "PNC",
           item.visit_place ?? item.visit_notes ?? null,
           item.visit_number ?? 1,
           item.reg_year ?? null,
@@ -231,13 +235,14 @@ export async function moveTempToRealPncVisitTable() {
     await db.runAsync(
       `
       INSERT INTO pnc_visit
-        (id, mother, name, visit_date, visit_place, visit_number, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
+        (id, mother, name, visit_date, visit_type, visit_place, visit_number, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
       VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         mother = excluded.mother,
         name = excluded.name,
         visit_date = excluded.visit_date,
+        visit_type = excluded.visit_type,
         visit_place = excluded.visit_place,
         visit_number = excluded.visit_number,
         reg_year = excluded.reg_year,
@@ -254,6 +259,7 @@ export async function moveTempToRealPncVisitTable() {
         item.mother,
         item.name,
         item.visit_date,
+        item.visit_type ?? "PNC",
         item.visit_place ?? null,
         item.visit_number ?? 1,
         item.reg_year ?? null,

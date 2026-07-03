@@ -202,6 +202,7 @@ export default function PregnancyForm({
     if (!selectedMotherId)
       e.motherId = t("pregnancy_form.validation.mother_req");
     if (!gravida.trim()) e.gravida = t("pregnancy_form.validation.gravida_req");
+    else if (parseInt(gravida, 10) < 1) e.gravida = t("pregnancy_form.validation.gravida_min");
     if (!parity.trim()) e.parity = t("pregnancy_form.validation.parity_req");
     if (!lmp) e.lmp = t("pregnancy_form.validation.lmp_req");
     if (gravida.trim() && parity.trim()) {

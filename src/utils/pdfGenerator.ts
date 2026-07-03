@@ -1,24 +1,74 @@
-import * as FileSystem from "expo-file-system";
-const {
-  EncodingType,
-  readAsStringAsync,
-  // @ts-ignore
-  StorageAccessFramework,
-  writeAsStringAsync,
-} = FileSystem;
+import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Share from "expo-sharing";
 import { Platform } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
+import {
+  CHILD_COUNSELING_QUESTIONS,
+  CHILD_HEALTH_COUNSELLING_QUESTIONS,
+  ONE_TIME_CHILD_COUNSELING_QUESTIONS,
+  REGISTRATION_COUNSELING_QUESTIONS,
+} from "../constants/ChildCounselingQuestions";
+import { ALL_QUESTIONS } from "../constants/CounselingQuestions";
+import { VACCINE_SCHEDULE } from "../constants/VaccineConstants";
+import { getDb } from "../hooks/database/db";
 import { getAllAdolescentIfa } from "../hooks/database/models/AdolescentIfaModel";
+import {
+  getAllDeliveries,
+  getDeliveriesByMother,
+} from "../hooks/database/models/DeliveryModel";
+import { getAllFamilyPlanning } from "../hooks/database/models/FamilyPlanningModel";
 import { getAllInfantMonitorings } from "../hooks/database/models/InfantMonitoringModel";
 import { getAllMaternalDeaths } from "../hooks/database/models/MaternalDeathModel";
+import { getAllMothersGroupMeetings } from "../hooks/database/models/MothersGroupMeetingModel";
 import { getAllNewbornDeaths } from "../hooks/database/models/NewbornDeathModel";
 import {
   getPregnantWomenList,
   PregnantWomenListItem,
 } from "../hooks/database/models/PregnantWomenModal";
+import { resolveNepaliYearMonth } from "./dateHelper";
 import storage from "./storage";
+
+const {
+  EncodingType,
+  readAsStringAsync,
+  writeAsStringAsync,
+  StorageAccessFramework,
+} = FileSystem;
+
+/** Optional filter for year/month-wise PDF export */
+export type MonthFilter = { year: number; month?: number | null } | null;
+
+const matchesMonthFilter = (
+  filter: MonthFilter,
+  record: {
+    reg_year?: number | null;
+    reg_month?: number | string | null;
+    created_at?: string | null;
+  },
+): boolean => {
+  if (!filter) return true; // no filter = show all
+  const resolved = resolveNepaliYearMonth(
+    record.reg_year,
+    record.reg_month,
+    record.created_at,
+  );
+  if (!resolved) return false;
+  return (
+    resolved.year === filter.year &&
+    (!filter.month || resolved.month === filter.month)
+  );
+};
+
+const escapeHtml = (str: string | null | undefined): string => {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
 
 export const convertToNepaliNumber = (
   num: number | string | null | undefined,
@@ -57,8 +107,26 @@ const convertAdYmdToBs = (
   return parseDateToNepali(adString);
 };
 
+const getOcpBlisterPackSvg = () => {
+  let pills = "";
+  for (let i = 0; i < 21; i++) {
+    pills += `<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#fff;border:0.5px solid #546e7a;vertical-align:middle;"></span>`;
+  }
+  pills += `<span style="display:inline-block;width:2px;"></span>`;
+  for (let i = 0; i < 7; i++) {
+    pills += `<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#8d6e63;border:0.5px solid #5d4037;vertical-align:middle;"></span>`;
+  }
+  return `
+    <div style="display:inline-block;border:1px solid #37474f;border-radius:2px;background:#eceff1;text-align:center;padding:2px;line-height:1.2;">
+      <div style="background:#1e88e5;height:4px;margin-bottom:2px;"></div>
+      ${pills}
+    </div>
+  `;
+};
+
 const getCss = () => `
   <style>
+    @page { size: A4 landscape; margin: 10mm; }
     body { font-family: sans-serif; font-size: 10px; color: #333; padding: 20px; }
     h2, h3, h4 { text-align: center; margin: 10px 0; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
@@ -67,6 +135,27 @@ const getCss = () => `
     .page-break { page-break-before: always; }
     .title { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
     .subtitle { font-size: 12px; margin-bottom: 5px; }
+    .collected-title { text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+    .collected-table { table-layout: fixed; border: 1.4px solid #111; }
+    .collected-table th { background: #e8e8e8; font-size: 9px; padding: 6px 3px; }
+    .collected-table td { font-size: 9px; padding: 6px 3px; vertical-align: middle; }
+    .collected-table .sn-col { width: 38px; }
+    .collected-table .activity-col { width: 33%; }
+    .collected-table .activity-cell { text-align: left; line-height: 1.45; }
+    .collected-table .section-row td { background: #f7e4dc; font-weight: 700; text-align: left; }
+    .collected-table .section-row td:first-child { text-align: center; }
+    .collected-table .total-cell { background: #f3f4f6; font-weight: 700; }
+    .muac-container { display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: 100%; min-height: 48px; box-sizing: border-box; }
+    .muac-badge { display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; width: 44px; align-self: stretch; font-size: 9px; border-right: 1.2px solid #000; text-align: center; padding: 2px; box-sizing: border-box; }
+    .muac-green-badge { background-color: #2e7d32; }
+    .muac-yellow-badge { background-color: #fbc02d; color: black; }
+    .muac-red-badge { background-color: #d32f2f; }
+    .muac-content { flex: 1; text-align: left; padding: 4px 6px; font-size: 8.5px; line-height: 1.25; font-weight: 600; }
+    .muac-illustrations { display: flex; align-items: center; gap: 4px; padding-right: 4px; }
+    .muac-circle-img { border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; box-sizing: border-box; }
+    .muac-circle-green { border: 1.8px solid #2e7d32; background-color: #e8f5e9; }
+    .muac-circle-yellow { border: 1.8px solid #fbc02d; background-color: #fffde7; }
+    .muac-circle-red { border: 1.8px solid #d32f2f; background-color: #ffebee; }
   </style>
 `;
 
@@ -80,6 +169,1204 @@ const getEmptyRows = (cols: number, count = 3) => {
     rows += "</tr>";
   }
   return rows;
+};
+
+/** Safe checkmark/cross for expo-print (no emoji — they crash Android PDF writer) */
+const CHECK = "&#10003;"; // ✓
+const CROSS = "-"; // simple dash instead of ❌
+
+const NEPALI_MONTHS = [
+  "बैशाख",
+  "जेठ",
+  "आषाढ",
+  "श्रावण",
+  "भाद्र",
+  "आश्विन",
+  "कार्तिक",
+  "मंसिर",
+  "पौष",
+  "माघ",
+  "फाल्गुण",
+  "चैत्र",
+];
+
+type SummaryPeriod = { key: number; label: string };
+type SummaryCounts = Record<number, Record<number, number>>;
+
+/** nutrition sub-column counts: rowNo → month → subCol(1|2|3) → count */
+type NutritionSubCounts = Record<
+  number,
+  Record<number, Record<number, number>>
+>;
+
+const NUTRITION_ROWS = [55, 56, 57]; // rows that use 3-sub-column layout
+
+const selectedPeriods = (filter: MonthFilter): SummaryPeriod[] => {
+  if (filter?.month) {
+    return [{ key: filter.month, label: NEPALI_MONTHS[filter.month - 1] }];
+  }
+  return NEPALI_MONTHS.map((label, index) => ({ key: index + 1, label }));
+};
+
+const getRecordMonth = (
+  record: {
+    reg_year?: number | null;
+    reg_month?: number | string | null;
+    created_at?: string | null;
+  },
+  filter: MonthFilter,
+) => {
+  const resolved = resolveNepaliYearMonth(
+    record.reg_year,
+    record.reg_month,
+    record.created_at,
+  );
+
+  if (!resolved) return null;
+  if (filter && resolved.year !== filter.year) return null;
+  if (filter?.month && resolved.month !== filter.month) return null;
+  return resolved.month;
+};
+
+const addCount = (
+  counts: SummaryCounts,
+  rowNo: number,
+  month: number | null,
+  amount = 1,
+) => {
+  if (!month || month < 1 || month > 12) return;
+  counts[rowNo][month] = (counts[rowNo][month] || 0) + amount;
+};
+
+const hasPositiveAnswer = (answers: string | null | undefined, id: string) => {
+  if (!answers) return false;
+  try {
+    const parsed = JSON.parse(answers);
+    const value = parsed?.[id];
+    if (Array.isArray(value)) {
+      return value.some((entry) => {
+        if (typeof entry === "boolean") return entry;
+        if (typeof entry === "number") return entry > 0;
+        return Boolean(entry?.value);
+      });
+    }
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value > 0;
+    return Boolean(value?.value);
+  } catch (e) {
+    return false;
+  }
+};
+
+/** Check a counseling answer, validating the question exists in ALL_QUESTIONS and matching expected category */
+const hasCounselingAnswer = (
+  record: any,
+  questionId: string,
+  expectedCategory?: string,
+): boolean => {
+  const question = ALL_QUESTIONS.find((q) => q.id === questionId);
+  if (!question) return false;
+  if (expectedCategory && question.category !== expectedCategory) return false;
+
+  if (hasPositiveAnswer(record.answers, questionId)) return true;
+  if (question.type === "referral") {
+    return hasPositiveAnswer(record.referral_answers, questionId);
+  }
+  return hasPositiveAnswer(record.counseling_answers, questionId);
+};
+
+/** Check a child-counseling answer against the child-counseling question definitions */
+const hasChildCounselingAnswer = (record: any, questionId: string): boolean => {
+  const definedInChild =
+    CHILD_COUNSELING_QUESTIONS.some((q) => q.id === questionId) ||
+    CHILD_HEALTH_COUNSELLING_QUESTIONS.some((q) => q.id === questionId) ||
+    ONE_TIME_CHILD_COUNSELING_QUESTIONS.some((q) => q.id === questionId) ||
+    REGISTRATION_COUNSELING_QUESTIONS.some((q) => q.id === questionId);
+  if (!definedInChild) return false;
+  return hasPositiveAnswer(record.answers, questionId);
+};
+
+/** Sum the quantity values for a child-counseling question (e.g. ORS packets, zinc tablets) */
+const sumChildCounselingQuantity = (
+  answers: string | null | undefined,
+  questionId: string,
+): number => {
+  if (!answers) return 0;
+  try {
+    const parsed = JSON.parse(answers);
+    const value = parsed?.[questionId];
+    if (!Array.isArray(value)) return 0;
+    return value.reduce((sum: number, entry: any) => {
+      if (typeof entry === "number") return sum + entry;
+      if (typeof entry?.value === "number") return sum + entry.value;
+      return sum;
+    }, 0);
+  } catch {
+    return 0;
+  }
+};
+
+const parseDateForAge = (value: string | null | undefined) => {
+  if (!value) return null;
+  const datePart = value.split("T")[0];
+  const year = parseInt(datePart.split("-")[0], 10);
+  const adDate = year >= 2070 ? null : datePart;
+  if (!adDate) return null;
+  const parsed = new Date(`${adDate}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getAgeInDays = (
+  birthDate: string | null | undefined,
+  recordDate: string | null | undefined,
+) => {
+  const birth = parseDateForAge(birthDate);
+  const record = parseDateForAge(recordDate);
+  if (!birth || !record) return null;
+  return Math.floor((record.getTime() - birth.getTime()) / 86400000);
+};
+
+const getAllRows = async <T>(table: string): Promise<T[]> => {
+  const db = await getDb();
+  return db.getAllAsync<T>(
+    `SELECT * FROM ${table} WHERE is_deleted = 0 ORDER BY created_at DESC`,
+  );
+};
+
+const buildCollectedDataCounts = async (filter: MonthFilter) => {
+  const counts: SummaryCounts = {};
+  const rowsToInit = [...Array.from({ length: 85 }, (_, i) => i + 1), 420, 430];
+  rowsToInit.forEach((rowNo) => {
+    counts[rowNo] = {};
+    for (let month = 1; month <= 12; month++) counts[rowNo][month] = 0;
+  });
+
+  const [
+    pregnancies,
+    counselingRecords,
+    childCounselingRecords,
+    supplements,
+    vaccinations,
+    deliveries,
+    infants,
+    deaths,
+    familyPlanningRecords,
+    mothersGroupMeetings,
+    maternalDeaths,
+    adolescentIfaRecords,
+    childBirthRegistrations,
+    childDeathRegistrations,
+    fchvCounselingRecords,
+  ] = await Promise.all([
+    getPregnantWomenList(),
+    getAllRows<any>("counseling_referral"),
+    getAllRows<any>("child_counseling"),
+    getAllRows<any>("supplements"),
+    getAllRows<any>("child_vaccination"),
+    getAllDeliveries(),
+    getAllInfantMonitorings(),
+    getAllNewbornDeaths(),
+    getAllFamilyPlanning(),
+    getAllMothersGroupMeetings(),
+    getAllMaternalDeaths(),
+    getAllAdolescentIfa(),
+    getAllRows<any>("child_birth_registration"),
+    getAllRows<any>("child_death_registration"),
+    getAllRows<any>("fchv_counseling"),
+  ]);
+
+  const childById = infants.reduce<Record<string, any>>((acc, child) => {
+    acc[child.id] = child;
+    return acc;
+  }, {});
+
+  pregnancies.forEach((item) => {
+    addCount(counts, 1, getRecordMonth(item, filter));
+  });
+
+  counselingRecords.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (hasCounselingAnswer(item, "pregnancy_test_referral", "pregnant")) {
+      addCount(counts, 2, month);
+    }
+    if (hasCounselingAnswer(item, "hiv_transmission_counseling", "pregnant")) {
+      addCount(counts, 3, month);
+    }
+    if (hasCounselingAnswer(item, "antenatal_checkups", "pregnant")) {
+      addCount(counts, 4, month);
+    }
+    if (hasCounselingAnswer(item, "iron_tablets_followup", "pregnant")) {
+      addCount(counts, 5, month);
+    }
+    if (
+      hasCounselingAnswer(item, "institutional_delivery_referral", "pregnant")
+    ) {
+      addCount(counts, 6, month);
+    }
+    if (hasCounselingAnswer(item, "home_delivery_misoprostol", "postpartum")) {
+      addCount(counts, 7, month);
+    }
+    if (
+      hasCounselingAnswer(item, "health_education_safe_motherhood", "pregnant")
+    ) {
+      addCount(counts, 8, month);
+    }
+    if (
+      hasCounselingAnswer(
+        item,
+        "infant_feeding_practices_counseling",
+        "postpartum",
+      )
+    ) {
+      addCount(counts, 12, month);
+    }
+    if (
+      hasCounselingAnswer(item, "institutional_delivery_referral", "pregnant")
+    ) {
+      addCount(counts, 13, month);
+    }
+    if (
+      hasCounselingAnswer(item, "postnatal_iron_tablets_given", "postpartum")
+    ) {
+      addCount(counts, 14, month);
+    }
+    if (hasCounselingAnswer(item, "vitamin_a_given", "postpartum")) {
+      addCount(counts, 15, month);
+    }
+    if (hasCounselingAnswer(item, "bathed_after_24_hours", "postpartum")) {
+      addCount(counts, 11, month);
+    }
+    if (hasCounselingAnswer(item, "abortion_services_referral", "pregnant")) {
+      addCount(counts, 37, month);
+    }
+    if (
+      hasCounselingAnswer(item, "family_planning_services_referral", "mother")
+    ) {
+      addCount(counts, 46, month);
+    }
+    if (hasCounselingAnswer(item, "fm_health_education", "mother")) {
+      addCount(counts, 47, month);
+    }
+    if (hasCounselingAnswer(item, "uterine_prolapse_referral", "mother")) {
+      addCount(counts, 76, month);
+    }
+    if (
+      hasCounselingAnswer(item, "cervical_cancer_screening_referral", "mother")
+    ) {
+      addCount(counts, 77, month);
+    }
+  });
+
+  infants.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (item.status === "alive") addCount(counts, 9, month);
+    if (item.status === "dead") addCount(counts, 10, month);
+  });
+
+  const homeBirthRows = ([...deliveries, ...infants] as any[]).filter(
+    (item) => item.birth_place === "home" || item.delivery_place === "home",
+  );
+  homeBirthRows.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (
+      item.bathed_after_24_hours ||
+      item.is_all_given ||
+      item.early_breastfeeding
+    ) {
+      addCount(counts, 11, month);
+    }
+  });
+
+  childCounselingRecords.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (hasChildCounselingAnswer(item, "bathed_after_24_hours")) {
+      addCount(counts, 11, month);
+    }
+    if (hasChildCounselingAnswer(item, "newborn_vaccination_facility")) {
+      addCount(counts, 17, month);
+    }
+    if (hasChildCounselingAnswer(item, "all_vaccines_23_months")) {
+      addCount(counts, 18, month);
+    }
+
+    // ── Diarrhoea rows (28-33) ────────────────────────────────
+    if (hasChildCounselingAnswer(item, "has_diarrhea")) {
+      addCount(counts, 28, month);
+    }
+    if (hasChildCounselingAnswer(item, "diarrhea_treated_with_ors_zinc")) {
+      addCount(counts, 29, month);
+    }
+    const orsQty = sumChildCounselingQuantity(item.answers, "ors_for_child");
+    if (orsQty > 0) {
+      addCount(counts, 30, month, orsQty);
+    }
+    const zincQty = sumChildCounselingQuantity(item.answers, "zinc_for_child");
+    if (zincQty > 0) {
+      addCount(counts, 32, month, zincQty);
+    }
+    if (
+      hasChildCounselingAnswer(
+        item,
+        "referred_to_health_facility_due_to_phuknas",
+      )
+    ) {
+      addCount(counts, 33, month);
+    }
+
+    // ── Respiratory rows (34-36) ──────────────────────────────
+    if (
+      hasChildCounselingAnswer(item, "has_breathing_problems") ||
+      hasChildCounselingAnswer(item, "has_pneumonia")
+    ) {
+      addCount(counts, 34, month);
+    }
+    if (hasChildCounselingAnswer(item, "home_treatment_cold")) {
+      addCount(counts, 35, month);
+    }
+    if (hasChildCounselingAnswer(item, "referred_breathing_problems")) {
+      addCount(counts, 36, month);
+    }
+
+    // ── Malnutrition rows (48-54) ────────────────────────────
+    let malnutritionAnswers: any[] = [];
+    try {
+      const parsed = JSON.parse(item.answers || "{}");
+      const logs = parsed?.has_malnutrition;
+      if (Array.isArray(logs)) malnutritionAnswers = logs;
+    } catch {}
+    if (malnutritionAnswers.length > 0) {
+      const latest = malnutritionAnswers[malnutritionAnswers.length - 1];
+      if (latest.muac === "green") addCount(counts, 48, month);
+      if (latest.muac === "yellow") addCount(counts, 49, month);
+      if (latest.muac === "red") addCount(counts, 50, month);
+      const sub = latest.sub_answers || {};
+      if (sub.malnutrition_cured?.value) addCount(counts, 52, month);
+      if (sub.malnutrition_no_weight_gain?.value) addCount(counts, 53, month);
+      if (sub.malnutrition_dropped_out?.value) addCount(counts, 54, month);
+    }
+    if (
+      hasChildCounselingAnswer(
+        item,
+        "referred_to_health_facility_due_to_phuknas",
+      )
+    ) {
+      addCount(counts, 51, month);
+    }
+
+    // ── Registration counseling (80, 82) ─────────────────────
+    if (hasChildCounselingAnswer(item, "birth_registration_counseling")) {
+      addCount(counts, 80, month);
+    }
+    if (hasChildCounselingAnswer(item, "death_registration_counseling")) {
+      addCount(counts, 82, month);
+    }
+
+    // ── Sick infant by age (20-22) ────────────────────────────
+    const hasSickInfantAnswer = [
+      "has_diarrhea",
+      "has_breathing_problems",
+      "has_pneumonia",
+      "has_malnutrition",
+    ].some((id) => hasChildCounselingAnswer(item, id));
+    if (!hasSickInfantAnswer) return;
+
+    const child = childById[item.child];
+    const ageInDays = getAgeInDays(
+      child?.date_of_birth,
+      item.updated_at || item.created_at,
+    );
+    if (ageInDays === null) return;
+    if (ageInDays >= 0 && ageInDays <= 7) addCount(counts, 20, month);
+    if (ageInDays >= 8 && ageInDays <= 28) addCount(counts, 21, month);
+    if (ageInDays >= 29 && ageInDays <= 59) addCount(counts, 22, month);
+  });
+
+  childBirthRegistrations.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (item.birth_status === 1) {
+      addCount(counts, 81, month);
+    }
+  });
+
+  childDeathRegistrations.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (item.death_status === 1) {
+      addCount(counts, 83, month);
+    }
+  });
+
+  supplements.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (item.iron_pregnancy) addCount(counts, 5, month);
+    if (item.iron_post_delivery) addCount(counts, 14, month);
+    if (item.vitamin_a_post_delivery) addCount(counts, 15, month);
+  });
+
+  const vaccineIds = VACCINE_SCHEDULE.flatMap((slot) =>
+    slot.vaccines.map((vaccine) => vaccine.id),
+  );
+  const vaccineCountByChild = vaccinations.reduce<Record<string, Set<string>>>(
+    (acc, item) => {
+      if (!item.child || item.is_given !== 1) return acc;
+      acc[item.child] = acc[item.child] || new Set<string>();
+      acc[item.child].add(item.vaccine_id);
+      return acc;
+    },
+    {},
+  );
+  infants.forEach((child) => {
+    const given = vaccineCountByChild[child.id];
+    if (!given || !vaccineIds.every((id) => given.has(id))) return;
+    const ageDays = getAgeInDays(child.date_of_birth, new Date().toISOString());
+    if (ageDays === null || ageDays >= 700) return;
+    addCount(counts, 18, getRecordMonth(child, filter));
+  });
+
+  deaths.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    const age = Number(item.death_age_days || 0);
+    if (item.death_age_unit === "days" && age <= 7) addCount(counts, 23, month);
+    if (item.death_age_unit === "days" && age >= 8 && age <= 28) {
+      addCount(counts, 24, month);
+    }
+    if (
+      (item.death_age_unit === "days" && age >= 29 && age <= 59) ||
+      (item.death_age_unit === "months" && age < 2)
+    ) {
+      addCount(counts, 25, month);
+    }
+  });
+
+  familyPlanningRecords.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (item.ocp_qty > 0) addCount(counts, 42, month);
+    if (item.ecp_qty > 0) addCount(counts, 420, month);
+    if (item.ocp_qty > 0) addCount(counts, 43, month, item.ocp_qty);
+    if (item.ecp_qty > 0) addCount(counts, 430, month, item.ecp_qty);
+    if (item.condom_qty > 0) {
+      addCount(counts, 44, month);
+      addCount(counts, 45, month, item.condom_qty);
+    }
+  });
+
+  mothersGroupMeetings.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    addCount(counts, 61, month);
+    addCount(counts, 62, month, item.attendees_count || 0);
+    addCount(counts, 63, month);
+  });
+
+  maternalDeaths.forEach((item) => {
+    if (item.death_place === "Institution") return;
+    const month = getRecordMonth(item, filter);
+    if (item.death_condition === "Pregnant") addCount(counts, 64, month);
+    if (item.death_condition === "Labor") addCount(counts, 65, month);
+    if (item.death_condition === "Post-delivery") addCount(counts, 66, month);
+  });
+
+  adolescentIfaRecords.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    const hasPhase1 =
+      item.phase1_week_1 > 0 ||
+      item.phase1_week_2 > 0 ||
+      item.phase1_week_3 > 0 ||
+      item.phase1_week_4 > 0 ||
+      item.phase1_week_5 > 0 ||
+      item.phase1_week_6 > 0 ||
+      item.phase1_week_7 > 0 ||
+      item.phase1_week_8 > 0 ||
+      item.phase1_week_9 > 0 ||
+      item.phase1_week_10 > 0 ||
+      item.phase1_week_11 > 0 ||
+      item.phase1_week_12 > 0 ||
+      item.phase1_week_13 > 0;
+    const hasPhase2 =
+      item.phase2_week_1 > 0 ||
+      item.phase2_week_2 > 0 ||
+      item.phase2_week_3 > 0 ||
+      item.phase2_week_4 > 0 ||
+      item.phase2_week_5 > 0 ||
+      item.phase2_week_6 > 0 ||
+      item.phase2_week_7 > 0 ||
+      item.phase2_week_8 > 0 ||
+      item.phase2_week_9 > 0 ||
+      item.phase2_week_10 > 0 ||
+      item.phase2_week_11 > 0 ||
+      item.phase2_week_12 > 0 ||
+      item.phase2_week_13 > 0;
+    if (hasPhase1) addCount(counts, 84, month);
+    if (hasPhase2) addCount(counts, 85, month);
+  });
+
+  const FCHV_COUNSELING_ROW_MAP: Record<number, string> = {
+    16: "immunization_cleanliness_sessions",
+    19: "village_clinic_support",
+    38: "adolescent_referred_count",
+    39: "cough_referred_count",
+    40: "first_aid_count",
+    41: "first_aid_referred_count",
+    69: "child_health_education_count",
+    70: "ncd_health_education_count",
+    71: "ncd_beneficiaries_count",
+    72: "tb_referred_count",
+    73: "leprosy_referred_count",
+    74: "ncd_referred_count",
+    75: "mental_health_referred_count",
+    78: "elderly_referred_count",
+    79: "fchv_fund_amount",
+  };
+
+  fchvCounselingRecords.forEach((record: any) => {
+    const month = getRecordMonth(record, filter);
+    if (!month) return;
+    let data: Record<string, any> = {};
+    try {
+      data = JSON.parse(record.data || "{}");
+    } catch {
+      return;
+    }
+    for (const [rowNoStr, key] of Object.entries(FCHV_COUNSELING_ROW_MAP)) {
+      const rowNo = Number(rowNoStr);
+      const value = data[key];
+      if (value !== undefined && value !== null && value !== "") {
+        const num = Number(value);
+        if (!isNaN(num) && num > 0) {
+          addCount(counts, rowNo, month, num);
+        }
+      }
+    }
+  });
+
+  return counts;
+};
+
+/** Build sub-column counts for child nutrition rows 55/56/57 */
+const buildNutritionCounts = async (
+  filter: MonthFilter,
+): Promise<NutritionSubCounts> => {
+  // rowNo → month → subCol → count
+  const nc: NutritionSubCounts = {};
+  for (const rowNo of NUTRITION_ROWS) {
+    nc[rowNo] = {};
+    for (let m = 1; m <= 12; m++) {
+      nc[rowNo][m] = { 1: 0, 2: 0, 3: 0 };
+    }
+  }
+
+  const db = await getDb();
+  const records = await db.getAllAsync<any>(
+    `SELECT * FROM child_nutrition WHERE is_deleted = 0`,
+  );
+
+  records.forEach((item) => {
+    const month = getRecordMonth(item, filter);
+    if (!month) return;
+
+    const ageGroup = item.child_age_group;
+    const timesPerMonth = item.times_per_month ?? 0;
+
+    if (ageGroup === "6-11") {
+      for (let sc = 1; sc <= Math.min(timesPerMonth, 1); sc++) {
+        nc[55][month][sc] += 1;
+      }
+    } else if (ageGroup === "12-17") {
+      for (let sc = 1; sc <= Math.min(timesPerMonth, 2); sc++) {
+        nc[56][month][sc] += 1;
+      }
+    } else if (ageGroup === "18-23") {
+      for (let sc = 1; sc <= Math.min(timesPerMonth, 3); sc++) {
+        nc[57][month][sc] += 1;
+      }
+    }
+  });
+
+  return nc;
+};
+
+const COLLECTED_DATA_ROWS = [
+  { no: 0, activity: "विविध", section: "(क)" },
+  {
+    no: 1,
+    activity: "आफ्नो क्षेत्रमा भेट गरिएका गर्भवती महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 2,
+    activity:
+      "गर्भ जाँचको लागि स्वास्थ्य संस्थामा प्रेषण गरेको गर्भवती महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 3,
+    activity:
+      "आमाबाट बच्चामा सर्ने एचआइभि सम्बन्धि सूचना दिएका गर्भवतीलाई रक्त परिक्षणका लागि रेफर गरेको संख्या (जना)",
+  },
+  {
+    no: 4,
+    activity:
+      "पहिलो पटक स्वास्थ्य संस्थामा गर्भ जाँच गरेको सुनिश्चित गरेको महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 5,
+    activity:
+      "दोहोऱ्याई आएको वेला आईरन चक्की वितरण गरेको गर्भवती महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 6,
+    activity:
+      "प्रसूति सेवाको लागि स्वास्थ्य संस्थामा प्रेषण गरेको गर्भवती महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 7,
+    activity:
+      "स्वास्थ्यकर्मी विना घरमै सुत्केरी भई मातृसुरक्षा चक्की (मिसोप्रोस्टोल) खाएको सुनिश्चित गरिएका महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 8,
+    activity:
+      "सुरक्षित मातृत्व र नवशिशु सम्बन्धि सामग्री (फ्लिप चार्ट/पोस्टर/श्रव्य दृश्य सामग्री) प्रयोग गरी स्वास्थ्य शिक्षा पाएका संख्या",
+  },
+  { no: 0, activity: "घरमा जन्मेका शिशुहरू", section: "(ख)" },
+  { no: 9, activity: "जिवित जन्म भएका शिशुहरू (जना)" },
+  { no: 10, activity: "मृत जन्म भएका शिशुहरू (जना)" },
+  {
+    no: 11,
+    activity:
+      "जन्मेको २४ घण्टासम्म ननुहाएको सुनिश्चित गरिएको नवजात शिशुहरूको संख्या (जना)",
+  },
+  { no: 0, activity: "आमा र नवजात शिशु स्वास्थ्य", section: "(ग)" },
+  {
+    no: 12,
+    activity:
+      "शिशु तथा बाल्यकालिन पोषण व्यवहार सम्बन्धी सल्लाह दिएको आमाहरूको संख्या (जना)",
+  },
+  {
+    no: 13,
+    activity: "सुत्केरी जाँचको लागि प्रेषण गरेको महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 14,
+    activity:
+      "घरमा प्रसूती भएका सुत्केरीलाई ४५ आइरन चक्की वितरण गरेको महिलाहरूको संख्या (जना)",
+  },
+  { no: 15, activity: "भिटामिन ए दिएको सुत्केरी महिलाहरूको संख्या (जना)" },
+  { no: 0, activity: "खोप कार्यक्रम", section: "(घ)" },
+  { no: 16, activity: "खोप क्लिनिक र सरसफाई सेसनमा सहभागी भएको (पटक)" },
+  { no: 17, activity: "खोप लगाउन पठाएको नयाँ बच्चाको संख्या (जना)" },
+  {
+    no: 18,
+    activity: "२३ महिना भित्रमा पूर्ण खोप प्राप्त गरेको बच्चा संख्या (जना)",
+  },
+  { no: 19, activity: "गाउँघर क्लिनिकमा सहभागी भई सघाएको (पटक)" },
+  {
+    no: 0,
+    activity: "२ महिना मुनिको बिरामि शिशुको उपचार तथा प्रेषण",
+    section: "(ङ)",
+  },
+  { no: 20, activity: "०-७ दिन सम्मका बिरामी शिशुहरूको संख्या (जना)" },
+  { no: 21, activity: "८-२८ दिनसम्मका बिरामी शिशुहरूको संख्या (जना)" },
+  { no: 22, activity: "२९-५९ दिन सम्मका बिरामी शिशुहरूको संख्या (जना)" },
+  { no: 23, activity: "०-७ दिन भित्र मृत्यु भएका नवजात शिशु संख्या (जना)" },
+  { no: 24, activity: "८-२८ दिन भित्र मृत्यु भएका नवजात शिशु संख्या (जना)" },
+  { no: 25, activity: "२९-५९ दिन भित्र मृत्यु भएका बच्चा संख्या (जना)" },
+  {
+    no: 0,
+    activity: "२-५९ महिना भित्रका शिशु/ बालबालिकाको मृत्यु विवरण",
+    section: "(च)",
+  },
+  { no: 26, activity: "२-११ महिना भित्र मृत्यु भएका बच्चा संख्या (जना)" },
+  {
+    no: 27,
+    activity: "१२-५९ महिना भित्र मृत्यु भएका बालबालिकाको संख्या (जना)",
+  },
+  {
+    no: 0,
+    activity: "२-५९ महिना सम्मका बिरामी शिशुको उपचार तथा प्रेषण: झाडापखाला",
+    section: "(छ)",
+  },
+  {
+    no: 28,
+    activity:
+      "झाडापखाला लागेका २ महिनादेखि ५ वर्ष मुनिका जम्मा बिरामी बच्चाहरूको संख्या (जना)",
+  },
+  {
+    no: 29,
+    activity:
+      "पुनर्जलीय झोल र जिंक चक्कीबाट उपचार गरेका बच्चाहरूको संख्या (जना)",
+  },
+  {
+    no: 30,
+    activity:
+      "५ वर्ष मुनिका बच्चाहरूलाई वितरण गरेको पुनर्जलीय झोलको पुरिया (संख्या)",
+  },
+  {
+    no: 31,
+    activity:
+      "५ वर्ष भन्दा माथिका मानिसहरूलाई वितरण गरेको पुनर्जलीय झोलको पुरिया (संख्या)",
+  },
+  { no: 32, activity: "वितरण गरेको जिंक चक्की संख्या (चक्की)" },
+  {
+    no: 33,
+    activity:
+      "झाडापखाला लागेका २ महिना देखि ५ वर्ष सम्मका बिरामी बच्चाहरूलाई प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 0,
+    activity:
+      "२-५९ महिना सम्मका बिरामी शिशुको उपचार तथा प्रेषण: श्वासप्रश्वास रोग",
+    section: "(ज)",
+  },
+  {
+    no: 34,
+    activity:
+      "श्वास प्रश्वास रोग लागेका २ देखि ५९ महिनाका बिरामी बच्चाहरूको संख्या (जना)",
+  },
+  {
+    no: 35,
+    activity:
+      "न्यूमोनिया नभएको (रुघाखोकी भएका) ५ वर्ष मुनिका बच्चालाई घरेलु उपचार सल्लाह दिएको बच्चाहरूको संख्या (जना)",
+  },
+  {
+    no: 36,
+    activity:
+      "श्वास प्रश्वास रोग भई स्वास्थ्य संस्थामा प्रेषण गरिएका २ देखि ५९ महिनाका बालबालिकाहरूको संख्या (जना)",
+  },
+  { no: 0, activity: "प्रेषण", section: "(झ)" },
+  {
+    no: 37,
+    activity:
+      "सुरक्षित गर्भपतनको लागि स्वास्थ्य संस्थामा प्रेषण गरेका महिलाहरूको संख्या (जना)",
+  },
+  {
+    no: 38,
+    activity:
+      "स्वास्थ्य संस्थामा सेवा लिन प्रेषण गरिएका किशोर किशोरीहरूको संख्या (जना)",
+  },
+  {
+    no: 39,
+    activity:
+      "लगातार २ हप्ता सम्म खोकी लागी स्वास्थ्य संस्थामा प्रेषण गरेका बिरामीहरूको संख्या (जना)",
+  },
+  { no: 40, activity: "प्राथमिक उपचार गरेको संख्या (जना)" },
+  {
+    no: 41,
+    activity: "प्राथमिक उपचारको क्रममा प्रेषण गरेको बिरामीहरूको संख्या (जना)",
+  },
+  { no: 0, activity: "परिवार नियोजन" },
+  { no: 42, activity: "पिल्स वितरण गरिएका महिलाहरूको संख्या (जना)" },
+  { no: 43, activity: "वितरण गरेको पिल्सको संख्या" },
+  { no: 44, activity: "कण्डम वितरण गरेको (जना)" },
+  { no: 45, activity: "वितरण गरेको कण्डमको संख्या (गोटा)" },
+  {
+    no: 46,
+    activity:
+      "परिवार नियोजन सेवाको लागि स्वास्थ्य संस्थामा प्रेषण गरेको दम्पतीहरूको संख्या",
+  },
+  {
+    no: 47,
+    activity:
+      "परिवार नियोजन सम्बन्धि सामग्री (फिलप चार्ट/पोस्टर/श्रव्य दृश्य) प्रयोग गरी स्वास्थ्य शिक्षा पाएको संख्या",
+  },
+  {
+    no: 0,
+    activity: "शीघ्र कुपोषणको एकीकृत व्यवस्थापन: एम.यु.ए.सी. छनौट",
+    section: "(ट)",
+  },
+  { no: 48, activity: "हरियो | हृष्टपुष्ट (जना): खुसी परिवार" },
+  {
+    no: 49,
+    activity:
+      "पहेलो | मध्यम शीघ्र कुपोषण (जना): घरमा म.स्वा.स्व.से. द्वारा परामर्श",
+  },
+  {
+    no: 50,
+    activity: "रातो | कडा शीघ्र कुपोषण (जना): स्वास्थ्य संस्थामा प्रेषण",
+  },
+  { no: 51, activity: "फुकेनास (जना): स्वा. संस्थामा प्रेषण" },
+  {
+    no: 0,
+    activity: "शीघ्र कुपोषणको एकीकृत व्यवस्थापन: घरभेट र अनुगमन",
+    section: "(ठ)",
+  },
+  {
+    no: 52,
+    activity: "रातो: कडा शीघ्र कुपोषित बच्चा: उपचार पछि निको भएको (जना)",
+  },
+  {
+    no: 53,
+    activity:
+      "रातो: कडा शीघ्र कुपोषित बच्चा: उपचार गरिरहँदा पनि तौल वृद्धि नभएको (जना)",
+  },
+  {
+    no: 54,
+    activity:
+      "रातो: कडा शीघ्र कुपोषित बच्चा: उपचार गर्दा गर्दै स्वास्थ्य संस्था जान छाडेका (जना)",
+  },
+
+  { no: 0, activity: "विविध", section: "(ढ)" },
+  { no: 58, activity: "आमा समूहको बैठक बसेको पटक" },
+  { no: 59, activity: "आमा समूहको बैठक सहभागी संख्या (जना)" },
+  { no: 60, activity: "आमा समूहको बैठकमा स्वास्थ्यकर्मी सहभागी भएको पटक" },
+  {
+    no: 61,
+    activity:
+      "गर्भवती अवस्थामा मातृ मृत्यु संख्या (स्वास्थ्य संस्थामा बाहेक अन्य स्थानमा भएको मात्र) (जना)",
+  },
+  {
+    no: 62,
+    activity:
+      "प्रसव अवस्थामा मातृ मृत्यु संख्या (स्वास्थ्य संस्थामा बाहेक अन्य स्थानमा भएको मात्र) (जना)",
+  },
+  {
+    no: 63,
+    activity:
+      "सुत्केरी अवस्थामा मातृ मृत्यु संख्या (स्वास्थ्य संस्थामा बाहेक अन्य स्थानमा भएको मात्र) (जना)",
+  },
+  {
+    no: 64,
+    activity:
+      "२९-५९ दिन सम्मको बच्चाको मृत्यु संख्या (स्वास्थ्य संस्थामा बाहेक अन्य स्थानमा भएको मात्र) (जना)",
+  },
+  {
+    no: 65,
+    activity:
+      "२ महिना देखि ५९ महिना सम्मका बालबालिकाको मृत्यु संख्या (स्वास्थ्य संस्थामा बाहेक) (जना)",
+  },
+  {
+    no: 66,
+    activity:
+      "बाल स्वास्थ्य सम्बन्धि स्वास्थ्य शिक्षा सामग्री (फ्लिप चार्ट/पोस्टर/श्रव्य दृश्य सामग्री) प्रयोग गरी स्वास्थ्य शिक्षा पाएका संख्या",
+  },
+  {
+    no: 67,
+    activity:
+      "स्वस्थ जीवनशैलीको लागि नसर्ने रोगका जोखिम तत्व र रोकथामको बारेमा फ्लिप चार्ट/पोस्टर/श्रव्य दृश्य सामग्री प्रयोग गरी स्वास्थ्य शिक्षा दिएको (पटक)",
+  },
+  {
+    no: 68,
+    activity:
+      "स्वस्थ जीवनशैलीको लागि नसर्ने रोगका जोखिम तत्वको बारेमा फ्लिप चार्ट/पोस्टर/श्रव्य दृश्य सामग्री प्रयोग गरी स्वास्थ्य शिक्षाबाट लाभान्वित संख्या",
+  },
+  {
+    no: 69,
+    activity:
+      "आफ्नो क्षेत्रका शंकास्पद क्षयरोगका बिरामीको प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 70,
+    activity:
+      "आफ्नो क्षेत्रका शंकास्पद कुष्ठरोगका बिरामीको प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 71,
+    activity:
+      "नसर्ने रोग (मधुमेह, मृगौला, दीर्घ श्वासप्रश्वास, अर्बुद रोग, मुटुरोग) का बिरामीको प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 72,
+    activity: "मानसिक स्वास्थ्य समस्या भएका बिरामीको प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 73,
+    activity: "पाठेघर खस्ने समस्या भएका आमाको प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 74,
+    activity: "पाठेघरको मुखको क्यान्सरको जाँचको लागि प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 75,
+    activity:
+      "स्वास्थ्य समस्या भएका जेष्ठ नागरिकको पहिचान गरी प्रेषण गरेको संख्या (जना)",
+  },
+  {
+    no: 76,
+    activity:
+      "महिला सामुदायिक स्वास्थ्य स्वयंसेविका कोषमा जम्मा भएको रकम रू. (लगानी समेत)",
+  },
+  {
+    no: 77,
+    activity:
+      "नवजात शिशुको ३५ दिनभित्र जन्म दर्ताका लागि परामर्श दिएको परिवार संख्या (परिवार)",
+  },
+  {
+    no: 78,
+    activity: "नवजात शिशुको जन्म दर्ता भएको सुनिश्चित गरिएको संख्या (जना)",
+  },
+  {
+    no: 79,
+    activity:
+      "मृत्यु भएको ३५ दिनभित्र मृत्यु दर्ताका लागि परामर्श दिएको परिवार संख्या (परिवार)",
+  },
+  { no: 80, activity: "मृत्यु दर्ता भएको सुनिश्चित गरिएको संख्या (जना)" },
+  {
+    no: 81,
+    activity:
+      "१३ हप्तासम्म आइरन फोलिक एसिड चक्की पाएका किशोरीको संख्या (संख्या)",
+  },
+  {
+    no: 82,
+    activity:
+      "२६ हप्तासम्म आइरन फोलिक एसिड चक्की पाएका किशोरीको संख्या (संख्या)",
+  },
+];
+
+/** Separate table for nutrition rows 55/56/57 shown as rows 80, 81, 82 */
+const generateNutritionTable = (
+  periods: SummaryPeriod[],
+  nutritionCounts: NutritionSubCounts,
+): string => {
+  const subColLabels = ["पहिलो पटक", "दोस्रो पटक", "तेस्रो पटक"];
+
+  // display number → original NUTRITION_ROWS key → max active sub-cols
+  const nutritionDisplayRows: Array<{
+    displayNo: number;
+    rowKey: number;
+    activity: string;
+    subCols: number;
+  }> = [
+    {
+      displayNo: 80,
+      rowKey: 55,
+      activity: "६ देखि ११ महिनाका बालबालिका",
+      subCols: 1,
+    },
+    {
+      displayNo: 81,
+      rowKey: 56,
+      activity: "१२ देखि १७ महिनाका बालबालिका",
+      subCols: 2,
+    },
+    {
+      displayNo: 82,
+      rowKey: 57,
+      activity: "१८ देखि २३ महिनाका बालबालिका",
+      subCols: 3,
+    },
+  ];
+
+  let html = `
+    <div class="collected-title" style="margin-top:24px;">
+      एकीकृत शिशु तथा बाल्यकालीन पोषण र बालभिटा समुदाय प्रवर्धन कार्यक्रम (ड)
+    </div>
+    <table class="collected-table">
+      <thead>
+        <tr>
+          <th class="sn-col" rowspan="2">क्र.सं.</th>
+          <th class="activity-col" rowspan="2">गतिविधिहरू</th>
+          ${periods
+            .map(
+              (p) =>
+                `<th colspan="3" style="text-align:center;">${p.label}</th>`,
+            )
+            .join("")}
+          <th rowspan="2">जम्मा</th>
+        </tr>
+        <tr>
+          ${periods
+            .map(() =>
+              subColLabels
+                .map(
+                  (l) =>
+                    `<th style="font-size:8px;background:#e8e8e8;padding:3px;">${l}</th>`,
+                )
+                .join(""),
+            )
+            .join("")}
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  nutritionDisplayRows.forEach(({ displayNo, rowKey, activity, subCols }) => {
+    const nc = nutritionCounts[rowKey] ?? {};
+    let grandTotal = 0;
+
+    const dataCells = periods
+      .map((period) => {
+        let cells = "";
+        for (let sc = 1; sc <= 3; sc++) {
+          if (sc <= subCols) {
+            const val = nc[period.key]?.[sc] || 0;
+            grandTotal += val;
+            cells += `<td style="border:1px solid #000;padding:4px;text-align:center;font-size:9px;">${convertToNepaliNumber(val)}</td>`;
+          } else {
+            cells += `<td style="border:1px solid #000;padding:4px;background:#b0b0b0;"></td>`;
+          }
+        }
+        return cells;
+      })
+      .join("");
+
+    html += `
+      <tr>
+        <td>${convertToNepaliNumber(displayNo)}</td>
+        <td class="activity-cell">${activity}</td>
+        ${dataCells}
+        <td class="total-cell">${convertToNepaliNumber(grandTotal)}</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  return html;
+};
+
+const generateCollectedDataTable = async (filter: MonthFilter) => {
+  const periods = selectedPeriods(filter);
+  const counts = await buildCollectedDataCounts(filter);
+  const nutritionCounts = await buildNutritionCounts(filter);
+
+  const title = filter?.month
+    ? `मासिक संकलित तथ्याङ्क (${NEPALI_MONTHS[filter.month - 1]} ${convertToNepaliNumber(filter.year)})`
+    : `वार्षिक संकलित तथ्याङ्क${filter?.year ? ` (${convertToNepaliNumber(filter.year)})` : ""}`;
+
+  // Main table columns: SN + Activity (colspan=3) + 1 per period + Total
+  const mainTotalCols = 3 + periods.length + 1;
+
+  let html = `
+    <div class="collected-title">${title}</div>
+    <table class="collected-table">
+      <thead>
+        <tr>
+          <th class="sn-col">क्र.सं.</th>
+          <th class="activity-col" colspan="3">गतिविधिहरू</th>
+          ${periods.map((p) => `<th>${p.label}</th>`).join("")}
+          <th>जम्मा</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  COLLECTED_DATA_ROWS.forEach((row) => {
+    // ── Section header ────────────────────────────────────────────
+    if (row.no === 0) {
+      html += `
+        <tr class="section-row">
+          <td>${row.section || ""}</td>
+          <td colspan="${mainTotalCols}">${row.activity}</td>
+        </tr>
+      `;
+      return;
+    }
+
+    // ── Regular row — one plain cell per month ────────────────────
+    const total = periods.reduce(
+      (sum, period) => sum + (counts[row.no]?.[period.key] || 0),
+      0,
+    );
+
+    if (row.no === 42) {
+      const ocpTotal = periods.reduce(
+        (sum, p) => sum + (counts[42]?.[p.key] || 0),
+        0,
+      );
+      const ecpTotal = periods.reduce(
+        (sum, p) => sum + (counts[420]?.[p.key] || 0),
+        0,
+      );
+
+      html += `
+        <tr>
+          <td rowspan="2" style="vertical-align: middle;">${convertToNepaliNumber(42)}</td>
+          <td rowspan="2" colspan="2" class="activity-cell" style="width: 14%; vertical-align: middle;">पिल्स वितरण गरिएका महिलाहरूको संख्या (जना)</td>
+          <td class="activity-cell" style="width: 11%; vertical-align: middle;">खाने चक्की पिल्स (OCP)</td>
+          ${periods.map((p) => `<td>${convertToNepaliNumber(counts[42]?.[p.key] || 0)}</td>`).join("")}
+          <td class="total-cell">${convertToNepaliNumber(ocpTotal)}</td>
+        </tr>
+        <tr>
+          <td class="activity-cell" style="vertical-align: middle;">आकस्मिक चक्की (ECP)</td>
+          ${periods.map((p) => `<td>${convertToNepaliNumber(counts[420]?.[p.key] || 0)}</td>`).join("")}
+          <td class="total-cell">${convertToNepaliNumber(ecpTotal)}</td>
+        </tr>
+      `;
+      return;
+    }
+
+    if (row.no === 43) {
+      const ocpTotal = periods.reduce(
+        (sum, p) => sum + (counts[43]?.[p.key] || 0),
+        0,
+      );
+      const ecpTotal = periods.reduce(
+        (sum, p) => sum + (counts[430]?.[p.key] || 0),
+        0,
+      );
+
+      html += `
+        <tr>
+          <td rowspan="2" style="vertical-align: middle;">${convertToNepaliNumber(43)}</td>
+          <td rowspan="2" colspan="2" class="activity-cell" style="width: 14%; vertical-align: middle;">वितरण गरेको पिल्सको संख्या</td>
+          <td class="activity-cell" style="width: 11%; vertical-align: middle;">खाने चक्की पिल्स (साइकल)</td>
+          ${periods.map((p) => `<td>${convertToNepaliNumber(counts[43]?.[p.key] || 0)}</td>`).join("")}
+          <td class="total-cell">${convertToNepaliNumber(ocpTotal)}</td>
+        </tr>
+        <tr>
+          <td class="activity-cell" style="vertical-align: middle;">आकस्मिक चक्की (डोज)</td>
+          ${periods.map((p) => `<td>${convertToNepaliNumber(counts[430]?.[p.key] || 0)}</td>`).join("")}
+          <td class="total-cell">${convertToNepaliNumber(ecpTotal)}</td>
+        </tr>
+      `;
+      return;
+    }
+
+    let activityCellContent = "";
+    let tdStyle = "";
+
+    if (row.no >= 48 && row.no <= 51) {
+      tdStyle = `style="padding:0; vertical-align:stretch;"`;
+      if (row.no === 48) {
+        activityCellContent = `
+          <div class="muac-container">
+            <div class="muac-badge muac-green-badge">हरियो</div>
+            <div class="muac-content">हृष्टपुष्ट (जना):<br/>खुसी परिवार</div>
+          </div>
+        `;
+      } else if (row.no === 49) {
+        activityCellContent = `
+          <div class="muac-container">
+            <div class="muac-badge muac-yellow-badge">पहेलो</div>
+            <div class="muac-content">मध्यम शीघ्र कुपोषण (जना):<br/>घरमा म.स्वा.स्व.से. द्वारा परामर्श</div>
+          </div>
+        `;
+      } else if (row.no === 50) {
+        activityCellContent = `
+          <div class="muac-container">
+            <div class="muac-badge muac-red-badge">रातो</div>
+            <div class="muac-content">कडा शीघ्र कुपोषण (जना):<br/>स्वास्थ्य संस्थामा प्रेषण</div>
+          </div>
+        `;
+      } else if (row.no === 51) {
+        activityCellContent = `
+          <div class="muac-container">
+            <div class="muac-badge" style="background-color: transparent; border-right: none; width: 0; padding: 0;"></div>
+            <div class="muac-content" style="padding-left: 10px;">फुकेनास (जना):<br/>स्वा. संस्थामा प्रेषण</div>
+          </div>
+        `;
+      }
+    } else {
+      activityCellContent = row.activity;
+    }
+
+    html += `
+      <tr>
+        <td>${convertToNepaliNumber(row.no)}</td>
+        <td class="activity-cell" colspan="3" ${tdStyle}>${activityCellContent}</td>
+        ${periods
+          .map(
+            (period) =>
+              `<td>${convertToNepaliNumber(counts[row.no]?.[period.key] || 0)}</td>`,
+          )
+          .join("")}
+        <td class="total-cell">${convertToNepaliNumber(total)}</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+
+  // ── Separate nutrition table (rows 80, 81, 82) ──────────────────
+  html += generateNutritionTable(periods, nutritionCounts);
+
+  return html;
 };
 
 const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
@@ -121,10 +1408,10 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
         <td>${regDate.day}</td><td>${regDate.month}</td><td>${regDate.year}</td>
-        <td>${item.name}</td><td>${convertToNepaliNumber(item.age)}</td>
+        <td>${escapeHtml(item.name)}</td><td>${convertToNepaliNumber(item.age)}</td>
         <td>${lmp.day}</td><td>${lmp.month}</td><td>${lmp.year}</td>
         <td>${edd.day}</td><td>${edd.month}</td><td>${edd.year}</td>
-        <td></td><td></td>
+        <td>${item.has_counseling ? CHECK : ""}</td><td>${!item.has_counseling ? CHECK : ""}</td>
         <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
       </tr>
     `;
@@ -138,7 +1425,7 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
   return html;
 };
 
-const generateMaternalDeathTable = (data: any[]) => {
+const generateMaternalDeathTable = async (data: any[]) => {
   let html = `
     <div class="title" style="text-align: center; margin-top: 20px;">मातृ मृत्यु विवरण</div>
     <div class="subtitle" style="text-align: center;">(गर्भवती अवस्था, प्रशव अवस्था तथा सुत्केरी भएको ४२ दिन भित्र मृत्यु भएका महिलाको लागि मात्र)</div>
@@ -165,31 +1452,74 @@ const generateMaternalDeathTable = (data: any[]) => {
   for (let i = 1; i <= 16; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
   html += `</tr></thead><tbody>`;
 
-  data.forEach((item, index) => {
+  for (const item of data) {
     const deathDate = convertAdYmdToBs(
       item.death_year,
       item.death_month,
       item.death_day,
     );
+
+    // Fetch delivery data for this mother to get delivery place
+    let deliveryPlace: string | null = null;
+    if (item.mother) {
+      try {
+        const deliveries = await getDeliveriesByMother(item.mother);
+        if (deliveries.length > 0) {
+          deliveryPlace = deliveries[0].delivery_place ?? null;
+        }
+      } catch (e) {
+        console.log("Error fetching delivery data:", e);
+      }
+    }
+
+    const isDeathPregnant =
+      item.death_condition && item.death_condition.toLowerCase() === "pregnant";
+    const isDeathLabor =
+      item.death_condition && item.death_condition.toLowerCase() === "labor";
+    const isDeathPostpartum =
+      item.death_condition &&
+      (item.death_condition.toLowerCase() === "post_delivery" ||
+        item.death_condition.toLowerCase() === "post-delivery");
+
+    const isDeliveredHome =
+      deliveryPlace && deliveryPlace.toLowerCase() === "home";
+    const isDeliveredInst =
+      deliveryPlace && deliveryPlace.toLowerCase() === "institution";
+    const isDeliveredOther =
+      deliveryPlace &&
+      deliveryPlace.toLowerCase() !== "home" &&
+      deliveryPlace.toLowerCase() !== "institution";
+
+    const isDeathHome =
+      item.death_place && item.death_place.toLowerCase() === "home";
+    const isDeathInst =
+      item.death_place && item.death_place.toLowerCase() === "institution";
+    const isDeathOther =
+      item.death_place &&
+      item.death_place.toLowerCase() !== "home" &&
+      item.death_place.toLowerCase() !== "institution";
+
     html += `
       <tr>
-        <td>${convertToNepaliNumber(index + 1)}</td>
-        <td>${item.mother_name || ""}</td>
+        <td>${convertToNepaliNumber(data.indexOf(item) + 1)}</td>
+        <td>${escapeHtml(item.mother_name)}</td>
         <td>${convertToNepaliNumber(item.mother_age)}</td>
-        <td>${item.death_condition === "Pregnant" ? "✔️" : "❌"}</td>
-        <td>${item.death_condition === "Labor" ? "✔️" : "❌"}</td>
-        <td>${item.death_condition === "Post_delivery" ? "✔️" : "❌"}</td>
+        <td>${isDeathPregnant ? CHECK : CROSS}</td>
+        <td>${isDeathLabor ? CHECK : CROSS}</td>
+        <td>${isDeathPostpartum ? CHECK : CROSS}</td>
         <td>${deathDate.day}</td>
         <td>${deathDate.month}</td>
         <td>${deathDate.year}</td>
-        <td></td><td></td><td></td>
-        <td>${item.death_place === "Home" ? "✔️" : "❌"}</td>
-        <td>${item.death_place === "Institution" ? "✔️" : "❌"}</td>
-        <td>${item.death_place === "Other" ? "✔️" : "❌"}</td>
-        <td>${item.remarks || ""}</td>
+        <td>${isDeliveredHome ? CHECK : CROSS}</td>
+        <td>${isDeliveredInst ? CHECK : CROSS}</td>
+        <td>${isDeliveredOther ? CHECK : CROSS}</td>
+        <td>${isDeathHome ? CHECK : CROSS}</td>
+        <td>${isDeathInst ? CHECK : CROSS}</td>
+        <td>${isDeathOther ? CHECK : CROSS}</td>
+        <td>${escapeHtml(item.remarks)}</td>
       </tr>
     `;
-  });
+  }
 
   if (data.length === 0) {
     html += getEmptyRows(16, 3);
@@ -238,22 +1568,22 @@ const generateNewbornDeathTable = (data: any[]) => {
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
-        <td>${item.baby_name || ""}</td>
-        <td>${item.mother_name || ""}</td>
-        <td></td>
+        <td>${escapeHtml(item.baby_name)}</td>
+        <td>${escapeHtml(item.mother_name)}</td>
+        <td>${convertToNepaliNumber(item.mother_age)}</td>
         <td>${birthDate.day}</td>
         <td>${birthDate.month}</td>
         <td>${birthDate.year}</td>
-        <td>${item.birth_condition === "Preterm" ? "✔️" : "❌"}</td>
-        <td>${item.birth_condition === "LowWeight" ? "✔️" : "❌"}</td>
-        <td>${item.birth_condition === "Normal" ? "✔️" : "❌"}</td>
-        <td>${item.birth_condition === "Other" ? "✔️" : "❌"}</td>
+        <td>${item.birth_condition === "Preterm" ? CHECK : CROSS}</td>
+        <td>${item.birth_condition === "LowWeight" ? CHECK : CROSS}</td>
+        <td>${item.birth_condition === "Normal" ? CHECK : CROSS}</td>
+        <td>${item.birth_condition === "Other" ? CHECK : CROSS}</td>
         <td>${convertToNepaliNumber(item.death_age_days)}</td>
-        <td>${item.cause_of_death || ""}</td>
-        <td>${item.death_place === "Home" ? "✔️" : "❌"}</td>
-        <td>${item.death_place === "Institution" ? "✔️" : "❌"}</td>
-        <td>${item.death_place === "Other" ? "✔️" : "❌"}</td>
-        <td>${item.remarks || ""}</td>
+        <td>${escapeHtml(item.cause_of_death)}</td>
+        <td>${item.death_place === "Home" ? CHECK : CROSS}</td>
+        <td>${item.death_place === "Institution" ? CHECK : CROSS}</td>
+        <td>${item.death_place === "Other" ? CHECK : CROSS}</td>
+        <td>${escapeHtml(item.remarks)}</td>
       </tr>
     `;
   });
@@ -299,14 +1629,14 @@ const generateChildDeathTable = (data: any[]) => {
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
-        <td>${item.baby_name || ""}</td>
-        <td>${item.mother_name || ""}</td>
+        <td>${escapeHtml(item.baby_name)}</td>
+        <td>${escapeHtml(item.mother_name)}</td>
         <td>${birthDate.day}</td>
         <td>${birthDate.month}</td>
         <td>${birthDate.year}</td>
         <td>${convertToNepaliNumber(item.death_age_days)}</td>
-        <td>${item.cause_of_death || ""}</td>
-        <td>${item.remarks || ""}</td>
+        <td>${escapeHtml(item.cause_of_death)}</td>
+        <td>${escapeHtml(item.remarks)}</td>
       </tr>
     `;
   });
@@ -348,14 +1678,14 @@ const generateInfantCareTable = (data: any[]) => {
     html += `
       <tr>
         <td>${dob.day}/${dob.month}/${dob.year}</td>
-        <td>${item.mother_name || ""}</td>
-        <td>${item.baby_name || ""}</td>
+        <td>${escapeHtml(item.mother_name)}</td>
+        <td>${escapeHtml(item.baby_name)}</td>
         <td></td>
-        <td>${item.birth_place === "home" ? "✔️" : "❌"}</td>
-        <td>${item.birth_place === "institution" ? "✔️" : "❌"}</td>
-        <td>${item.birth_place === "other" ? "✔️" : "❌"}</td>
-        <td>${item.fchv_present ? "✔️" : "❌"}</td>
-        <td>${item.asphyxiated_newborn ? "✔️" : "❌"}</td>
+        <td>${item.birth_place === "home" ? CHECK : CROSS}</td>
+        <td>${item.birth_place === "institution" ? CHECK : CROSS}</td>
+        <td>${item.birth_place === "other" ? CHECK : CROSS}</td>
+        <td>${item.fchv_present ? CHECK : CROSS}</td>
+        <td>${item.asphyxiated_newborn ? CHECK : CROSS}</td>
       </tr>
     `;
   });
@@ -378,13 +1708,31 @@ const savePdfToDevice = async (htmlContent: string, fileName: string) => {
     try {
       let directoryUri = await storage.get<string>("export_directory_uri");
 
-      if (!directoryUri) {
-        const permissions =
-          await StorageAccessFramework.requestDirectoryPermissionsAsync();
-        if (!permissions.granted) return;
+      if (!directoryUri && StorageAccessFramework) {
+        try {
+          const permissions =
+            await StorageAccessFramework.requestDirectoryPermissionsAsync();
+          if (!permissions.granted) return;
 
-        directoryUri = permissions.directoryUri;
-        await storage.set("export_directory_uri", directoryUri);
+          directoryUri = permissions.directoryUri;
+          await storage.set("export_directory_uri", directoryUri);
+        } catch (permError) {
+          console.error("StorageAccessFramework error:", permError);
+          await storage.remove("export_directory_uri");
+          alert(
+            "Storage Access Framework not available. Download to device not supported on Android.",
+          );
+          return;
+        }
+      }
+
+      if (!directoryUri || !StorageAccessFramework) {
+        // Fallback to Share if permissions were denied or SAF is not loaded
+        await Share.shareAsync(uri, {
+          mimeType: "application/pdf",
+          dialogTitle: `Export ${fileName}`,
+        });
+        return;
       }
 
       const base64 = await readAsStringAsync(uri, {
@@ -432,17 +1780,49 @@ const wrapHtml = (bodyHtml: string) => `
   </html>
 `;
 
-export const exportAllDataToPdf = async () => {
+const getMonthSuffix = (filter: MonthFilter): string => {
+  if (!filter) return "";
+  if (!filter.month) return `_${filter.year}`;
+  return `_${filter.year}_${String(filter.month).padStart(2, "0")}`;
+};
+
+export const exportCollectedDataToPdf = async (filter: MonthFilter = null) => {
   try {
-    const pregnancies = await getPregnantWomenList();
-    const maternalDeaths = await getAllMaternalDeaths();
-    const newbornDeaths = await getAllNewbornDeaths();
-    const infants = await getAllInfantMonitorings();
-    const adolescents = await getAllAdolescentIfa();
+    const htmlContent = wrapHtml(await generateCollectedDataTable(filter));
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Collected_Data${getMonthSuffix(filter)}.pdf`,
+    );
+  } catch (error) {
+    console.error("Error generating Collected Data PDF:", error);
+    throw error;
+  }
+};
+
+export const exportAllDataToPdf = async (filter: MonthFilter = null) => {
+  try {
+    const pregnancies = (await getPregnantWomenList()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
+    const maternalDeaths = (await getAllMaternalDeaths()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
+    const newbornDeaths = (await getAllNewbornDeaths()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
+    const infants = (await getAllInfantMonitorings()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
+    const adolescents = (await getAllAdolescentIfa()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
+    const collectedDataTable = await generateCollectedDataTable(filter);
 
     const htmlContent = wrapHtml(`
+      ${collectedDataTable}
+      <div class="page-break"></div>
       ${await generatePregnancyTable(pregnancies)}
-      ${generateMaternalDeathTable(maternalDeaths)}
+      ${await generateMaternalDeathTable(maternalDeaths)}
       ${generateNewbornDeathTable(newbornDeaths)}
       ${generateChildDeathTable(newbornDeaths)}
       ${generateInfantCareTable(infants)}
@@ -450,62 +1830,90 @@ export const exportAllDataToPdf = async () => {
       ${generateAdolescentIfaTable(adolescents)}
     `);
 
-    await savePdfToDevice(htmlContent, "FCHV_Export_All.pdf");
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Export_All${getMonthSuffix(filter)}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw error;
   }
 };
 
-export const exportPregnancyToPdf = async () => {
+export const exportPregnancyToPdf = async (filter: MonthFilter = null) => {
   try {
-    const data = await getPregnantWomenList();
+    const data = (await getPregnantWomenList()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
     const htmlContent = wrapHtml(await generatePregnancyTable(data));
-    await savePdfToDevice(htmlContent, "FCHV_Pregnancy.pdf");
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Pregnancy${getMonthSuffix(filter)}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating Pregnancy PDF:", error);
     throw error;
   }
 };
 
-export const exportMaternalDeathToPdf = async () => {
+export const exportMaternalDeathToPdf = async (filter: MonthFilter = null) => {
   try {
-    const data = await getAllMaternalDeaths();
-    const htmlContent = wrapHtml(generateMaternalDeathTable(data));
-    await savePdfToDevice(htmlContent, "FCHV_Maternal_Death.pdf");
+    const data = (await getAllMaternalDeaths()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
+    const htmlContent = wrapHtml(await generateMaternalDeathTable(data));
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Maternal_Death${getMonthSuffix(filter)}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating Maternal Death PDF:", error);
     throw error;
   }
 };
 
-export const exportNewbornDeathToPdf = async () => {
+export const exportNewbornDeathToPdf = async (filter: MonthFilter = null) => {
   try {
-    const data = await getAllNewbornDeaths();
+    const data = (await getAllNewbornDeaths()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
     const htmlContent = wrapHtml(generateNewbornDeathTable(data));
-    await savePdfToDevice(htmlContent, "FCHV_Newborn_Death.pdf");
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Newborn_Death${getMonthSuffix(filter)}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating Newborn Death PDF:", error);
     throw error;
   }
 };
 
-export const exportChildDeathToPdf = async () => {
+export const exportChildDeathToPdf = async (filter: MonthFilter = null) => {
   try {
-    const data = await getAllNewbornDeaths();
+    const data = (await getAllNewbornDeaths()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
     const htmlContent = wrapHtml(generateChildDeathTable(data));
-    await savePdfToDevice(htmlContent, "FCHV_Child_Death.pdf");
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Child_Death${getMonthSuffix(filter)}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating Child Death PDF:", error);
     throw error;
   }
 };
 
-export const exportInfantCareToPdf = async () => {
+export const exportInfantCareToPdf = async (filter: MonthFilter = null) => {
   try {
-    const data = await getAllInfantMonitorings();
+    const data = (await getAllInfantMonitorings()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
     const htmlContent = wrapHtml(generateInfantCareTable(data));
-    await savePdfToDevice(htmlContent, "FCHV_Infant_Care.pdf");
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Infant_Care${getMonthSuffix(filter)}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating Infant Care PDF:", error);
     throw error;
@@ -595,24 +2003,24 @@ const generateAdolescentIfaTable = (data: any[]) => {
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
-        <td style="text-align: left; padding-left: 5px;">${item.name || ""}</td>
-        <td>${is10_14 ? "✔️" : ""}</td>
-        <td>${is15_19 ? "✔️" : ""}</td>
+        <td style="text-align: left; padding-left: 5px;">${escapeHtml(item.name)}</td>
+        <td>${is10_14 ? CHECK : ""}</td>
+        <td>${is15_19 ? CHECK : ""}</td>
         ${Array.from({ length: 13 })
           .map(
             (_, i) =>
-              `<td>${item[`phase1_week_${i + 1}`] === 1 ? "✔️" : ""}</td>`,
+              `<td>${item[`phase1_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
           )
           .join("")}
-        <td>${item.phase1_completed === 1 ? "✔️" : ""}</td>
+        <td>${item.phase1_completed === 1 ? CHECK : ""}</td>
         ${Array.from({ length: 13 })
           .map(
             (_, i) =>
-              `<td>${item[`phase2_week_${i + 1}`] === 1 ? "✔️" : ""}</td>`,
+              `<td>${item[`phase2_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
           )
           .join("")}
-        <td>${item.phase2_completed === 1 ? "✔️" : ""}</td>
-        <td style="text-align: left; padding-left: 5px; font-size: 8px;">${item.remarks || ""}</td>
+        <td>${item.phase2_completed === 1 ? CHECK : ""}</td>
+        <td style="text-align: left; padding-left: 5px; font-size: 8px;">${escapeHtml(item.remarks)}</td>
       </tr>
     `;
   });
@@ -640,11 +2048,16 @@ const generateAdolescentIfaTable = (data: any[]) => {
   return html;
 };
 
-export const exportAdolescentIfaToPdf = async () => {
+export const exportAdolescentIfaToPdf = async (filter: MonthFilter = null) => {
   try {
-    const data = await getAllAdolescentIfa();
+    const data = (await getAllAdolescentIfa()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
     const htmlContent = wrapHtml(generateAdolescentIfaTable(data));
-    await savePdfToDevice(htmlContent, "FCHV_Iron_Adolescent.pdf");
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_Iron_Adolescent${getMonthSuffix(filter)}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating Adolescent IFA PDF:", error);
     throw error;

@@ -41,6 +41,10 @@ async function initSyncDefaultColumns(): Promise<void> {
       "child_counseling",
       "child_vaccination",
       "delivery",
+      "child_birth_registration",
+      "child_death_registration",
+      "fchv_counseling",
+      "child_nutrition",
     ],
   );
 }

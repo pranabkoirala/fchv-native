@@ -7,7 +7,9 @@ import { useFocusEffect, useRouter } from "expo-router";
 import {
   Activity,
   AlertCircle,
+  Apple,
   Baby,
+  Building2,
   Calendar,
   Check,
   Clock,
@@ -54,7 +56,10 @@ import { Skeleton } from "@/components/common/Skeleton"; // Checking if this exi
 import StatCard from "@/components/dashboard/StatCard";
 import TrendChart from "@/components/dashboard/TrendChart";
 import { useLanguage } from "@/context/LanguageContext";
-import { getRecentNepaliMonthBuckets } from "../../utils/dateHelper";
+import {
+  getRecentNepaliMonthBuckets,
+  toNepaliNumbers,
+} from "../../utils/dateHelper";
 import { getMunicipalityById, getWardById } from "../../utils/locationHelper";
 
 type TrendRow = {
@@ -82,6 +87,8 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { language, t } = useLanguage();
   const { isConnected } = useOnlineStatus();
+  const formatNum = (n: number) =>
+    language === "np" ? toNepaliNumbers(n) : String(n);
   const [motherCount, setMotherCount] = useState(0);
   const [pregnancyCount, setPregnancyCount] = useState(0);
   const [childCount, setChildCount] = useState(0);
@@ -653,6 +660,143 @@ export default function DashboardScreen() {
                     </Text>
                   </TouchableOpacity>
                 </View>
+
+                {/* Row 3 - Adolescent, FCHV Council & Nutrition */}
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push(
+                        "/dashboard/adolescent/adolescent-form" as any,
+                      )
+                    }
+                    className="w-[31%]"
+                    activeOpacity={0.7}
+                    style={{
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: 20,
+                      paddingVertical: 20,
+                      paddingHorizontal: 8,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: 120,
+                      borderWidth: 1,
+                      borderColor: "#F0F2F5",
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "#F3E8FF",
+                        borderRadius: 16,
+                        width: 48,
+                        height: 48,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <UserPlus size={24} color="#7C3AED" />
+                    </View>
+                    <Text
+                      style={{
+                        color: "#1E293B",
+                        fontWeight: "600",
+                        fontSize: 13,
+                        textAlign: "center",
+                        lineHeight: 18,
+                      }}
+                    >
+                      {t("dashboard.quick_actions.add_adolescent")}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      router.push("/dashboard/fchv-counseling" as any);
+                    }}
+                    activeOpacity={0.7}
+                    className="w-[31%]"
+                    style={{
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: 20,
+                      paddingVertical: 20,
+                      paddingHorizontal: 8,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: 120,
+                      borderWidth: 1,
+                      borderColor: "#F0F2F5",
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "#F0FDF4",
+                        borderRadius: 16,
+                        width: 48,
+                        height: 48,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Building2 size={24} color="#16A34A" />
+                    </View>
+                    <Text
+                      style={{
+                        color: "#1E293B",
+                        fontWeight: "600",
+                        fontSize: 13,
+                        textAlign: "center",
+                        lineHeight: 18,
+                      }}
+                    >
+                      {t("dashboard.quick_actions.fchv_council")}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push("/dashboard/child-nutrition" as any)
+                    }
+                    activeOpacity={0.7}
+                    className="w-[31%]"
+                    style={{
+                      backgroundColor: "#FFFFFF",
+                      borderRadius: 20,
+                      paddingVertical: 20,
+                      paddingHorizontal: 8,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: 120,
+                      borderWidth: 1,
+                      borderColor: "#F0F2F5",
+                    }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: "#D1FAE5",
+                        borderRadius: 16,
+                        width: 48,
+                        height: 48,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Apple size={24} color="#059669" />
+                    </View>
+                    <Text
+                      style={{
+                        color: "#1E293B",
+                        fontWeight: "600",
+                        fontSize: 13,
+                        textAlign: "center",
+                        lineHeight: 18,
+                      }}
+                    >
+                      {t("dashboard.quick_actions.nutrition")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
@@ -708,7 +852,7 @@ export default function DashboardScreen() {
                   iconColor="#475569"
                   iconBg="#F1F5F9"
                   bg="white"
-                  value={motherCount}
+                  value={formatNum(motherCount)}
                   label={t("dashboard.stats_labels.mothers")}
                   delay={0}
                 />
@@ -718,7 +862,7 @@ export default function DashboardScreen() {
                   iconColor="#0891B2"
                   iconBg="#CFFAFE"
                   bg="white"
-                  value={pregnancyCount}
+                  value={formatNum(pregnancyCount)}
                   label={t("dashboard.stats_labels.pregnant")}
                   delay={100}
                 />
@@ -728,19 +872,19 @@ export default function DashboardScreen() {
                   iconColor="#059669"
                   iconBg="#D1FAE5"
                   bg="white"
-                  value={childCount}
+                  value={formatNum(childCount)}
                   label={t("dashboard.stats_labels.children", "Total Children")}
                   delay={200}
                 />
               </View>
               <View style={{ flexDirection: "row", gap: 12 }}>
                 <StatCard
-                  path="/dashboard/adolescent"
+                  path="/dashboard/report?tab=adolescent"
                   icon={Heart}
                   iconColor="#7C3AED"
                   iconBg="#EDE9FE"
                   bg="white"
-                  value={adolescentCount}
+                  value={formatNum(adolescentCount)}
                   label={t(
                     "dashboard.stats_labels.adolescents",
                     "Adolescent Girls",
@@ -753,7 +897,7 @@ export default function DashboardScreen() {
                   iconColor="#0284C7"
                   iconBg="#E0F2FE"
                   bg="white"
-                  value={deliveryCount}
+                  value={formatNum(deliveryCount)}
                   label={t("dashboard.stats_labels.deliveries")}
                   delay={500}
                 />
@@ -763,7 +907,7 @@ export default function DashboardScreen() {
                   iconColor="#D97706"
                   iconBg="#FEF3C7"
                   bg="white"
-                  value={mothersMeetingCount}
+                  value={formatNum(mothersMeetingCount)}
                   label={t("dashboard.stats_labels.mothers_meetings")}
                   delay={600}
                 />
@@ -775,7 +919,7 @@ export default function DashboardScreen() {
                   iconColor="#E11D48"
                   iconBg="#FFE4E6"
                   bg="#FFE4E6"
-                  value={highRiskPregnancyCount}
+                  value={formatNum(highRiskPregnancyCount)}
                   label={t("dashboard.stats_labels.high_risk")}
                   delay={400}
                 />
@@ -895,7 +1039,7 @@ export default function DashboardScreen() {
                 iconColor="#E11D48"
                 iconBg="#FFE4E6"
                 bg="white"
-                value={maternalDeathCount}
+                value={formatNum(maternalDeathCount)}
                 label={t("dashboard.stats_labels.mother_deaths")}
                 delay={400}
               />
@@ -906,7 +1050,7 @@ export default function DashboardScreen() {
                 iconColor="#F97316"
                 iconBg="#FFF7ED"
                 bg="white"
-                value={childDeathCount}
+                value={formatNum(childDeathCount)}
                 label={t("dashboard.stats_labels.child_deaths")}
                 delay={500}
               />
@@ -938,7 +1082,7 @@ export default function DashboardScreen() {
                     letterSpacing: 0.5,
                   }}
                 >
-                  {t("dashboard.sections.health_summary", "Health Summary")}
+                  {t("dashboard.sections.health_summary")}
                 </Text>
               </View>
             </View>
@@ -955,7 +1099,7 @@ export default function DashboardScreen() {
                 icon={Baby}
                 iconColor="#059669"
                 iconBg="#D1FAE5"
-                value={under29Days}
+                value={formatNum(under29Days)}
                 label={t("dashboard.health_summary.under_29_days")}
                 delay={100}
               />
@@ -965,7 +1109,7 @@ export default function DashboardScreen() {
                 icon={Baby}
                 iconColor="#0284C7"
                 iconBg="#E0F2FE"
-                value={days29To59Months}
+                value={formatNum(days29To59Months)}
                 label={t("dashboard.health_summary.29_to_59_months")}
                 delay={200}
               />
@@ -1040,7 +1184,7 @@ export default function DashboardScreen() {
                         >
                           <View
                             style={{
-                              padding: 16,
+                              padding: 14,
                               flexDirection: "row",
                               alignItems: "center",
                             }}
@@ -1063,7 +1207,7 @@ export default function DashboardScreen() {
                                 style={{
                                   color: "#0F172A",
                                   fontSize: 14,
-                                  fontWeight: "700",
+                                  fontWeight: "600",
                                 }}
                                 numberOfLines={1}
                               >

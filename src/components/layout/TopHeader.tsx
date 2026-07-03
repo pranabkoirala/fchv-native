@@ -47,7 +47,7 @@ const TopHeader = () => {
         <View className="bg-white p-1 rounded-full mr-3">
           <Image
             source={require("../../assets/fchv-logo.png")}
-            className="w-10 h-10 rounded-full"
+            className="w-11 h-11 rounded-full"
             resizeMode="cover"
           />
         </View>
@@ -60,14 +60,14 @@ const TopHeader = () => {
           ) : (
             <>
               <Text
-                className="text-slate-900 text-[17px] font-bold leading-tight"
+                className="text-slate-900 text-[19px] font-bold leading-tight"
                 numberOfLines={1}
               >
                 {`${t("common.namaste")}, ${fchvName}`}
               </Text>
               {orgName ? (
                 <Text
-                  className="text-slate-400 text-[11px] font-medium mt-0.5"
+                  className="text-slate-500 text-[12px] font-medium mt-0.5"
                   numberOfLines={1}
                 >
                   {orgName} Hospital

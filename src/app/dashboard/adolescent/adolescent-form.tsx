@@ -14,7 +14,7 @@ import { ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-nativ
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdolescentRegistrationForm() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from: string }>();
   const { showToast } = useToast();
   const router = useRouter();
   const { language, t } = useLanguage()
@@ -104,7 +104,14 @@ export default function AdolescentRegistrationForm() {
 
       await createAdolescentIfa(payload);
       showToast(t("adolescent_page.form.messages.save_success"));
-      router.back();
+      if (from === "details") {
+        router.replace({
+          pathname: "/dashboard/report/adolescent-details",
+          params: { id: payload.id },
+        } as any);
+      } else {
+        router.back();
+      }
     } catch (error) {
       console.error(error);
       showToast(t("adolescent_page.form.messages.save_error"));
@@ -152,7 +159,16 @@ export default function AdolescentRegistrationForm() {
             ? t("adolescent_page.edit_title")
             : t("adolescent_page.new_title")
         }
-        onBackPress={() => router.back()}
+        onBackPress={() => {
+          if (from === "details" && id) {
+            router.replace({
+              pathname: "/dashboard/report/adolescent-details",
+              params: { id },
+            } as any);
+          } else {
+            router.back();
+          }
+        }}
       />
       <ScrollView
         showsVerticalScrollIndicator={false}

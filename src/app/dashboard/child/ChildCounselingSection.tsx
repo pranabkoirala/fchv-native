@@ -1,30 +1,54 @@
 import { useLanguage } from "@/context/LanguageContext";
-import { BarChart3, Check, ChevronDown, MessageSquare, Minus, Plus, Trash2 } from "lucide-react-native";
+import {
+  BarChart3,
+  Check,
+  ChevronDown,
+  MessageSquare,
+  Minus,
+  Plus,
+  Trash2,
+} from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, LayoutAnimation, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Animated,
+  LayoutAnimation,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import {
   CHILD_COUNSELING_QUESTIONS,
   CHILD_HEALTH_COUNSELLING_QUESTIONS,
   MALNUTRITION_CONTENT,
+  ONE_TIME_CHILD_COUNSELING_QUESTIONS,
+  REGISTRATION_COUNSELING_QUESTIONS,
 } from "../../../constants/ChildCounselingQuestions";
 import { useToast } from "../../../context/ToastContext";
+import { getChildBirthRegistration } from "../../../hooks/database/models/ChildBirthRegistrationModel";
 import {
   ChildCounselingStoreType,
   getChildCounselingByChild,
   getChildCounselingHistory,
   saveChildCounseling,
 } from "../../../hooks/database/models/ChildCounselingModel";
+import { getChildDeathRegistration } from "../../../hooks/database/models/ChildDeathRegistrationModel";
 import { toNepaliNumbers } from "../../../utils/dateHelper";
 
 interface ChildCounselingSectionProps {
   childId: string;
   disabled?: boolean;
+  isDead?: boolean;
 }
 
 export default function ChildCounselingSection({
   childId,
-  disabled
+  disabled,
+  isDead,
 }: ChildCounselingSectionProps) {
   const { showToast } = useToast();
   const { language, t } = useLanguage();
@@ -33,22 +57,30 @@ export default function ChildCounselingSection({
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [historyAnswers, setHistoryAnswers] = useState<Record<string, any>>({});
+  const [birthRegistered, setBirthRegistered] = useState(false);
+  const [deathRegistered, setDeathRegistered] = useState(false);
 
   // Loading states for individual buttons
-  const [loadingButtons, setLoadingButtons] = useState<Record<string, boolean>>({});
+  const [loadingButtons, setLoadingButtons] = useState<Record<string, boolean>>(
+    {},
+  );
 
   // Delete confirmation modal state
   const [deleteModal, setDeleteModal] = useState(false);
-  const [pendingDeleteQuestionId, setPendingDeleteQuestionId] = useState<string | null>(null);
+  const [pendingDeleteQuestionId, setPendingDeleteQuestionId] = useState<
+    string | null
+  >(null);
 
   // Date editing state
   const [datePickerVisible, setDatePickerVisible] = useState(false);
-  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(
+    null,
+  );
   const [editingLogIndex, setEditingLogIndex] = useState<number | null>(null);
   const [editingDateBs, setEditingDateBs] = useState("");
 
   // New inputs for malnutrition entry
-  const [muac, setMuac] = useState<'green' | 'yellow' | 'red' | null>(null);
+  const [muac, setMuac] = useState<"green" | "yellow" | "red" | null>(null);
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [orsCount, setOrsCount] = useState(1);
@@ -67,11 +99,17 @@ export default function ChildCounselingSection({
     }).start();
     LayoutAnimation.configureNext({
       duration: 300,
-      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      create: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
       update: { type: LayoutAnimation.Types.easeInEaseOut },
-      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      delete: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
     });
-    setMalnutritionExpanded(prev => !prev);
+    setMalnutritionExpanded((prev) => !prev);
   };
 
   const parseMeasurement = (value: string) => {
@@ -79,15 +117,26 @@ export default function ChildCounselingSection({
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   };
 
-  const calculateBmi = (weightValue: string | number | null | undefined, heightValue: string | number | null | undefined) => {
-    const parsedWeight = typeof weightValue === "number" ? weightValue : parseMeasurement(weightValue || "");
-    const parsedHeight = typeof heightValue === "number" ? heightValue : parseMeasurement(heightValue || "");
+  const calculateBmi = (
+    weightValue: string | number | null | undefined,
+    heightValue: string | number | null | undefined,
+  ) => {
+    const parsedWeight =
+      typeof weightValue === "number"
+        ? weightValue
+        : parseMeasurement(weightValue || "");
+    const parsedHeight =
+      typeof heightValue === "number"
+        ? heightValue
+        : parseMeasurement(heightValue || "");
     if (!parsedWeight || !parsedHeight) return null;
 
     const heightInMeters = parsedHeight / 100;
     if (heightInMeters <= 0) return null;
 
-    return Number((parsedWeight / (heightInMeters * heightInMeters)).toFixed(1));
+    return Number(
+      (parsedWeight / (heightInMeters * heightInMeters)).toFixed(1),
+    );
   };
 
   const isWithinOneDay = (date?: string) => {
@@ -154,17 +203,30 @@ export default function ChildCounselingSection({
       // Load full history for one-time questions check
       const history = await getChildCounselingHistory(childId);
       const aggregated: Record<string, any> = {};
-      history.forEach(h => {
+      history.forEach((h) => {
         if (h.answers) {
           const parsed = JSON.parse(h.answers);
-          Object.keys(parsed).forEach(key => {
+          Object.keys(parsed).forEach((key) => {
             if (!aggregated[key]) aggregated[key] = [];
-            const logs = Array.isArray(parsed[key]) ? parsed[key] : (parsed[key] ? [{ date: h.updated_at, value: true }] : []);
+            const logs = Array.isArray(parsed[key])
+              ? parsed[key]
+              : parsed[key]
+                ? [{ date: h.updated_at, value: true }]
+                : [];
             aggregated[key] = [...aggregated[key], ...logs];
           });
         }
       });
       setHistoryAnswers(aggregated);
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      const birthReg = await getChildBirthRegistration(childId);
+      setBirthRegistered(birthReg?.birth_status === 1);
+      const deathReg = await getChildDeathRegistration(childId);
+      setDeathRegistered(deathReg?.death_status === 1);
     } catch (e) {
       console.error(e);
     } finally {
@@ -176,28 +238,12 @@ export default function ChildCounselingSection({
     loadData();
   }, [childId]);
 
-  const handleToggle = async (questionId: string, value: any) => {
-    setLoadingButtons(prev => ({ ...prev, [questionId]: true }));
-    const newAnswers = { ...answers, [questionId]: value };
-    setAnswers(newAnswers);
-
-    try {
-      await saveChildCounseling({
-        id: record?.id,
-        child: childId,
-        answers: JSON.stringify(newAnswers),
-      });
-    } catch (e) {
-      console.error("Failed to save answer", e);
-      showToast("Failed to save");
-      setAnswers(answers);
-    } finally {
-      setLoadingButtons(prev => ({ ...prev, [questionId]: false }));
-    }
-  };
-
-  const handleAdd = async (questionId: string, customLogValue?: any, isOneTime: boolean = false) => {
-    setLoadingButtons(prev => ({ ...prev, [questionId]: true }));
+  const handleAdd = async (
+    questionId: string,
+    customLogValue?: any,
+    isOneTime: boolean = false,
+  ) => {
+    setLoadingButtons((prev) => ({ ...prev, [questionId]: true }));
     const currentTime = new Date().toISOString();
 
     let existingLogs = [];
@@ -210,7 +256,7 @@ export default function ChildCounselingSection({
     // Prevent multiple entries for one-time questions
     if (isOneTime && existingLogs.length > 0) {
       showToast("Already recorded");
-      setLoadingButtons(prev => ({ ...prev, [questionId]: false }));
+      setLoadingButtons((prev) => ({ ...prev, [questionId]: false }));
       return;
     }
 
@@ -225,14 +271,71 @@ export default function ChildCounselingSection({
         child: childId,
         answers: JSON.stringify(newAnswers),
       });
-      showToast(t("counseling_section.added_successfully") || "Recorded successfully");
+      showToast(
+        t("counseling_section.added_successfully") || "Recorded successfully",
+      );
     } catch (e) {
       console.error("Failed to save answer", e);
       showToast("Failed to save");
       setAnswers(answers);
     } finally {
-      setLoadingButtons(prev => ({ ...prev, [questionId]: false }));
+      setLoadingButtons((prev) => ({ ...prev, [questionId]: false }));
     }
+  };
+
+  const isAnswered = (questionId: string): boolean => {
+    const value = answers[questionId];
+    if (!value) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+  };
+
+  const handleToggleAnswer = async (questionId: string) => {
+    setLoadingButtons((prev) => ({ ...prev, [questionId]: true }));
+    const currentTime = new Date().toISOString();
+    let newAnswers: Record<string, any>;
+
+    if (isAnswered(questionId)) {
+      const { [questionId]: _, ...rest } = answers;
+      newAnswers = rest;
+    } else {
+      newAnswers = {
+        ...answers,
+        [questionId]: [{ date: currentTime, value: true }],
+      };
+    }
+
+    setAnswers(newAnswers);
+    try {
+      await saveChildCounseling({
+        id: record?.id,
+        child: childId,
+        answers: JSON.stringify(newAnswers),
+      });
+    } catch (e) {
+      console.error("Failed to save answer", e);
+      showToast("Failed to save");
+      setAnswers(answers);
+    } finally {
+      setLoadingButtons((prev) => ({ ...prev, [questionId]: false }));
+    }
+  };
+
+  const renderCheckButton = (questionId: string) => {
+    const answered = isAnswered(questionId);
+    return (
+      <TouchableOpacity
+        onPress={() => handleToggleAnswer(questionId)}
+        disabled={disabled || loadingButtons[questionId]}
+        className={`w-8 h-8 rounded-lg items-center justify-center ${answered ? "bg-green-500" : disabled ? "bg-slate-100" : "bg-slate-200"}`}
+      >
+        {loadingButtons[questionId] ? (
+          <ActivityIndicator color="white" size="small" />
+        ) : answered ? (
+          <Check size={18} color="white" />
+        ) : null}
+      </TouchableOpacity>
+    );
   };
 
   const handleSaveOrs = async () => {
@@ -247,7 +350,7 @@ export default function ChildCounselingSection({
 
   const handleAddMalnutrition = async () => {
     const mainQuestionId = MALNUTRITION_CONTENT.main_question.id;
-    setLoadingButtons(prev => ({ ...prev, [mainQuestionId]: true }));
+    setLoadingButtons((prev) => ({ ...prev, [mainQuestionId]: true }));
     const currentTime = new Date().toISOString();
     const parsedWeight = parseMeasurement(weight);
     const parsedHeight = parseMeasurement(height);
@@ -255,7 +358,7 @@ export default function ChildCounselingSection({
 
     if (!muac) {
       showToast("Please select MUAC condition");
-      setLoadingButtons(prev => ({ ...prev, [mainQuestionId]: false }));
+      setLoadingButtons((prev) => ({ ...prev, [mainQuestionId]: false }));
       return;
     }
 
@@ -281,7 +384,10 @@ export default function ChildCounselingSection({
       sub_answers: {},
     };
 
-    const newAnswers = { ...answers, [mainQuestionId]: [...existingLogs, newLog] };
+    const newAnswers = {
+      ...answers,
+      [mainQuestionId]: [...existingLogs, newLog],
+    };
     setAnswers(newAnswers);
 
     try {
@@ -290,7 +396,9 @@ export default function ChildCounselingSection({
         child: childId,
         answers: JSON.stringify(newAnswers),
       });
-      showToast(t("counseling_section.added_successfully") || "Recorded successfully");
+      showToast(
+        t("counseling_section.added_successfully") || "Recorded successfully",
+      );
 
       // Reset inputs after success
       setMuac(null);
@@ -301,25 +409,31 @@ export default function ChildCounselingSection({
       showToast("Failed to save");
       setAnswers(answers);
     } finally {
-      setLoadingButtons(prev => ({ ...prev, [mainQuestionId]: false }));
+      setLoadingButtons((prev) => ({ ...prev, [mainQuestionId]: false }));
     }
   };
 
-  const handleSetSubQuestion = async (logIndex: number, subQuestionId: string, value: boolean) => {
+  const handleSetSubQuestion = async (
+    logIndex: number,
+    subQuestionId: string,
+    value: boolean,
+  ) => {
     const mainQuestionId = MALNUTRITION_CONTENT.main_question.id;
     const loadingKey = `${mainQuestionId}_${logIndex}_${subQuestionId}`;
-    setLoadingButtons(prev => ({ ...prev, [loadingKey]: true }));
+    setLoadingButtons((prev) => ({ ...prev, [loadingKey]: true }));
 
     let logs: any[] = [];
 
     if (Array.isArray(answers[mainQuestionId])) {
       logs = [...answers[mainQuestionId]];
     } else if (answers[mainQuestionId]) {
-      logs = [{ date: record?.updated_at || new Date().toISOString(), value: true }];
+      logs = [
+        { date: record?.updated_at || new Date().toISOString(), value: true },
+      ];
     }
 
     if (!logs[logIndex]) {
-      setLoadingButtons(prev => ({ ...prev, [loadingKey]: false }));
+      setLoadingButtons((prev) => ({ ...prev, [loadingKey]: false }));
       return;
     }
 
@@ -346,13 +460,15 @@ export default function ChildCounselingSection({
         child: childId,
         answers: JSON.stringify(newAnswers),
       });
-      showToast(t("counseling_section.added_successfully") || "Recorded successfully");
+      showToast(
+        t("counseling_section.added_successfully") || "Recorded successfully",
+      );
     } catch (e) {
       console.error("Failed to save sub-question", e);
       showToast("Failed to save");
       setAnswers(answers);
     } finally {
-      setLoadingButtons(prev => ({ ...prev, [loadingKey]: false }));
+      setLoadingButtons((prev) => ({ ...prev, [loadingKey]: false }));
     }
   };
 
@@ -362,7 +478,12 @@ export default function ChildCounselingSection({
     const logs = Array.isArray(rawValue)
       ? rawValue
       : rawValue
-        ? [{ date: record?.updated_at || new Date().toISOString(), value: true }]
+        ? [
+            {
+              date: record?.updated_at || new Date().toISOString(),
+              value: true,
+            },
+          ]
         : [];
     if (logs.length === 0) return;
     setPendingDeleteQuestionId(questionId);
@@ -374,18 +495,26 @@ export default function ChildCounselingSection({
     if (!pendingDeleteQuestionId) return;
 
     const questionId = pendingDeleteQuestionId;
-    setLoadingButtons(prev => ({ ...prev, [`delete_${questionId}`]: true }));
+    setLoadingButtons((prev) => ({ ...prev, [`delete_${questionId}`]: true }));
     const rawValue = answers[questionId];
     let logs = Array.isArray(rawValue)
       ? [...rawValue]
       : rawValue
-        ? [{ date: record?.updated_at || new Date().toISOString(), value: true }]
+        ? [
+            {
+              date: record?.updated_at || new Date().toISOString(),
+              value: true,
+            },
+          ]
         : [];
 
     if (logs.length === 0) {
       setDeleteModal(false);
       setPendingDeleteQuestionId(null);
-      setLoadingButtons(prev => ({ ...prev, [`delete_${questionId}`]: false }));
+      setLoadingButtons((prev) => ({
+        ...prev,
+        [`delete_${questionId}`]: false,
+      }));
       return;
     }
 
@@ -402,13 +531,18 @@ export default function ChildCounselingSection({
         answers: JSON.stringify(newAnswers),
       });
       setRecord(savedRecord);
-      showToast(t("counseling_section.deleted_successfully") || "Deleted successfully");
+      showToast(
+        t("counseling_section.deleted_successfully") || "Deleted successfully",
+      );
     } catch (e) {
       console.error("Failed to delete answer", e);
       showToast("Failed to delete");
       setAnswers(answers);
     } finally {
-      setLoadingButtons(prev => ({ ...prev, [`delete_${questionId}`]: false }));
+      setLoadingButtons((prev) => ({
+        ...prev,
+        [`delete_${questionId}`]: false,
+      }));
       setDeleteModal(false);
       setPendingDeleteQuestionId(null);
     }
@@ -419,7 +553,11 @@ export default function ChildCounselingSection({
     setPendingDeleteQuestionId(null);
   };
 
-  const openDatePicker = (questionId: string, logIndex: number, dateStr: string) => {
+  const openDatePicker = (
+    questionId: string,
+    logIndex: number,
+    dateStr: string,
+  ) => {
     try {
       const bsDate = AdToBs(dateStr.split("T")[0]);
       setEditingDateBs(bsDate);
@@ -443,7 +581,9 @@ export default function ChildCounselingSection({
     if (Array.isArray(answers[questionId])) {
       logs = JSON.parse(JSON.stringify(answers[questionId]));
     } else if (answers[questionId]) {
-      logs = [{ date: record?.updated_at || new Date().toISOString(), value: true }];
+      logs = [
+        { date: record?.updated_at || new Date().toISOString(), value: true },
+      ];
     }
 
     if (logs[logIndex]) {
@@ -459,10 +599,14 @@ export default function ChildCounselingSection({
         child: childId,
         answers: JSON.stringify(newAnswers),
       });
-      showToast(t("counseling_section.updated_successfully") || "Updated successfully");
+      showToast(
+        t("counseling_section.updated_successfully") || "Updated successfully",
+      );
     } catch (e) {
       console.error("Failed to update date", e);
-      showToast(t("counseling_section.update_date_failed") || "Failed to update date");
+      showToast(
+        t("counseling_section.update_date_failed") || "Failed to update date",
+      );
       setAnswers(answers);
     }
 
@@ -476,7 +620,9 @@ export default function ChildCounselingSection({
     if (Array.isArray(answers[questionId])) {
       logs = answers[questionId];
     } else if (answers[questionId]) {
-      logs = [{ date: record?.updated_at || new Date().toISOString(), value: true }];
+      logs = [
+        { date: record?.updated_at || new Date().toISOString(), value: true },
+      ];
     }
 
     if (logs.length === 0) return null;
@@ -484,12 +630,29 @@ export default function ChildCounselingSection({
     return renderLogBadges(logs, questionId);
   };
 
+  const renderLogsInlineReadOnly = (questionId: string) => {
+    let logs = [];
+    if (Array.isArray(answers[questionId])) {
+      logs = answers[questionId];
+    } else if (answers[questionId]) {
+      logs = [
+        { date: record?.updated_at || new Date().toISOString(), value: true },
+      ];
+    }
+
+    if (logs.length === 0) return null;
+
+    return renderLogBadges(logs, questionId, false, true);
+  };
+
   const renderMalnutritionLogs = (questionId: string) => {
     let logs: any[] = [];
     if (Array.isArray(answers[questionId])) {
       logs = answers[questionId];
     } else if (answers[questionId]) {
-      logs = [{ date: record?.updated_at || new Date().toISOString(), value: true }];
+      logs = [
+        { date: record?.updated_at || new Date().toISOString(), value: true },
+      ];
     }
 
     if (logs.length === 0) return null;
@@ -497,42 +660,65 @@ export default function ChildCounselingSection({
     return renderLogBadges(logs, questionId, true);
   };
 
-  const renderLogBadges = (logs: any[], questionId: string, showSeverity: boolean = false) => {
+  const renderLogBadges = (
+    logs: any[],
+    questionId: string,
+    showSeverity: boolean = false,
+    isReadOnly: boolean = false,
+  ) => {
     return (
       <View className="flex-row flex-wrap mt-2 gap-2 items-center">
         {logs.map((log: any, index: number) => {
           let dateStr = "";
           try {
-            dateStr = language === "np" ? toNepaliNumbers(AdToBs(log.date.split("T")[0])) : log.date.split("T")[0];
+            dateStr =
+              language === "np"
+                ? toNepaliNumbers(AdToBs(log.date.split("T")[0]))
+                : log.date.split("T")[0];
           } catch (e) {
             dateStr = log.date.split("T")[0];
           }
           const isLatest = index === logs.length - 1;
-          const canDelete = isLatest && isWithinOneDay(log.date);
+          const canDelete = !isReadOnly && isLatest && isWithinOneDay(log.date);
 
           let extraInfo = "";
           if (log.muac) {
-            const muacShort = log.muac === 'green' ? 'G' : log.muac === 'yellow' ? 'Y' : 'R';
+            const muacShort =
+              log.muac === "green" ? "G" : log.muac === "yellow" ? "Y" : "R";
             extraInfo += ` [${muacShort}]`;
           }
           if (log.weight) extraInfo += ` ${log.weight}kg`;
           if (log.height) extraInfo += ` ${log.height}cm`;
           if (questionId === "ors_for_child" && typeof log.value === "number") {
-            const displayVal = language === "np" ? toNepaliNumbers(log.value) : log.value;
-            const unit = log.value === 1 ? t("counseling_section.ors_packet_one") : t("counseling_section.ors_packet_other");
+            const displayVal =
+              language === "np" ? toNepaliNumbers(log.value) : log.value;
+            const unit =
+              log.value === 1
+                ? t("counseling_section.ors_packet_one")
+                : t("counseling_section.ors_packet_other");
             extraInfo += ` (${displayVal} ${unit})`;
           }
-          if (questionId === "zinc_for_child" && typeof log.value === "number") {
-            const displayVal = language === "np" ? toNepaliNumbers(log.value) : log.value;
-            const unit = log.value === 1 ? t("counseling_section.zinc_tablet_one") : t("counseling_section.zinc_tablet_other");
+          if (
+            questionId === "zinc_for_child" &&
+            typeof log.value === "number"
+          ) {
+            const displayVal =
+              language === "np" ? toNepaliNumbers(log.value) : log.value;
+            const unit =
+              log.value === 1
+                ? t("counseling_section.zinc_tablet_one")
+                : t("counseling_section.zinc_tablet_other");
             extraInfo += ` (${displayVal} ${unit})`;
           }
 
           return (
-            <View key={index} className={`flex-row items-center ${canDelete ? "bg-blue-50 border border-blue-100" : "bg-slate-50 border border-slate-100"} px-2.5 py-1 rounded-md`}>
+            <View
+              key={index}
+              className={`flex-row items-center ${canDelete ? "bg-blue-50 border border-blue-100" : "bg-slate-50 border border-slate-100"} px-2.5 py-1 rounded-md`}
+            >
               <TouchableOpacity
                 onPress={() => openDatePicker(questionId, index, log.date)}
-                disabled={disabled}
+                disabled={disabled || isReadOnly}
                 className="flex-row items-center"
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
@@ -545,7 +731,7 @@ export default function ChildCounselingSection({
                 <TouchableOpacity
                   onPress={() => requestDeleteLatest(questionId)}
                   disabled={disabled}
-                  className={`ml-1.5 bg-white rounded-full p-0.5 border border-blue-100 ${disabled ? 'opacity-50' : ''}`}
+                  className={`ml-1.5 bg-white rounded-full p-0.5 border border-blue-100 ${disabled ? "opacity-50" : ""}`}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Trash2 size={10} color={disabled ? "#94A3B8" : "#DC2626"} />
@@ -640,7 +826,7 @@ export default function ChildCounselingSection({
             <View className="flex-row items-center gap-x-4">
               {/* Decrement */}
               <TouchableOpacity
-                onPress={() => setOrsCount(prev => Math.max(1, prev - 1))}
+                onPress={() => setOrsCount((prev) => Math.max(1, prev - 1))}
                 disabled={orsCount <= 1}
                 className={`w-11 h-11 rounded-xl items-center justify-center bg-[#475569]`}
               >
@@ -662,10 +848,12 @@ export default function ChildCounselingSection({
 
               {/* Increment */}
               <TouchableOpacity
-                onPress={() => setOrsCount(prev => prev + 1)}
+                onPress={() => setOrsCount((prev) => prev + 1)}
                 className="w-11 h-11 rounded-xl items-center justify-center border bg-[#475569]"
               >
-                <Text className="font-bold text-xl text-white"><Plus color="white" /></Text>
+                <Text className="font-bold text-xl text-white">
+                  <Plus color="white" />
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -726,7 +914,7 @@ export default function ChildCounselingSection({
             <View className="flex-row items-center gap-x-4">
               {/* Decrement */}
               <TouchableOpacity
-                onPress={() => setZincCount(prev => Math.max(1, prev - 1))}
+                onPress={() => setZincCount((prev) => Math.max(1, prev - 1))}
                 disabled={zincCount <= 1}
                 className={`w-11 h-11 rounded-xl items-center justify-center bg-[#475569]`}
               >
@@ -748,10 +936,12 @@ export default function ChildCounselingSection({
 
               {/* Increment */}
               <TouchableOpacity
-                onPress={() => setZincCount(prev => prev + 1)}
+                onPress={() => setZincCount((prev) => prev + 1)}
                 className="w-11 h-11 rounded-xl items-center justify-center bg-[#475569]"
               >
-                <Text className="font-bold text-xl text-white"><Plus color="white"/></Text>
+                <Text className="font-bold text-xl text-white">
+                  <Plus color="white" />
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -822,7 +1012,10 @@ export default function ChildCounselingSection({
             const index = logs.length - 1 - revIdx;
             let dateStr = "";
             try {
-              dateStr = language === "np" ? toNepaliNumbers(AdToBs(log.date.split("T")[0])) : log.date.split("T")[0];
+              dateStr =
+                language === "np"
+                  ? toNepaliNumbers(AdToBs(log.date.split("T")[0]))
+                  : log.date.split("T")[0];
             } catch (e) {
               dateStr = log.date?.split("T")[0] || "";
             }
@@ -831,20 +1024,41 @@ export default function ChildCounselingSection({
             const isLatest = index === logs.length - 1;
             const canDelete = isLatest && isWithinOneDay(log.date);
             const bmiValue = log.bmi ?? calculateBmi(log.weight, log.height);
-            const recordNumber = language === "np" ? toNepaliNumbers(index + 1) : index + 1;
+            const recordNumber =
+              language === "np" ? toNepaliNumbers(index + 1) : index + 1;
 
-            const displayWeight = language === "np" && log.weight ? toNepaliNumbers(log.weight) : log.weight;
-            const displayHeight = language === "np" && log.height ? toNepaliNumbers(log.height) : log.height;
-            const displayBmi = language === "np" && bmiValue ? toNepaliNumbers(bmiValue) : bmiValue;
+            const displayWeight =
+              language === "np" && log.weight
+                ? toNepaliNumbers(log.weight)
+                : log.weight;
+            const displayHeight =
+              language === "np" && log.height
+                ? toNepaliNumbers(log.height)
+                : log.height;
+            const displayBmi =
+              language === "np" && bmiValue
+                ? toNepaliNumbers(bmiValue)
+                : bmiValue;
 
-            const muacColor = log.muac === 'red' ? '#F43F5E' : log.muac === 'yellow' ? '#FAB005' : '#10B981';
+            const muacColor =
+              log.muac === "red"
+                ? "#F43F5E"
+                : log.muac === "yellow"
+                  ? "#FAB005"
+                  : "#10B981";
             const subAnswers = log.sub_answers || {};
-            const malnutritionQuestions = MALNUTRITION_CONTENT.sub_questions.filter((q) =>
-              log.muac === "green" ? q.id === "malnutrition_cured" : q.id !== "malnutrition_cured",
-            );
+            const malnutritionQuestions =
+              MALNUTRITION_CONTENT.sub_questions.filter((q) =>
+                log.muac === "green"
+                  ? q.id === "malnutrition_cured"
+                  : q.id !== "malnutrition_cured",
+              );
 
             return (
-              <View key={`${log.date}-${index}`} className={`rounded-2xl border ${style.card} p-3`}>
+              <View
+                key={`${log.date}-${index}`}
+                className={`rounded-2xl border ${style.card} p-3`}
+              >
                 <View className="flex-row items-center justify-between mb-2">
                   <View className="flex-row items-center">
                     <View className="bg-white/80 rounded-full px-2 py-0.5 border border-white/50 mr-2">
@@ -852,23 +1066,31 @@ export default function ChildCounselingSection({
                         {t("counseling_section.record")} #{recordNumber}
                       </Text>
                     </View>
-                    <Text className="text-slate-600 text-[12px] font-medium">{dateStr}</Text>
+                    <Text className="text-slate-600 text-[12px] font-medium">
+                      {dateStr}
+                    </Text>
                   </View>
                   {canDelete && (
                     <TouchableOpacity
                       onPress={() => requestDeleteLatest(questionId)}
                       disabled={disabled}
-                      className={`w-7 h-7 rounded-full bg-white/90 items-center justify-center ${disabled ? 'opacity-50' : ''}`}
+                      className={`w-7 h-7 rounded-full bg-white/90 items-center justify-center ${disabled ? "opacity-50" : ""}`}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                      <Trash2 size={12} color={disabled ? "#94A3B8" : "#EF4444"} />
+                      <Trash2
+                        size={12}
+                        color={disabled ? "#94A3B8" : "#EF4444"}
+                      />
                     </TouchableOpacity>
                   )}
                 </View>
 
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center flex-1">
-                    <View className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: muacColor }} />
+                    <View
+                      className="w-2.5 h-2.5 rounded-full mr-2"
+                      style={{ backgroundColor: muacColor }}
+                    />
                     <Text className={`font-bold text-[15px] ${style.title}`}>
                       {getMuacLabel(log.muac)}
                     </Text>
@@ -905,16 +1127,22 @@ export default function ChildCounselingSection({
                 <View className="mt-3 pt-3 border-t border-white/70 gap-y-2">
                   {malnutritionQuestions.map((q) => {
                     const rawAnswer = subAnswers[q.id];
-                    const isSelected = rawAnswer === true || rawAnswer?.value === true;
+                    const isSelected =
+                      rawAnswer === true || rawAnswer?.value === true;
                     const loadingKey = `${questionId}_${index}_${q.id}`;
 
                     return (
-                      <View key={q.id} className="flex-row items-center justify-between bg-white/70 border border-white/80 rounded-xl px-3 py-2">
+                      <View
+                        key={q.id}
+                        className="flex-row items-center justify-between bg-white/70 border border-white/80 rounded-xl px-3 py-2"
+                      >
                         <Text className="flex-1 text-slate-700 text-[13px] font-medium leading-5 mr-3">
                           {language === "np" ? q.ne : q.en}
                         </Text>
                         <TouchableOpacity
-                          onPress={() => handleSetSubQuestion(index, q.id, !isSelected)}
+                          onPress={() =>
+                            handleSetSubQuestion(index, q.id, !isSelected)
+                          }
                           disabled={disabled || loadingButtons[loadingKey]}
                           className={`${isSelected ? "bg-primary" : disabled ? "bg-slate-100" : "bg-slate-700"} w-8 h-8 rounded-lg items-center justify-center`}
                         >
@@ -923,7 +1151,10 @@ export default function ChildCounselingSection({
                           ) : isSelected ? (
                             <Check size={17} color="white" />
                           ) : (
-                            <Plus size={17} color={disabled ? "#CBD5E1" : "white"} />
+                            <Plus
+                              size={17}
+                              color={disabled ? "#CBD5E1" : "white"}
+                            />
                           )}
                         </TouchableOpacity>
                       </View>
@@ -946,10 +1177,15 @@ export default function ChildCounselingSection({
     if (Array.isArray(answers[mainQuestionId])) {
       malnutritionLogs = answers[mainQuestionId];
     } else if (answers[mainQuestionId]) {
-      malnutritionLogs = [{ date: record?.updated_at || new Date().toISOString(), value: true }];
+      malnutritionLogs = [
+        { date: record?.updated_at || new Date().toISOString(), value: true },
+      ];
     }
 
-    const latestLog = malnutritionLogs.length > 0 ? malnutritionLogs[malnutritionLogs.length - 1] : null;
+    const latestLog =
+      malnutritionLogs.length > 0
+        ? malnutritionLogs[malnutritionLogs.length - 1]
+        : null;
     const chevronRotation = chevronRotateAnim.interpolate({
       inputRange: [0, 1],
       outputRange: ["0deg", "-90deg"],
@@ -957,24 +1193,40 @@ export default function ChildCounselingSection({
 
     const renderCollapsedSummary = () => {
       if (latestLog) {
-        const muacColor = latestLog.muac === 'red' ? '#F43F5E' : latestLog.muac === 'yellow' ? '#FAB005' : '#10B981';
+        const muacColor =
+          latestLog.muac === "red"
+            ? "#F43F5E"
+            : latestLog.muac === "yellow"
+              ? "#FAB005"
+              : "#10B981";
         let dateStr = "";
         try {
-          dateStr = language === "np" ? toNepaliNumbers(AdToBs(latestLog.date.split("T")[0])) : latestLog.date.split("T")[0];
+          dateStr =
+            language === "np"
+              ? toNepaliNumbers(AdToBs(latestLog.date.split("T")[0]))
+              : latestLog.date.split("T")[0];
         } catch (e) {
           dateStr = latestLog.date?.split("T")[0] || "";
         }
-        const recordCount = language === "np" ? toNepaliNumbers(malnutritionLogs.length) : malnutritionLogs.length;
+        const recordCount =
+          language === "np"
+            ? toNepaliNumbers(malnutritionLogs.length)
+            : malnutritionLogs.length;
         return (
           <View className="flex-row items-center justify-between px-4 py-3">
             <View className="flex-row items-center">
-              <View className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: muacColor }} />
+              <View
+                className="w-2.5 h-2.5 rounded-full mr-2"
+                style={{ backgroundColor: muacColor }}
+              />
               <Text className="text-slate-700 font-semibold text-[15px]">
                 {getMuacLabel(latestLog.muac)}
               </Text>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-slate-400 text-[12px] font-medium mr-3">{dateStr}</Text>
+              <Text className="text-slate-400 text-[12px] font-medium mr-3">
+                {dateStr}
+              </Text>
               <View className="bg-slate-100 rounded-full px-2.5 py-0.5">
                 <Text className="text-slate-500 text-[11px] font-bold">
                   {recordCount} {t("counseling_section.records")}
@@ -1020,31 +1272,37 @@ export default function ChildCounselingSection({
             </Text>
             <View className="flex-row gap-x-2 mb-6">
               <TouchableOpacity
-                onPress={() => setMuac('green')}
+                onPress={() => setMuac("green")}
                 disabled={disabled}
-                className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'green' ? "bg-emerald-500 border-emerald-500" : (disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201")}`}
+                className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === "green" ? "bg-emerald-500 border-emerald-500" : disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201"}`}
               >
-                <Text className={`font-bold text-[15px] ${muac === 'green' ? "text-white" : (disabled ? "text-slate-300" : "text-emerald-700")}`}>
+                <Text
+                  className={`font-bold text-[15px] ${muac === "green" ? "text-white" : disabled ? "text-slate-300" : "text-emerald-700"}`}
+                >
                   {t("counseling_section.muac_normal")}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => setMuac('yellow')}
+                onPress={() => setMuac("yellow")}
                 disabled={disabled}
-                className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'yellow' ? "bg-yellow-400 border-yellow-400" : (disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201")}`}
+                className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === "yellow" ? "bg-yellow-400 border-yellow-400" : disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201"}`}
               >
-                <Text className={`font-bold text-[15px] ${muac === 'yellow' ? "text-white" : (disabled ? "text-slate-300" : "text-yellow-700")}`}>
+                <Text
+                  className={`font-bold text-[15px] ${muac === "yellow" ? "text-white" : disabled ? "text-slate-300" : "text-yellow-700"}`}
+                >
                   {t("counseling_section.muac_risk")}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => setMuac('red')}
+                onPress={() => setMuac("red")}
                 disabled={disabled}
-                className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === 'red' ? "bg-rose-500 border-rose-500" : (disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201")}`}
+                className={`flex-1 py-3 px-1 rounded-xl border items-center justify-center ${muac === "red" ? "bg-rose-500 border-rose-500" : disabled ? "bg-slate-50 border-slate-100" : "bg-white border-slate-201"}`}
               >
-                <Text className={`font-bold text-[15px] ${muac === 'red' ? "text-white" : (disabled ? "text-slate-300" : "text-rose-700")}`}>
+                <Text
+                  className={`font-bold text-[15px] ${muac === "red" ? "text-white" : disabled ? "text-slate-300" : "text-rose-700"}`}
+                >
                   {t("counseling_section.muac_severe")}
                 </Text>
               </TouchableOpacity>
@@ -1055,7 +1313,9 @@ export default function ChildCounselingSection({
                 <Text className="text-slate-600 font-semibold mb-2 text-[15px]">
                   {t("counseling_section.weight_kg")}
                 </Text>
-                <View className={`bg-slate-50 border border-slate-200 rounded-xl px-4 ${disabled ? 'opacity-50' : ''}`}>
+                <View
+                  className={`bg-slate-50 border border-slate-200 rounded-xl px-4 ${disabled ? "opacity-50" : ""}`}
+                >
                   <TextInput
                     placeholder="0.00"
                     value={weight}
@@ -1071,7 +1331,9 @@ export default function ChildCounselingSection({
                 <Text className="text-slate-600 font-semibold mb-2 text-[15px]">
                   {t("counseling_section.height_cm")}
                 </Text>
-                <View className={`bg-slate-50 border border-slate-200 rounded-xl px-4 ${disabled ? 'opacity-50' : ''}`}>
+                <View
+                  className={`bg-slate-50 border border-slate-200 rounded-xl px-4 ${disabled ? "opacity-50" : ""}`}
+                >
                   <TextInput
                     placeholder="0.0"
                     value={height}
@@ -1090,7 +1352,11 @@ export default function ChildCounselingSection({
                   {t("counseling_section.bmi")}
                 </Text>
                 <Text className="text-slate-800 font-semibold text-[20px] mt-0.5">
-                  {bmi ? (language === "np" ? toNepaliNumbers(bmi) : bmi) : "---"}
+                  {bmi
+                    ? language === "np"
+                      ? toNepaliNumbers(bmi)
+                      : bmi
+                    : "---"}
                 </Text>
               </View>
               <Text className="text-slate-500 text-[13px] font-medium max-w-[160px] text-right">
@@ -1101,7 +1367,7 @@ export default function ChildCounselingSection({
             <TouchableOpacity
               onPress={handleAddMalnutrition}
               disabled={!muac || disabled || loadingButtons[mainQuestionId]}
-              className={`w-full py-2.5 rounded-xl items-center justify-center mb-4 ${(!muac || disabled || loadingButtons[mainQuestionId]) ? "bg-slate-300" : "bg-primary"}`}
+              className={`w-full py-2.5 rounded-xl items-center justify-center mb-4 ${!muac || disabled || loadingButtons[mainQuestionId] ? "bg-slate-300" : "bg-primary"}`}
             >
               {loadingButtons[mainQuestionId] ? (
                 <ActivityIndicator color="white" size="small" />
@@ -1112,7 +1378,7 @@ export default function ChildCounselingSection({
               )}
             </TouchableOpacity>
 
-            {muac === 'green' && (
+            {muac === "green" && (
               <View className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl mb-4 items-center">
                 <Text className="text-emerald-700 font-semibold italic text-sm">
                   {t("counseling_section.malnutrition_good")}
@@ -1128,163 +1394,98 @@ export default function ChildCounselingSection({
   };
 
   const renderCounselingGroup = () => {
-    return (
-      <View className="bg-white rounded-2xl mb-6 py-3 px-2">
-        <View className="flex-row items-center mb-3 ml-1">
-          <MessageSquare size={20} color="#166534" />
-          <Text className="text-[#166534] font-bold text-lg ml-2">{t("counseling_section.counseling")}</Text>
-        </View>
+    const isConditionBad = answers["good_health_condition"]?.length > 0;
+    const hasDiarrhea = answers["has_diarrhea"]?.length > 0;
+    const hasBreathingProblems = answers["has_breathing_problems"]?.length > 0;
 
-        <View className="bg-white rounded-xl">
-          {CHILD_COUNSELING_QUESTIONS.map((q, index) => (
-            <View key={q.id} className="bg-white py-4 px-2 border-t border-slate-100">
-              <View className="flex-row items-start justify-between">
-                <View className="flex-1 mr-4">
-                  <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
+    let visibleOneTime = ONE_TIME_CHILD_COUNSELING_QUESTIONS;
+    let visibleRoutine = CHILD_COUNSELING_QUESTIONS.filter(
+      (q) => !ONE_TIME_CHILD_COUNSELING_QUESTIONS.some((oq) => oq.id === q.id)
+    );
+    let visibleHealth = CHILD_HEALTH_COUNSELLING_QUESTIONS.filter((q) => {
+      if (q.id === "good_health_condition") return true;
+      if (!isConditionBad) return false;
+      if (
+        q.id === "diarrhea_treated_with_ors_zinc" ||
+        q.id === "ors_for_child" ||
+        q.id === "zinc_for_child"
+      ) {
+        return hasDiarrhea;
+      }
+      if (
+        q.id === "has_pneumonia" ||
+        q.id === "referred_breathing_problems" ||
+        q.id === "home_treatment_cold"
+      ) {
+        return hasBreathingProblems;
+      }
+      return true;
+    });
+    let visibleReg = REGISTRATION_COUNSELING_QUESTIONS.filter((q) => {
+      if (q.id === "birth_registration_counseling") return !birthRegistered || (answers[q.id]?.length > 0);
+      if (q.id === "death_registration_counseling") return isDead || (answers[q.id]?.length > 0);
+      return true;
+    });
+
+    const renderReadOnlySection = (title: string, questions: any[]) => {
+      if (questions.length === 0) return null;
+      return (
+        <View className="mb-4">
+          <Text className="text-slate-500 font-bold text-[12px] uppercase tracking-wider mb-2 pl-1">
+            {title}
+          </Text>
+          <View className="bg-slate-50 rounded-xl overflow-hidden border border-slate-100/80">
+            {questions.map((q, idx) => {
+              const logs = answers[q.id] || [];
+              const hasLogs = logs.length > 0;
+              return (
+                <View
+                  key={q.id}
+                  className={`py-3 px-4 ${idx > 0 ? "border-t border-slate-200/50" : ""}`}
+                >
+                  <Text className={`text-[15px] font-semibold ${hasLogs ? "text-slate-800" : "text-slate-400"}`}>
                     {language === "np" ? q.ne : q.en}
                   </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => handleAdd(q.id)}
-                  disabled={disabled || loadingButtons[q.id]}
-                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
-                >
-                  {loadingButtons[q.id] ? (
-                    <ActivityIndicator color="white" size="small" />
+                  {hasLogs ? (
+                    renderLogsInlineReadOnly(q.id)
                   ) : (
-                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
-                  )}
-                </TouchableOpacity>
-              </View>
-              {renderLogsInline(q.id)}
-            </View>
-          ))}
-
-          {CHILD_HEALTH_COUNSELLING_QUESTIONS.slice(0, 1).map((q: any) => {
-            const logs = Array.isArray(answers[q.id]) ? answers[q.id] : [];
-            const isConditionBad = logs.length > 0;
-
-            return (
-              <View key={q.id} className="bg-white py-4 px-2 border-t border-slate-100">
-                <View className="flex-row items-start justify-between">
-                  <View className="flex-1 mr-4">
-                    <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
-                      {language === "np" ? q.ne : q.en}
+                    <Text className="text-[12px] text-slate-400 italic mt-1 pl-0.5">
+                      {language === "np" ? "अझै थपिएको छैन" : "Not counseling yet"}
                     </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleAdd(q.id)}
-                    disabled={disabled || loadingButtons[q.id]}
-                    className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} p-2 rounded-lg flex-row items-center ml-2 justify-center`}
-                  >
-                    {loadingButtons[q.id] ? (
-                      <ActivityIndicator color="white" size="small" />
-                    ) : (
-                      <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
-                    )}
-                  </TouchableOpacity>
+                  )}
                 </View>
-                {renderLogsInline(q.id)}
-
-                {isConditionBad && (
-                  <View className="mt-4 ml-1">
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} className="flex-1">
-                      {CHILD_HEALTH_COUNSELLING_QUESTIONS.slice(1).map((subQ: any, subIndex: number) => {
-                        // Diarrhea-dependent questions only shown if child has diarrhea
-                        if (subQ.id === "diarrhea_treated_with_ors_zinc" || subQ.id === "ors_for_child" || subQ.id === "zinc_for_child") {
-                          const hasDiarrheaLogs = Array.isArray(answers["has_diarrhea"]) ? answers["has_diarrhea"] : [];
-                          if (hasDiarrheaLogs.length === 0) return null;
-                        }
-
-                        if (subQ.id === "ors_for_child") {
-                          return (
-                            <View key={subQ.id} className="py-4">
-                              <View className="flex-row items-start justify-between">
-                                <View className="flex-1 mr-2">
-                                  <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
-                                    {language === "np" ? subQ.ne : subQ.en}
-                                  </Text>
-                                </View>
-                                <TouchableOpacity
-                                  onPress={() => {
-                                    setOrsCount(1);
-                                    setOrsModalVisible(true);
-                                  }}
-                                  disabled={disabled || loadingButtons[subQ.id]}
-                                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
-                                >
-                                  {loadingButtons[subQ.id] ? (
-                                    <ActivityIndicator color="white" size="small" />
-                                  ) : (
-                                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
-                                  )}
-                                </TouchableOpacity>
-                              </View>
-                              {renderLogsInline(subQ.id)}
-                            </View>
-                          );
-                        }
-
-                        if (subQ.id === "zinc_for_child") {
-                          return (
-                            <View key={subQ.id} className="py-4">
-                              <View className="flex-row items-start justify-between">
-                                <View className="flex-1 mr-2">
-                                  <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
-                                    {language === "np" ? subQ.ne : subQ.en}
-                                  </Text>
-                                </View>
-                                <TouchableOpacity
-                                  onPress={() => {
-                                    setZincCount(1);
-                                    setZincModalVisible(true);
-                                  }}
-                                  disabled={disabled || loadingButtons[subQ.id]}
-                                  className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
-                                >
-                                  {loadingButtons[subQ.id] ? (
-                                    <ActivityIndicator color="white" size="small" />
-                                  ) : (
-                                    <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
-                                  )}
-                                </TouchableOpacity>
-                              </View>
-                              {renderLogsInline(subQ.id)}
-                            </View>
-                          );
-                        }
-
-                        return (
-                          <View key={subQ.id} className="py-4">
-                            <View className="flex-row items-start justify-between">
-                              <View className="flex-1 mr-2">
-                                <Text className="text-slate-700 text-[16px] font-medium leading-relaxed">
-                                  {language === "np" ? subQ.ne : subQ.en}
-                                </Text>
-                              </View>
-                              <TouchableOpacity
-                                onPress={() => handleAdd(subQ.id)}
-                                disabled={disabled || loadingButtons[subQ.id]}
-                                className={`${disabled ? 'bg-slate-100' : 'bg-[#475569]'} px-2 py-2 rounded-lg flex-row items-center ml-2 justify-center`}
-                              >
-                                {loadingButtons[subQ.id] ? (
-                                  <ActivityIndicator color="white" size="small" />
-                                ) : (
-                                  <Plus size={19} color={disabled ? "#CBD5E1" : "white"} />
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                            {renderLogsInline(subQ.id)}
-                          </View>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                )}
-              </View>
-            );
-          })}
+              );
+            })}
+          </View>
         </View>
+      );
+    };
+
+    return (
+      <View className="bg-white rounded-2xl mb-6 py-4 px-3 border border-slate-100">
+        <View className="flex-row items-center mb-4 ml-1">
+          <MessageSquare size={20} color="#166534" />
+          <Text className="text-[#166534] font-bold text-lg ml-2">
+            {t("counseling_section.counseling", { defaultValue: "Counseling Records" })}
+          </Text>
+        </View>
+
+        {renderReadOnlySection(
+          t("visit.sections.one_time_counseling", { defaultValue: "One-Time Counseling" }),
+          visibleOneTime
+        )}
+        {renderReadOnlySection(
+          t("visit.sections.routine_counseling", { defaultValue: "Routine Counseling" }),
+          visibleRoutine
+        )}
+        {renderReadOnlySection(
+          t("visit.sections.health_status_counseling", { defaultValue: "Health Status & Illness Counseling" }),
+          visibleHealth
+        )}
+        {renderReadOnlySection(
+          t("visit.sections.registration_counseling", { defaultValue: "Registration Counseling" }),
+          visibleReg
+        )}
       </View>
     );
   };

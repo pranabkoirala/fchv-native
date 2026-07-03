@@ -171,3 +171,203 @@ export const CHILD_STATUS_OPTIONS = [
   { value: "alive", np_label: "जीवित", en_label: "Alive" },
   { value: "dead", np_label: "मृत", en_label: "Dead" },
 ];
+
+export interface FchvCounselingField {
+  key: string;
+  number: boolean;
+  name: boolean;
+  en: string;
+  ne: string;
+}
+
+export const FCHV_COUNSELING: FchvCounselingField[] = [
+  {
+    key: "adolescent_referred_count",
+    number: true,
+    name: false,
+    en: "Number of adolescents referred to a health facility",
+    ne: "स्वास्थ्य संस्थामा प्रेषण गरिएका किशोर-किशोरीको संख्या",
+  },
+  {
+    key: "adolescent_referred_names",
+    number: false,
+    name: true,
+    en: "Names of referred adolescents",
+    ne: "प्रेषण गरिएका किशोर-किशोरीहरूको नाम",
+  },
+  {
+    key: "cough_referred_count",
+    number: true,
+    name: false,
+    en: "Number of patients referred for cough lasting 2 weeks or more",
+    ne: "२ हप्ता वा सोभन्दा बढी समयदेखि खोकी लागेर प्रेषण गरिएका बिरामीको संख्या",
+  },
+  {
+    key: "cough_referred_names",
+    number: false,
+    name: true,
+    en: "Names of referred patients (cough)",
+    ne: "प्रेषण गरिएका खोकीका बिरामीहरूको नाम",
+  },
+  {
+    key: "first_aid_count",
+    number: true,
+    name: false,
+    en: "Number of people who received first aid",
+    ne: "प्राथमिक उपचार पाएका व्यक्तिको संख्या",
+  },
+  {
+    key: "first_aid_names",
+    number: false,
+    name: true,
+    en: "Names of people who received first aid",
+    ne: "प्राथमिक उपचार पाएका व्यक्तिहरूको नाम",
+  },
+  {
+    key: "first_aid_referred_count",
+    number: true,
+    name: false,
+    en: "Number of patients referred after first aid",
+    ne: "प्राथमिक उपचारपछि प्रेषण गरिएका बिरामीको संख्या",
+  },
+  {
+    key: "first_aid_referred_names",
+    number: false,
+    name: true,
+    en: "Names of patients referred after first aid",
+    ne: "प्राथमिक उपचारपछि प्रेषण गरिएका बिरामीहरूको नाम",
+  },
+  {
+    key: "child_health_education_count",
+    number: true,
+    name: false,
+    en: "Number of children who received child health education",
+    ne: "बाल स्वास्थ्य शिक्षामा सहभागी बालबालिकाको संख्या",
+  },
+  {
+    key: "child_health_education_names",
+    number: false,
+    name: true,
+    en: "Names of children who received child health education",
+    ne: "बाल स्वास्थ्य शिक्षामा सहभागी बालबालिकाहरूको नाम",
+  },
+  {
+    key: "ncd_health_education_count",
+    number: true,
+    name: false,
+    en: "Number of people who received health education on NCD risk factors and prevention",
+    ne: "नसर्ने रोगका जोखिम र रोकथाम सम्बन्धी स्वास्थ्य शिक्षा पाएका व्यक्तिको संख्या",
+  },
+  {
+    key: "ncd_health_education_names",
+    number: false,
+    name: true,
+    en: "Names of people who received health education",
+    ne: "स्वास्थ्य शिक्षा पाएका व्यक्तिहरूको नाम",
+  },
+  {
+    key: "ncd_beneficiaries_count",
+    number: true,
+    name: false,
+    en: "Number of beneficiaries of NCD health education",
+    ne: "नसर्ने रोग सम्बन्धी स्वास्थ्य शिक्षाबाट लाभान्वित व्यक्तिको संख्या",
+  },
+  {
+    key: "ncd_beneficiaries_names",
+    number: false,
+    name: true,
+    en: "Names of beneficiaries",
+    ne: "लाभान्वित व्यक्तिहरूको नाम",
+  },
+  {
+    key: "tb_referred_count",
+    number: true,
+    name: false,
+    en: "Number of suspected TB patients referred",
+    ne: "शंकास्पद क्षयरोगका प्रेषण गरिएका बिरामीको संख्या",
+  },
+  {
+    key: "tb_referred_names",
+    number: false,
+    name: true,
+    en: "Names of referred TB patients",
+    ne: "प्रेषण गरिएका शंकास्पद क्षयरोगका बिरामीहरूको नाम",
+  },
+  {
+    key: "leprosy_referred_count",
+    number: true,
+    name: false,
+    en: "Number of suspected leprosy patients referred",
+    ne: "शंकास्पद कुष्ठरोगका प्रेषण गरिएका बिरामीको संख्या",
+  },
+  {
+    key: "leprosy_referred_names",
+    number: false,
+    name: true,
+    en: "Names of referred leprosy patients",
+    ne: "प्रेषण गरिएका शंकास्पद कुष्ठरोगका बिरामीहरूको नाम",
+  },
+  {
+    key: "ncd_referred_count",
+    number: true,
+    name: false,
+    en: "Number of NCD patients referred",
+    ne: "नसर्ने रोगका प्रेषण गरिएका बिरामीको संख्या",
+  },
+  {
+    key: "ncd_referred_names",
+    number: false,
+    name: true,
+    en: "Names of referred NCD patients",
+    ne: "प्रेषण गरिएका नसर्ने रोगका बिरामीहरूको नाम",
+  },
+  {
+    key: "mental_health_referred_count",
+    number: true,
+    name: false,
+    en: "Number of patients with mental health problems referred",
+    ne: "मानसिक स्वास्थ्य समस्या भई प्रेषण गरिएका बिरामीको संख्या",
+  },
+  {
+    key: "mental_health_referred_names",
+    number: false,
+    name: true,
+    en: "Names of referred patients",
+    ne: "प्रेषण गरिएका मानसिक स्वास्थ्यका बिरामीहरूको नाम",
+  },
+  {
+    key: "elderly_referred_count",
+    number: true,
+    name: false,
+    en: "Number of elderly people with health problems referred",
+    ne: "स्वास्थ्य समस्या भई प्रेषण गरिएका ज्येष्ठ नागरिकको संख्या",
+  },
+  {
+    key: "elderly_referred_names",
+    number: false,
+    name: true,
+    en: "Names of referred elderly people",
+    ne: "प्रेषण गरिएका ज्येष्ठ नागरिकहरूको नाम",
+  },
+  {
+    key: "fchv_fund_amount",
+    number: true,
+    name: false,
+    en: "Amount deposited in FCHV fund (NPR)",
+    ne: "म.स्वा.स्व. कोषमा जम्मा भएको रकम (रु.)",
+  },
+  {
+    key: "immunization_cleanliness_sessions",
+    number: true,
+    name: false,
+    en: "Participation in immunization/cleanliness sessions (times)",
+    ne: "खोप क्लिनिक वा सरसफाइ सेसनमा सहभागिता (पटक)",
+  },
+  {
+    key: "village_clinic_support",
+    number: true,
+    name: false,
+    en: "Assisted at village clinic (times)",
+    ne: "गाउँघर क्लिनिक सञ्चालनमा सहयोग गरेको (पटक)",
+  },
+];

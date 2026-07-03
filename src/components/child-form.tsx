@@ -421,6 +421,7 @@ export default function ChildRegistrationForm() {
             }}
             error={errors?.motherId}
             isSearchable={true}
+            required={true}
           />
 
           {/* Baby Info */}
@@ -438,7 +439,7 @@ export default function ChildRegistrationForm() {
 
             <View className="mb-4">
               <Text className="text-slate-800 text-[16px] mb-1.5 ml-1">
-                {t("child_form.date_of_birth")}
+                {t("child_form.date_of_birth")}<Text className="text-red-500"> *</Text>
               </Text>
               <Pressable
                 onPress={() => setShowDatePicker(true)}
@@ -487,7 +488,7 @@ export default function ChildRegistrationForm() {
             </View>
 
             {/* Suggested Pregnancy Match Selection */}
-            {!pregnancyId && suggestedPregnancy && (
+            {/* {!pregnancyId && suggestedPregnancy && (
               <View className="mb-5 rounded-2xl border border-amber-100 bg-amber-50/40 overflow-hidden">
                 <View className="flex-row items-center px-4 py-3 bg-amber-50 border-b border-amber-100">
                   <View className="w-7 h-7 rounded-full bg-amber-100 items-center justify-center mr-2">
@@ -535,12 +536,12 @@ export default function ChildRegistrationForm() {
                   </TouchableOpacity>
                 </View>
               </View>
-            )}
+            )} */}
 
             {/* Gender Selection */}
             <View className="mb-4">
               <Text className="text-slate-800 text-[16px] mb-3 ml-1">
-                {t("child_form.gender")}
+                {t("child_form.gender")}<Text className="text-red-500"> *</Text>
               </Text>
               <View className="flex-row gap-x-4">
                 {[
@@ -680,7 +681,9 @@ export default function ChildRegistrationForm() {
 
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => setAsphyxiatedNewborn(asphyxiatedNewborn ? 0 : 1)}
+                  onPress={() =>
+                    setAsphyxiatedNewborn(asphyxiatedNewborn ? 0 : 1)
+                  }
                   className={`flex-row items-center p-4 mt-4 rounded-xl border ${asphyxiatedNewborn ? "bg-rose-50 border-rose-300" : "bg-white border-slate-200"}`}
                 >
                   <View

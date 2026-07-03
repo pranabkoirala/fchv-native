@@ -701,7 +701,7 @@ CREATE TABLE IF NOT EXISTS delivery (
 );
 CREATE INDEX IF NOT EXISTS idx_delivery_mother ON delivery(mother);
 
-CREATE TABLE IF NOT EXISTS delivery_staging (
+  CREATE TABLE IF NOT EXISTS delivery_staging (
     id TEXT PRIMARY KEY,
     mother TEXT,
     delivery_date TEXT,
@@ -725,5 +725,146 @@ CREATE TABLE IF NOT EXISTS delivery_staging (
     updated_at TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS child_birth_registration (
+    id TEXT PRIMARY KEY,
+    child TEXT NOT NULL,
+    birth_status INTEGER NOT NULL DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(child) REFERENCES child_monitoring(id),
+    UNIQUE(child)
+  );
+  CREATE INDEX IF NOT EXISTS idx_child_birth_registration_child ON child_birth_registration(child);
+
+  CREATE TABLE IF NOT EXISTS child_birth_registration_staging (
+    id TEXT PRIMARY KEY,
+    child TEXT,
+    birth_status INTEGER NOT NULL DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS child_death_registration (
+    id TEXT PRIMARY KEY,
+    child TEXT NOT NULL,
+    death_status INTEGER NOT NULL DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(child) REFERENCES child_monitoring(id),
+    UNIQUE(child)
+  );
+  CREATE INDEX IF NOT EXISTS idx_child_death_registration_child ON child_death_registration(child);
+
+  CREATE TABLE IF NOT EXISTS child_death_registration_staging (
+    id TEXT PRIMARY KEY,
+    child TEXT,
+    death_status INTEGER NOT NULL DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS fchv_counseling (
+    id TEXT PRIMARY KEY,
+    fchv_name TEXT,
+    fchv_id TEXT,
+    data TEXT,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS fchv_counseling_staging (
+    id TEXT PRIMARY KEY,
+    fchv_name TEXT,
+    fchv_id TEXT,
+    data TEXT,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS child_nutrition (
+    id TEXT PRIMARY KEY,
+    mother_id TEXT NOT NULL,
+    child_id TEXT NOT NULL,
+    nutrition_names TEXT NOT NULL,
+    balvita_packets INTEGER DEFAULT 0,
+    child_age_group TEXT,
+    times_per_month INTEGER DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(mother_id) REFERENCES mother(id),
+    FOREIGN KEY(child_id) REFERENCES child_monitoring(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS child_nutrition_staging (
+    id TEXT PRIMARY KEY,
+    mother_id TEXT,
+    child_id TEXT,
+    nutrition_names TEXT,
+    balvita_packets INTEGER DEFAULT 0,
+    child_age_group TEXT,
+    times_per_month INTEGER DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS abortion (
+    id TEXT PRIMARY KEY,
+    mother TEXT NOT NULL,
+    pregnancy TEXT,
+    aborted INTEGER NOT NULL DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(mother) REFERENCES mother(id),
+    FOREIGN KEY(pregnancy) REFERENCES pregnancy(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS abortion_staging (
+    id TEXT PRIMARY KEY,
+    mother TEXT,
+    pregnancy TEXT,
+    aborted INTEGER NOT NULL DEFAULT 0,
+    reg_year INTEGER,
+    reg_month INTEGER,
+    is_synced INTEGER NOT NULL DEFAULT 0,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
 
 `;

@@ -307,8 +307,10 @@ export interface PregnantWomenListItem {
   gravida: number;
   parity: number;
   risk_level: string;
+  reg_year?: number;
   reg_month?: string;
   created_at?: string;
+  has_counseling?: string | null;
 }
 
 export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
@@ -320,24 +322,43 @@ export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
       (m.first_name || ' ' || m.last_name) as name,
       m.husband_name,
       m.phone_number as phone,
+      m.date_of_birth,
       p.lmp_date,
       p.expected_delivery_date as edd,
       p.gravida,
       p.parity,
       p.risk_level,
+      p.reg_year,
       p.reg_month,
-      p.created_at
+      p.created_at,
+      (SELECT cr.counseling_answers FROM counseling_referral cr 
+       WHERE cr.mother = m.id AND cr.pregnancy = p.id 
+       AND cr.is_deleted = 0 AND cr.counseling_answers IS NOT NULL 
+       LIMIT 1) as has_counseling
     FROM pregnancy p
     INNER JOIN mother m ON p.mother = m.id
     WHERE p.is_deleted = 0 AND p.is_current = 1 AND m.is_deleted = 0
     ORDER BY p.updated_at DESC
   `;
   const rows = await db.getAllAsync<any>(query);
-  return rows.map((row) => ({
-    ...row,
-    gravida: row.gravida || 0,
-    parity: row.parity || 0,
-  }));
+  return rows.map((row) => {
+    let age = 0;
+    if (row.date_of_birth) {
+      const birthDate = new Date(row.date_of_birth);
+      const today = new Date();
+      age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+    return {
+      ...row,
+      age,
+      gravida: row.gravida || 0,
+      parity: row.parity || 0,
+    };
+  });
 }
 
 export async function getPregnancyById(id: string): Promise<any> {

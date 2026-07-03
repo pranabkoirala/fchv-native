@@ -1,3 +1,4 @@
+import { getFchvData } from "@/api/services/fchv";
 import { Button } from "@/components/button";
 import CustomHeader from "@/components/CustomHeader";
 import { useLanguage } from "@/context/LanguageContext";
@@ -21,6 +22,7 @@ import {
 } from "react-native";
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import municipalitiesData from "@/assets/json/municipalities.json";
 
 export default function MothersGroupMeetingForm() {
   const router = useRouter();
@@ -45,6 +47,8 @@ export default function MothersGroupMeetingForm() {
   const [location, setLocation] = useState("");
   const [wardNo, setWardNo] = useState("1");
   const [attendees, setAttendees] = useState(0);
+
+  const [totalWards, setTotalWards] = useState(15);
 
   const [topicInput, setTopicInput] = useState("");
   const [topics, setTopics] = useState<string[]>([]);
@@ -96,6 +100,33 @@ export default function MothersGroupMeetingForm() {
       return () => backHandler.remove();
     }
   }, [params.from, params.id]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const fchvData = await getFchvData();
+        if (fchvData?.address?.municipality?.id) {
+          for (const p of municipalitiesData as any[]) {
+            for (const d of p.districts || []) {
+              const m = (d.municipalities || []).find(
+                (mu: any) => mu.id === fchvData.address.municipality.id,
+              );
+              if (m) {
+                const count = m.wards?.length || 15;
+                setTotalWards(count);
+                setWardNo((prev) =>
+                  parseInt(prev) > count ? String(count) : prev,
+                );
+                return;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching FCHV data for ward count", e);
+      }
+    })();
+  }, []);
 
   const handleAddTopic = () => {
     if (topicInput.trim()) {
@@ -232,7 +263,7 @@ export default function MothersGroupMeetingForm() {
                 showsHorizontalScrollIndicator={false}
                 className="flex-row"
               >
-                {[...Array(15)].map((_, i) => {
+                {[...Array(totalWards)].map((_, i) => {
                   const w = String(i + 1);
                   const isSelected = wardNo === w;
                   return (

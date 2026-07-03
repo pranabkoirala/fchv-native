@@ -27,11 +27,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CustomHeader from "../../../components/CustomHeader";
 import MaternalDeathModal from "../../../components/forms/MaternalDeathModal";
 import NewbornDeathModal from "../../../components/forms/NewbornDeathModal";
+import AbortionSection from "../../../components/profile/AbortionSection";
 import CounselingReferralSection from "../../../components/profile/CounselingReferralSection";
 import FamilyPlanningSection from "../../../components/profile/FamilyPlanningSection";
 import PNCDetailModal from "../../../components/profile/PNCDetailModal";
 import PNCModal from "../../../components/profile/PNCModal";
 import { useToast } from "../../../context/ToastContext";
+import { getAbortionByMother, getAbortionByMotherAndPregnancy } from "../../../hooks/database/models/AbortionModel";
 import { getInfantMonitoringsByMother } from "../../../hooks/database/models/InfantMonitoringModel";
 import { getMaternalDeathByMother } from "../../../hooks/database/models/MaternalDeathModel";
 import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
@@ -46,6 +48,7 @@ import {
   getSupplementByMother,
   SupplementStoreType,
 } from "../../../hooks/database/models/SupplementModel";
+import { AbortionStoreType } from "../../../hooks/database/types/abortionModal";
 import { HmisRecordStoreType } from "../../../hooks/database/types/hmisRecordModal";
 import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
 import { NewbornDeathStoreType } from "../../../hooks/database/types/newbornDeathModal";
@@ -303,6 +306,8 @@ export default function HmisRecordProfileScreen() {
     useState<MaternalDeathStoreType | null>(null);
   const [existingNewbornDeathRecord, setExistingNewbornDeathRecord] =
     useState<NewbornDeathStoreType | null>(null);
+  const [abortionRecord, setAbortionRecord] =
+    useState<AbortionStoreType | null>(null);
   const [children, setChildren] = useState<any[]>([]);
   const [allChildren, setAllChildren] = useState<any[]>([]);
   const [mother, setMother] = useState<any>(null);
@@ -423,6 +428,10 @@ export default function HmisRecordProfileScreen() {
               setExistingDeathRecord(deathData);
               const newbornDeathData = await getNewbornDeathByMother(mother.id);
               setExistingNewbornDeathRecord(newbornDeathData);
+              const abortionData = pregnancy?.id
+                ? await getAbortionByMotherAndPregnancy(mother.id, pregnancy.id)
+                : await getAbortionByMother(mother.id);
+              setAbortionRecord(abortionData);
               await loadSupplements(mother.id);
             }
           }
@@ -489,9 +498,13 @@ export default function HmisRecordProfileScreen() {
   const isOverdue = profileDaysRemaining !== null && profileDaysRemaining < 0;
   const isDueToday = profileDaysRemaining === 0;
   const hasCurrentPregnancyChild = currentPregnancyChildren.length > 0;
+  const hasAbortion = abortionRecord?.aborted === 1;
   const addPregnancyDisabled =
     !!existingDeathRecord ||
-    (activePregnancy && !hasCurrentPregnancyChild && !isOverdue);
+    (activePregnancy &&
+      !hasCurrentPregnancyChild &&
+      !isOverdue &&
+      !hasAbortion);
   const remainingBadgeClass = isOverdue
     ? "bg-rose-50"
     : isDueToday
@@ -815,7 +828,7 @@ export default function HmisRecordProfileScreen() {
             </View>
           </View>
 
-          <View className="bg-white rounded-2xl border border-slate-100 overflow-hidde">
+          <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
             <SectionTitle
               title={t("profile.family_planning_method")}
               icon={Heart}
@@ -827,6 +840,41 @@ export default function HmisRecordProfileScreen() {
               />
             </View>
           </View>
+
+          {/* Abortion Section */}
+          {(activePregnancy || hasAbortion) && (
+            <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <View className="p-4">
+                <AbortionSection
+                  motherId={record.id}
+                  pregnancyId={pregnancy?.id || null}
+                  disabled={!!existingDeathRecord}
+                  onAbortionRecorded={() => {
+                    setAbortionRecord({
+                      id: "",
+                      mother: record.id,
+                      pregnancy: pregnancy?.id || null,
+                      aborted: 1,
+                      reg_year: null,
+                      reg_month: null,
+                      is_synced: 0,
+                      is_deleted: 0,
+                      created_at: "",
+                      updated_at: "",
+                    });
+                    // Also update local pregnancy state to reflect ended
+                    if (pregnancy) {
+                      setPregnancy({
+                        ...pregnancy,
+                        ended: 1,
+                        is_current: 0,
+                      });
+                    }
+                  }}
+                />
+              </View>
+            </View>
+          )}
 
           <CounselingReferralSection
             key={pregnancy?.id || "no-pregnancy"}

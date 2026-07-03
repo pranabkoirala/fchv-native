@@ -5,6 +5,7 @@ export type PncVisitStoreType = {
   is_synced: number;
   is_deleted: number;
   visit_date: string;
+  visit_type: string;
   visit_place: string | null;
   visit_number?: number | null;
   reg_year?: number | null;

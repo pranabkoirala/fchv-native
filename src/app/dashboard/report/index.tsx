@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useGlobalSearchParams, useRouter } from "expo-router";
 import {
   AlertTriangle,
   Baby,
@@ -41,6 +41,8 @@ import {
   getPregnantWomenList,
   PregnantWomenListItem,
 } from "../../../hooks/database/models/PregnantWomenModal";
+import { getAllAdolescentIfa } from "../../../hooks/database/models/AdolescentIfaModel";
+import { AdolescentIfaStoreType } from "../../../hooks/database/types/adolescentIfaModal";
 import { DeliveryStoreType } from "../../../hooks/database/types/deliveryModal";
 import { InfantMonitoringStoreType } from "../../../hooks/database/types/infantMonitoringModal";
 import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
@@ -101,7 +103,8 @@ interface UnifiedRecord {
     | "dead_mother"
     | "dead_child"
     | "delivery"
-    | "mother_meeting";
+    | "mother_meeting"
+    | "adolescent";
   image?: string;
   subtitle?: string;
   reg_month?: string | number | null;
@@ -115,7 +118,8 @@ type TabKey =
   | "dead_child"
   | "pregnancy"
   | "delivery"
-  | "mother_meeting";
+  | "mother_meeting"
+  | "adolescent";
 
 interface TabItem {
   key: TabKey;
@@ -126,6 +130,7 @@ const TAB_KEYS: TabItem[] = [
   { key: "mother" },
   { key: "pregnancy" },
   { key: "child" },
+  { key: "adolescent" },
   { key: "delivery" },
   { key: "mother_meeting" },
   { key: "dead_mother" },
@@ -178,6 +183,12 @@ const TYPE_COLORS: Record<
     accent: "#0891B2",
     icon: "#0891B2",
   },
+  adolescent: {
+    bg: "bg-violet-50",
+    iconBg: "bg-violet-500",
+    accent: "#7C3AED",
+    icon: "#7C3AED",
+  },
 };
 
 const RecordCard = memo(function RecordCard({
@@ -222,6 +233,8 @@ const RecordCard = memo(function RecordCard({
         return <Baby {...iconProps} />;
       case "mother_meeting":
         return <Users {...iconProps} />;
+      case "adolescent":
+        return <Heart {...iconProps} />;
       default:
         return <User {...iconProps} />;
     }
@@ -312,7 +325,7 @@ export default function ReportScreen() {
   const router = useRouter();
   const { t, language } = useLanguage();
 
-  const { tab } = useLocalSearchParams<{ tab: TabKey }>();
+  const { tab } = useGlobalSearchParams<{ tab: TabKey }>();
   const [activeTab, setActiveTab] = useState<TabKey>(tab || "all");
   const tabScrollRef = useRef<ScrollView>(null);
   const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});
@@ -343,6 +356,7 @@ export default function ReportScreen() {
   const [childDeaths, setChildDeaths] = useState<NewbornDeathStoreType[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryStoreType[]>([]);
   const [meetings, setMeetings] = useState<any[]>([]);
+  const [adolescents, setAdolescents] = useState<AdolescentIfaStoreType[]>([]);
 
   const [motherNameMap, setMotherNameMap] = useState<Record<string, string>>(
     {},
@@ -365,6 +379,7 @@ export default function ReportScreen() {
         childDeathList,
         deliveryList,
         meetingList,
+        adolescentList,
       ] = await Promise.all([
         getAllMothersList(),
         getAllInfantMonitorings(),
@@ -373,6 +388,7 @@ export default function ReportScreen() {
         getAllNewbornDeaths(),
         getAllDeliveries(),
         getAllMothersGroupMeetings(),
+        getAllAdolescentIfa(),
       ]);
 
       setMothers(motherList);
@@ -382,6 +398,7 @@ export default function ReportScreen() {
       setChildDeaths(childDeathList);
       setDeliveries(deliveryList);
       setMeetings(meetingList);
+      setAdolescents(adolescentList);
 
       const nameMap: Record<string, string> = {};
       const wardMap: Record<string, string> = {};
@@ -559,6 +576,22 @@ export default function ReportScreen() {
       });
     }
 
+    if (activeTab === "all" || activeTab === "adolescent") {
+      adolescents.forEach((a) => {
+        records.push({
+          id: a.id,
+          name: a.name,
+          ward: "",
+          registrationDate: a.created_at || "",
+          status: "normal",
+          statusLabel: t("reports.status.normal"),
+          type: "adolescent",
+          subtitle: `${t("adolescent_page.age_group")}: ${a.age_group} ${t("adolescent_page.years")}`,
+          reg_month: a.reg_month?.toString() || (a.created_at ? a.created_at.substring(0, 7) : null),
+        });
+      });
+    }
+
     return records;
   }, [
     activeTab,
@@ -567,6 +600,9 @@ export default function ReportScreen() {
     pregnancies,
     maternalDeaths,
     childDeaths,
+    deliveries,
+    meetings,
+    adolescents,
     motherNameMap,
     motherWardMap,
     language,
@@ -645,6 +681,12 @@ export default function ReportScreen() {
             params: { id: record.id },
           } as any);
           break;
+        case "adolescent":
+          router.push({
+            pathname: "/dashboard/report/adolescent-details",
+            params: { id: record.id },
+          } as any);
+          break;
       }
     },
     [router],
@@ -657,6 +699,7 @@ export default function ReportScreen() {
           mothers.length +
           children.length +
           pregnancies.length +
+          adolescents.length +
           maternalDeaths.length +
           childDeaths.length
         );
@@ -674,6 +717,8 @@ export default function ReportScreen() {
         return deliveries.length;
       case "mother_meeting":
         return meetings.length;
+      case "adolescent":
+        return adolescents.length;
       default:
         return 0;
     }
@@ -730,6 +775,7 @@ export default function ReportScreen() {
               mother_meeting: isActive ? "bg-indigo-50" : "bg-transparent",
               dead_mother: isActive ? "bg-indigo-50" : "bg-transparent",
               dead_child: isActive ? "bg-indigo-50" : "bg-transparent",
+              adolescent: isActive ? "bg-indigo-50" : "bg-transparent",
             };
             const tabIcon = () => {
               const s = 14;
@@ -756,6 +802,8 @@ export default function ReportScreen() {
                   return <Heart size={s} color={c} />;
                 case "dead_child":
                   return <AlertTriangle size={s} color={c} />;
+                case "adolescent":
+                  return <Heart size={s} color={c} />;
                 default:
                   return null;
               }

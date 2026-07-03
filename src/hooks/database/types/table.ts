@@ -30,7 +30,17 @@ type TableType =
   | "child_vaccination"
   | "child_vaccination_staging"
   | "delivery"
-  | "delivery_staging";
+  | "delivery_staging"
+  | "child_birth_registration"
+  | "child_birth_registration_staging"
+  | "child_death_registration"
+  | "child_death_registration_staging"
+  | "fchv_counseling"
+  | "fchv_counseling_staging"
+  | "child_nutrition"
+  | "child_nutrition_staging"
+  | "abortion"
+  | "abortion_staging";
 
 type SyncTableType = Extract<
   TableType,
@@ -50,6 +60,11 @@ type SyncTableType = Extract<
   | "child_counseling"
   | "child_vaccination"
   | "delivery"
+  | "child_birth_registration"
+  | "child_death_registration"
+  | "fchv_counseling"
+  | "child_nutrition"
+  | "abortion"
 >;
 
 type RunAsync = (sql: string, params?: any[]) => Promise<any>;
