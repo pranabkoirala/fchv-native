@@ -67,7 +67,23 @@
           "color": "#356169"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-build-properties",
+      [
+    "expo-build-properties",
+    {
+      "android": {
+        "usesCleartextTraffic": true
+      },
+      "ios": {
+        "infoPlist": {
+          "NSAppTransportSecurity": {
+            "NSAllowsArbitraryLoads": true
+          }
+        }
+      }
+    }
+  ]
     ],
     "owner": "anojbudathoki"
   }

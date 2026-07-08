@@ -77,7 +77,10 @@ export default function LoginScreen() {
       try {
         await getFchvData();
       } catch (profileError) {
-        console.error("Failed to fetch FCHV profile after login:", profileError);
+        console.error(
+          "Failed to fetch FCHV profile after login:",
+          profileError,
+        );
       }
 
       showToast(t("login.success"));
@@ -85,6 +88,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       if (error?.response) {
         const status = error.response.status;
+        console.log({ error, status });
         if (status === 401 || status === 400) {
           showToast(t("login.error_invalid"));
         } else {
