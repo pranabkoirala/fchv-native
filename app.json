@@ -68,7 +68,6 @@
         }
       ],
       "expo-font",
-      "expo-build-properties",
       [
     "expo-build-properties",
     {
