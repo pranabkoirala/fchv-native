@@ -9,7 +9,7 @@ import axios, {
 import { router } from "expo-router";
 import { refreshToken } from "../services/auth/refreshToken";
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL;
+const baseURL = process.env.EXPO_PUBLIC_FCHV_API_URL;
 const THREE_MINUTES = 3 * 60 * 1000;
 
 export const httpClient: AxiosInstance = axios.create({
