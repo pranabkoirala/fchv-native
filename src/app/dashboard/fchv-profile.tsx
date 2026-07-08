@@ -611,7 +611,7 @@ export default function UserProfileScreen() {
               </Text>
               <Text className="text-[15px] font-semibold text-slate-800 mt-0.5">
                 {profile?.organization?.address
-                  ? `${addrName(profile.organization.address.municipality)} (${t("profile_settings.ward")} ${profile.organization.address.ward.number})`
+                  ? `${addrName(profile.organization.address.municipality)} (${t("profile_settings.ward")} ${profile.organization.address.ward?.number || "—"})`
                   : "—"}
               </Text>
             </View>
@@ -659,7 +659,7 @@ export default function UserProfileScreen() {
               </Text>
               <Text className="text-[15px] font-semibold text-slate-800 mt-0.5">
                 {profile?.address
-                  ? `${addrName(profile.address.municipality)}${profile.address.locality ? `, ${profile.address.locality}` : ""} (${t("profile_settings.ward")} ${profile.address.ward.number})`
+                  ? `${addrName(profile.address.municipality)}${profile.address.locality ? `, ${profile.address.locality}` : ""} (${t("profile_settings.ward")} ${profile.address.ward?.number || "—"})`
                   : "—"}
               </Text>
             </View>

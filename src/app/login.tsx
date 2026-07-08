@@ -67,14 +67,6 @@ export default function LoginScreen() {
       await storage.set(STAFF_ID_KEY, decoded?.staff_id);
 
       try {
-        await doSync({ throwOnError: true });
-      } catch (syncError) {
-        console.error("Initial database sync failed:", syncError);
-        showToast(t("login.sync_failed"));
-        return;
-      }
-
-      try {
         await getFchvData();
       } catch (profileError) {
         console.error(
@@ -85,6 +77,14 @@ export default function LoginScreen() {
 
       showToast(t("login.success"));
       router.replace("/dashboard");
+
+      try {
+        await doSync({ throwOnError: true });
+      } catch (syncError) {
+        console.error("Initial database sync failed:", syncError);
+        showToast(t("login.sync_failed"));
+        return;
+      }
     } catch (error: any) {
       if (error?.response) {
         const status = error.response.status;

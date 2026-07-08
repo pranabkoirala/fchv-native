@@ -1,9 +1,13 @@
-import axios, { type AxiosInstance, type AxiosError, isAxiosError } from "axios";
-import { refreshToken } from "../services/auth/refreshToken";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "@/constants/token";
 import { clearDatabase } from "@/hooks/database/db";
 import storage from "@/utils/storage";
+import axios, {
+  type AxiosError,
+  type AxiosInstance,
+  isAxiosError,
+} from "axios";
 import { router } from "expo-router";
+import { refreshToken } from "../services/auth/refreshToken";
 
 const baseURL = process.env.EXPO_PUBLIC_API_URL;
 const THREE_MINUTES = 3 * 60 * 1000;
@@ -12,6 +16,8 @@ export const httpClient: AxiosInstance = axios.create({
   baseURL,
   timeout: THREE_MINUTES,
 });
+
+console.log({ baseURL });
 
 // ── Request interceptor: attach access token ──
 httpClient.interceptors.request.use(async (config) => {
@@ -26,7 +32,10 @@ httpClient.interceptors.request.use(async (config) => {
 
 // ── Response interceptor: auto-refresh on 401 ──
 let isRefreshing = false;
-let failedQueue: { resolve: (token: string | null) => void; reject: (err: any) => void }[] = [];
+let failedQueue: {
+  resolve: (token: string | null) => void;
+  reject: (err: any) => void;
+}[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -47,7 +56,7 @@ const logAxiosError = (error: unknown) => {
   const method = error.config?.method?.toUpperCase();
 
   console.log(
-    `[HTTP] ${method ?? "?"} ${apiUrl ?? "?"} → ${statusCode ?? "NO_STATUS"}: ${error.message}`
+    `[HTTP] ${method ?? "?"} ${apiUrl ?? "?"} → ${statusCode ?? "NO_STATUS"}: ${error.message}`,
   );
 };
 
@@ -119,5 +128,5 @@ httpClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
