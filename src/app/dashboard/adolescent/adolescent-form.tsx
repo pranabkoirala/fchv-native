@@ -172,7 +172,7 @@ export default function AdolescentRegistrationForm() {
         <View style={{ paddingHorizontal: 20 }}>
           {/* Adolescent Name */}
           <InputText
-            label={t("adolescent_page.form.name")}
+            label={`${t("adolescent_page.form.name")} *`}
             placeholder={t("adolescent_page.form.name_placeholder")}
             value={name}
             onChangeText={setName}

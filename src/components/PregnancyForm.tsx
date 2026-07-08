@@ -270,8 +270,22 @@ export default function PregnancyForm({
     }
   };
 
+  const resetForm = () => {
+    setSelectedMotherId(id || "");
+    setGravida("");
+    setParity("");
+    setLmp("");
+    setEdd("");
+    setCaretakersName("");
+    setCaretakersPhone("");
+    setRiskLevel("normal");
+    setPregnancyId(null);
+    setErrors({});
+  };
+
   const handleCounselingModalClose = () => {
     setShowCounselingModal(false);
+    resetForm();
     if (from === "profile") {
       router.replace({
         pathname: "/dashboard/profile",

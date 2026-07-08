@@ -2,15 +2,14 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Minus, Plus, Trash2, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import {
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import CustomHeader from "../../components/CustomHeader";
 import { Button } from "../../components/button";
 import { useLanguage } from "../../context/LanguageContext";
@@ -140,18 +139,16 @@ export default function FchvCounselingPage() {
   const standaloneFields = numberFields.slice(-3);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-white pt-9"
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
+    <View className="flex-1 bg-white pt-9">
       <CustomHeader title={t("fchv_counseling.page_title")} />
 
-      <ScrollView
+      <KeyboardAwareScrollView
         className="flex-1 px-4 bg-gray-50"
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 60, paddingTop: 16 }}
+        enableOnAndroid={true}
+        extraScrollHeight={100}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 400, paddingTop: 16 }}
+        showsVerticalScrollIndicator={false}
       >
         {/* Paired fields: count + names list */}
         {pairedFields.map(({ count, names }) => {
@@ -382,7 +379,7 @@ export default function FchvCounselingPage() {
           onPress={handleSave}
           isLoading={loading}
         />
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* View-all modal for saved names overflow */}
       <Modal
@@ -431,6 +428,6 @@ export default function FchvCounselingPage() {
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

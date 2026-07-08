@@ -802,8 +802,8 @@
     "death_date": "मृत्यु मिति",
     "after_added": "दर्ता भइसक्यो",
     "subtitle": "नवजात तथा बाल मृत्यु (०–५९ महिना)",
-    "baby_name": "बच्चाको नाम",
-    "baby_name_placeholder": "बच्चाको नाम लेख्नुहोस्...",
+    "baby_name": "बच्चाको पूरा नाम",
+    "baby_name_placeholder": "बच्चाको पूरा नाम लेख्नुहोस्...",
     "choose_baby": "बच्चा छान्नुहोस्",
     "choose_baby_placeholder": "बच्चा छान्नुहोस्",
     "select_child_error": "कृपया बच्चा छान्नुहोस्।",
@@ -1173,7 +1173,7 @@
       "name_required": "किशोरीको नाम आवश्यक छ"
     },
     "form": {
-      "name": "किशोरीको नाम",
+      "name": "किशोरीको पूरा नाम",
       "name_placeholder": "पूरा नाम लेख्नुहोस्",
       "age_group": "उमेर समूह (वर्ष)",
       "years": "वर्ष",
@@ -1546,7 +1546,15 @@
       "routine_counseling": "नियमित परामर्श",
       "health_status_counseling": "स्वास्थ्य अवस्था परामर्श",
       "registration_counseling": "दर्ता परामर्श"
-    }
+    },
+    "ors_modal_title": "बच्चालाई दिइएको जीवनजल",
+    "ors_modal_subtitle": "बच्चाका लागि आमालाई दिइएको जीवनजलको प्याकेट संख्या प्रविष्ट गर्नुहोस्।",
+    "ors_quantity_label": "जीवनजलको मात्रा",
+    "ors_unit": "प्याकेट",
+    "zinc_modal_title": "बच्चालाई दिइएको जिंक",
+    "zinc_modal_subtitle": "बच्चाका लागि आमालाई दिइएको जिंक चक्कीको संख्या प्रविष्ट गर्नुहोस्।",
+    "zinc_quantity_label": "जिंक चक्कीको मात्रा",
+    "zinc_unit": "चक्की"
   },
   "delivery": {
     "title": "सुत्केरी दर्ता",

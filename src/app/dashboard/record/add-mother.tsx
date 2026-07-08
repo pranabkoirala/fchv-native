@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Baby, User } from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -78,15 +78,16 @@ export default function AddMotherScreen() {
   }>();
   const [step, setStep] = useState(initialStep === "1" ? 1 : 0);
   const [createdId, setCreatedId] = useState<string | null>(null);
-  const hasSetInitialStep = useRef(false);
 
-  // Sync step when params arrive (Expo Router can deliver params after mount)
-  useEffect(() => {
-    if (!hasSetInitialStep.current && initialStep === "1") {
-      setStep(1);
-      hasSetInitialStep.current = true;
-    }
-  }, [initialStep]);
+  // Reset to the Mother tab each time the screen comes into focus,
+  // unless the URL explicitly requests the pregnancy tab (step=1).
+  // This fixes the issue where the previously selected pregnancy tab
+  // persisted after navigating away and back (component instance reuse).
+  useFocusEffect(
+    useCallback(() => {
+      setStep(initialStep === "1" ? 1 : 0);
+    }, [initialStep]),
+  );
 
   // Smooth sliding animation — initialize directly to avoid flash when starting at step 1
   const slideAnim = useRef(new Animated.Value(initialStep === "1" ? -SCREEN_WIDTH : 0)).current;

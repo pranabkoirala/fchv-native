@@ -1175,7 +1175,7 @@
       "name_required": "Adolescent name is required"
     },
     "form": {
-      "name": "Adolescent's Name",
+      "name": "Adolescent's Full Name",
       "name_placeholder": "Enter Full Name",
       "age_group": "Age Group (उमेर समूह)",
       "years": "Years",
@@ -1285,7 +1285,7 @@
     "new_child": "Child Registration",
     "select_mother": "Select Mother",
     "select_mother_placeholder": "Select Mother",
-    "baby_name": "Baby's Name",
+    "baby_name": "Baby's Full Name",
     "baby_name_placeholder": "Enter baby's name",
     "date_of_birth": "Date of Birth",
     "gender": "Gender",
@@ -1548,7 +1548,15 @@
       "routine_counseling": "Routine Counseling",
       "health_status_counseling": "Health Condition Counseling",
       "registration_counseling": "Registration Counseling"
-    }
+    },
+    "ors_modal_title": "ORS Given to Child",
+    "ors_modal_subtitle": "Enter the number of ORS packets given to the mother for the child.",
+    "ors_quantity_label": "ORS Quantity",
+    "ors_unit": "packet(s)",
+    "zinc_modal_title": "Zinc Given to Child",
+    "zinc_modal_subtitle": "Enter the number of zinc tablets given to the mother for the child.",
+    "zinc_quantity_label": "Zinc Quantity",
+    "zinc_unit": "tablet(s)"
   },
   "delivery": {
     "title": "Delivery Registration",

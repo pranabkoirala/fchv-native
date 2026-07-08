@@ -338,6 +338,7 @@ export async function getPregnantWomenList(): Promise<PregnantWomenListItem[]> {
     FROM pregnancy p
     INNER JOIN mother m ON p.mother = m.id
     WHERE p.is_deleted = 0 AND p.is_current = 1 AND p.delivered = 0 AND m.is_deleted = 0
+      AND (SELECT COUNT(*) FROM hmis_maternal_death hmd WHERE hmd.mother = m.id AND hmd.is_deleted = 0) = 0
     ORDER BY p.updated_at DESC
   `;
   const rows = await db.getAllAsync<any>(query);

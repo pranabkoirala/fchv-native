@@ -75,11 +75,11 @@ export default function LoginScreen() {
         );
       }
 
-      showToast(t("login.success"));
-      router.replace("/dashboard");
-
       try {
         await doSync({ throwOnError: true });
+
+        showToast(t("login.success"));
+        router.replace("/dashboard");
       } catch (syncError) {
         console.error("Initial database sync failed:", syncError);
         showToast(t("login.sync_failed"));

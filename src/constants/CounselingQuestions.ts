@@ -125,14 +125,6 @@ export const ALL_QUESTIONS: CounselingQuestion[] = [
     frequency: "every_visit",
   },
   {
-    id: "bathe_within_24_hours",
-    en: "Did you bathe within 24 hours after giving birth?",
-    ne: "बच्चा जन्मेपछि २४ घण्टाभित्र नुहाउनुभएको थियो?",
-    type: "counseling",
-    category: "postpartum",
-    frequency: "one_time",
-  },
-  {
     id: "home_delivery",
     en: "Did the delivery take place at home?",
     ne: "घरमा प्रसूति भएको हो?",

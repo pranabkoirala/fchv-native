@@ -52,7 +52,7 @@ import {
 import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
 import { getCurrentNepaliDate, toNepaliNumbers } from "@/utils/dateHelper";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Calendar, Check, Minus, Plus } from "lucide-react-native";
+import { Calendar, Check, Minus, Plus, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
@@ -420,9 +420,20 @@ export default function VisitScreen() {
   const [childCounselingAnswers, setChildCounselingAnswers] = useState<
     Record<string, Record<string, boolean>>
   >({});
+  const [childCounselingQuantities, setChildCounselingQuantities] = useState<
+    Record<string, Record<string, number>>
+  >({});
   const [childOneTimeAnswered, setChildOneTimeAnswered] = useState<
     Record<string, Set<string>>
   >({});
+  const [orsModal, setOrsModal] = useState<{
+    visible: boolean;
+    childId: string | null;
+  }>({ visible: false, childId: null });
+  const [zincModal, setZincModal] = useState<{
+    visible: boolean;
+    childId: string | null;
+  }>({ visible: false, childId: null });
 
   const [visitDateBs, setVisitDateBs] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -467,6 +478,40 @@ export default function VisitScreen() {
   const [questionQuantities, setQuestionQuantities] = useState<
     Record<string, number>
   >({});
+
+  const openOrsModal = (childId: string) => {
+    setOrsModal({ visible: true, childId });
+  };
+
+  const saveOrsModal = (qty: number) => {
+    const childId = orsModal.childId;
+    if (!childId) return;
+    const value = Math.max(0, qty);
+    if (childCounselingAnswers[childId]?.ors_for_child) {
+      setChildCounselingQuantities((prev) => ({
+        ...prev,
+        [childId]: { ...(prev[childId] || {}), ors_for_child: value },
+      }));
+    }
+    setOrsModal({ visible: false, childId: null });
+  };
+
+  const openZincModal = (childId: string) => {
+    setZincModal({ visible: true, childId });
+  };
+
+  const saveZincModal = (qty: number) => {
+    const childId = zincModal.childId;
+    if (!childId) return;
+    const value = Math.max(0, qty);
+    if (childCounselingAnswers[childId]?.zinc_for_child) {
+      setChildCounselingQuantities((prev) => ({
+        ...prev,
+        [childId]: { ...(prev[childId] || {}), zinc_for_child: value },
+      }));
+    }
+    setZincModal({ visible: false, childId: null });
+  };
 
   // Sync URL params to state so the page works when navigated to via router.push with params
   useEffect(() => {
@@ -552,7 +597,10 @@ export default function VisitScreen() {
         setPregnancyId(preg?.id || null);
 
         // Load counseling history for this pregnancy only so previous deliveries don't leak
-        const history = await getCounselingReferralHistory(selectedMotherId, preg?.id);
+        const history = await getCounselingReferralHistory(
+          selectedMotherId,
+          preg?.id,
+        );
         const answeredIds = new Set<string>();
         history.forEach((record) => {
           if (record.answers) {
@@ -884,7 +932,11 @@ export default function VisitScreen() {
               value: true,
             };
             if (CHILD_QUANTITY_DEFAULTS[key] !== undefined) {
-              entry.value = CHILD_QUANTITY_DEFAULTS[key];
+              const customQty = childCounselingQuantities[childId]?.[key];
+              entry.value =
+                customQty !== undefined
+                  ? customQty
+                  : CHILD_QUANTITY_DEFAULTS[key];
             }
             logs.push(entry);
             newChildAnswers[key] = logs;
@@ -910,6 +962,7 @@ export default function VisitScreen() {
       setCheckedQuestions({});
       setQuestionQuantities({});
       setChildCounselingAnswers({});
+      setChildCounselingQuantities({});
       setChildOneTimeAnswered({});
       setErrors({});
     } catch (e) {
@@ -1208,32 +1261,90 @@ export default function VisitScreen() {
                           const isOneTime =
                             section.key === "one_time" &&
                             oneTimeAnswered.has(q.id);
-                          const qty = CHILD_QUANTITY_DEFAULTS[q.id];
-                          return (
+                          const isOrs = q.id === "ors_for_child";
+                          const isZinc = q.id === "zinc_for_child";
+                          const isOrsZinc = isOrs || isZinc;
+                          const checked = !!childAnswers[q.id];
+                          const storedQty =
+                            childCounselingQuantities[child.id]?.[q.id] ??
+                            CHILD_QUANTITY_DEFAULTS[q.id];
+
+                          const toggleChildCounsel = () => {
+                            if (isOneTime || child.status === "dead") return;
+                            if (checked) {
+                              if (isOrs) openOrsModal(child.id);
+                              else if (isZinc) openZincModal(child.id);
+                              return;
+                            }
+                            setChildCounselingAnswers((prev) => {
+                              const current = { ...(prev[child.id] || {}) };
+                              current[q.id] = true;
+                              return { ...prev, [child.id]: current };
+                            });
+                            if (isOrs) openOrsModal(child.id);
+                            else if (isZinc) openZincModal(child.id);
+                          };
+
+                          const removeChildCounsel = () => {
+                            setChildCounselingAnswers((prev) => {
+                              const current = { ...(prev[child.id] || {}) };
+                              delete current[q.id];
+                              return { ...prev, [child.id]: current };
+                            });
+                            setChildCounselingQuantities((prev) => {
+                              const current = { ...(prev[child.id] || {}) };
+                              delete current[q.id];
+                              return { ...prev, [child.id]: current };
+                            });
+                          };
+
+                          const item = (
                             <ObservationItem
                               key={q.id}
-                              checked={!!childAnswers[q.id]}
-                              onToggle={() => {
-                                if (isOneTime || child.status === "dead")
-                                  return;
-                                setChildCounselingAnswers((prev) => {
-                                  const current = { ...(prev[child.id] || {}) };
-                                  if (current[q.id]) {
-                                    delete current[q.id];
-                                  } else {
-                                    current[q.id] = true;
-                                  }
-                                  return { ...prev, [child.id]: current };
-                                });
-                              }}
+                              checked={checked}
+                              onToggle={
+                                isOrsZinc
+                                  ? toggleChildCounsel
+                                  : () => {
+                                      if (isOneTime || child.status === "dead")
+                                        return;
+                                      setChildCounselingAnswers((prev) => {
+                                        const current = {
+                                          ...(prev[child.id] || {}),
+                                        };
+                                        if (current[q.id]) {
+                                          delete current[q.id];
+                                        } else {
+                                          current[q.id] = true;
+                                        }
+                                        return { ...prev, [child.id]: current };
+                                      });
+                                    }
+                              }
                               label={language === "np" ? q.ne : q.en}
                               disabled={isOneTime || child.status === "dead"}
                               quantity={
-                                childAnswers[q.id] && qty !== undefined
-                                  ? qty
+                                checked && storedQty !== undefined
+                                  ? storedQty
                                   : undefined
                               }
                             />
+                          );
+
+                          if (!isOrsZinc) return item;
+
+                          return (
+                            <View key={q.id} className="flex-row items-center">
+                              <View className="flex-1">{item}</View>
+                              {checked && (
+                                <TouchableOpacity
+                                  onPress={removeChildCounsel}
+                                  className="ml-2 w-9 h-9 rounded-full bg-rose-50 items-center justify-center"
+                                >
+                                  <X size={16} color="#E11D48" />
+                                </TouchableOpacity>
+                              )}
+                            </View>
                           );
                         }),
                       )}
@@ -1347,6 +1458,142 @@ export default function VisitScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ORS Quantity Modal (child counseling) */}
+      <QuantityModal
+        visible={orsModal.visible}
+        onClose={() => setOrsModal((p) => ({ ...p, visible: false }))}
+        onSave={saveOrsModal}
+        title={t("visit.ors_modal_title")}
+        subtitle={t("visit.ors_modal_subtitle")}
+        label={t("visit.ors_quantity_label")}
+        unit={t("visit.ors_unit")}
+        saveLabel={t("visit.quantity_save")}
+        initialQty={
+          orsModal.childId
+            ? (childCounselingQuantities[orsModal.childId]?.ors_for_child ?? 1)
+            : 1
+        }
+      />
+
+      {/* Zinc Quantity Modal (child counseling) */}
+      <QuantityModal
+        visible={zincModal.visible}
+        onClose={() => setZincModal((p) => ({ ...p, visible: false }))}
+        onSave={saveZincModal}
+        title={t("visit.zinc_modal_title")}
+        subtitle={t("visit.zinc_modal_subtitle")}
+        label={t("visit.zinc_quantity_label")}
+        unit={t("visit.zinc_unit")}
+        saveLabel={t("visit.quantity_save")}
+        initialQty={
+          zincModal.childId
+            ? (childCounselingQuantities[zincModal.childId]?.zinc_for_child ??
+              1)
+            : 1
+        }
+      />
     </SafeAreaView>
   );
 }
+
+const QuantityModal = ({
+  visible,
+  onClose,
+  onSave,
+  title,
+  subtitle,
+  label,
+  unit,
+  saveLabel,
+  initialQty,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSave: (qty: number) => void;
+  title: string;
+  subtitle: string;
+  label: string;
+  unit: string;
+  saveLabel: string;
+  initialQty: number;
+}) => {
+  // Local quantity state so +/- taps only re-render this modal,
+  // not the entire visit screen.
+  const [qty, setQty] = useState("1");
+
+  useEffect(() => {
+    if (visible) {
+      setQty(String(initialQty ?? 1));
+    }
+  }, [visible, initialQty]);
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 bg-black/40 justify-center items-center px-6">
+        <View className="bg-white rounded-2xl w-full max-w-sm px-5 py-5">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-slate-800 font-bold text-[17px] flex-1 mr-2">
+              {title}
+            </Text>
+            <TouchableOpacity onPress={onClose} className="p-1">
+              <X size={20} color="#475569" />
+            </TouchableOpacity>
+          </View>
+
+          <Text className="text-slate-500 text-[13px] mb-4">{subtitle}</Text>
+
+          <View className="mb-4">
+            <Text className="text-slate-700 font-medium text-[14px] mb-2">
+              {label}
+            </Text>
+            <View className="flex-row items-center justify-center gap-x-3">
+              <TouchableOpacity
+                onPress={() => {
+                  const cur = parseInt(qty, 10) || 0;
+                  if (cur > 0) setQty(String(cur - 1));
+                }}
+                className="w-11 h-11 rounded-lg bg-primary items-center justify-center active:bg-slate-200"
+              >
+                <Minus color="#fff" />
+              </TouchableOpacity>
+              <View className="bg-slate-50 rounded-md border border-slate-200 w-32 justify-center">
+                <TextInput
+                  className="text-slate-800 text-[20px] font-bold text-center py-2"
+                  keyboardType="number-pad"
+                  value={qty}
+                  onChangeText={(val) => setQty(val.replace(/[^0-9]/g, ""))}
+                  maxLength={3}
+                  selectTextOnFocus
+                />
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  const cur = parseInt(qty, 10) || 0;
+                  if (cur < 999) setQty(String(cur + 1));
+                }}
+                className="w-11 h-11 rounded-lg bg-primary items-center justify-center active:bg-slate-200"
+              >
+                <Plus color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => onSave(parseInt(qty, 10) || 0)}
+            className="h-12 rounded-xl bg-primary items-center justify-center mt-2"
+          >
+            <Text className="text-white font-semibold text-[15px]">
+              {saveLabel}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};

@@ -1116,155 +1116,157 @@ export default function DashboardScreen() {
             </View>
 
             {/* Recent Activity */}
-            <View style={{ marginTop: 32, paddingHorizontal: 20 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 16,
-                }}
-              >
-                <Text
+            {recentActivity.length > 0 && (
+              <View style={{ marginTop: 32, paddingHorizontal: 20 }}>
+                <View
                   style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    color: "#475569",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 16,
                   }}
-                >
-                  {t("dashboard.sections.recent_activity")}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => router.push("/dashboard/report?tab=all")}
                 >
                   <Text
                     style={{
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: "600",
                       color: "#475569",
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
                     }}
                   >
-                    {t("dashboard.sections.view_all")}
+                    {t("dashboard.sections.recent_activity")}
                   </Text>
-                </TouchableOpacity>
-              </View>
-
-              {loading ? (
-                <View style={{ gap: 12 }}>
-                  <Skeleton height={80} borderRadius={16} />
-                  <Skeleton height={80} borderRadius={16} />
+                  <TouchableOpacity
+                    onPress={() => router.push("/dashboard/report?tab=all")}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "600",
+                        color: "#475569",
+                      }}
+                    >
+                      {t("dashboard.sections.view_all")}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-              ) : (
-                <View style={{ gap: 12 }}>
-                  {recentActivity.length > 0 ? (
-                    recentActivity.map((activity) => {
-                      const Icon = activity.icon;
-                      const d = new Date(activity.date);
-                      const isToday =
-                        new Date().toDateString() === d.toDateString();
-                      const timeStr = isToday
-                        ? t("dashboard.activity.today")
-                        : d.toLocaleDateString("en-GB", {
-                            month: "short",
-                            day: "numeric",
-                          });
 
-                      return (
-                        <View
-                          key={activity.id}
-                          style={{
-                            backgroundColor: "white",
-                            borderRadius: 20,
-                            borderWidth: 1,
-                            borderColor: "#E2E8F0",
-                            overflow: "hidden",
-                          }}
-                        >
+                {loading ? (
+                  <View style={{ gap: 12 }}>
+                    <Skeleton height={80} borderRadius={16} />
+                    <Skeleton height={80} borderRadius={16} />
+                  </View>
+                ) : (
+                  <View style={{ gap: 12 }}>
+                    {recentActivity.length > 0 ? (
+                      recentActivity.map((activity) => {
+                        const Icon = activity.icon;
+                        const d = new Date(activity.date);
+                        const isToday =
+                          new Date().toDateString() === d.toDateString();
+                        const timeStr = isToday
+                          ? t("dashboard.activity.today")
+                          : d.toLocaleDateString("en-GB", {
+                              month: "short",
+                              day: "numeric",
+                            });
+
+                        return (
                           <View
+                            key={activity.id}
                             style={{
-                              padding: 14,
-                              flexDirection: "row",
-                              alignItems: "center",
+                              backgroundColor: "white",
+                              borderRadius: 20,
+                              borderWidth: 1,
+                              borderColor: "#E2E8F0",
+                              overflow: "hidden",
                             }}
                           >
                             <View
                               style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 16,
-                                backgroundColor: activity.bg,
+                                padding: 14,
+                                flexDirection: "row",
                                 alignItems: "center",
-                                justifyContent: "center",
-                                marginRight: 14,
                               }}
                             >
-                              <Icon size={22} color={activity.color} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                              <Text
+                              <View
                                 style={{
-                                  color: "#0F172A",
-                                  fontSize: 14,
-                                  fontWeight: "600",
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 16,
+                                  backgroundColor: activity.bg,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  marginRight: 14,
                                 }}
-                                numberOfLines={1}
                               >
-                                {activity.title}
-                              </Text>
-                              {activity.subtitle ? (
+                                <Icon size={22} color={activity.color} />
+                              </View>
+                              <View style={{ flex: 1 }}>
                                 <Text
                                   style={{
-                                    color: "#64748B",
-                                    fontSize: 12,
-                                    fontWeight: "500",
-                                    marginTop: 3,
+                                    color: "#0F172A",
+                                    fontSize: 14,
+                                    fontWeight: "600",
                                   }}
                                   numberOfLines={1}
                                 >
-                                  {activity.subtitle}
+                                  {activity.title}
                                 </Text>
-                              ) : null}
-                            </View>
-                            <View
-                              style={{
-                                backgroundColor: "#F8FAFC",
-                                paddingHorizontal: 10,
-                                paddingVertical: 4,
-                                borderRadius: 8,
-                                marginLeft: 8,
-                              }}
-                            >
-                              <Text
+                                {activity.subtitle ? (
+                                  <Text
+                                    style={{
+                                      color: "#64748B",
+                                      fontSize: 12,
+                                      fontWeight: "500",
+                                      marginTop: 3,
+                                    }}
+                                    numberOfLines={1}
+                                  >
+                                    {activity.subtitle}
+                                  </Text>
+                                ) : null}
+                              </View>
+                              <View
                                 style={{
-                                  color: "#94A3B8",
-                                  fontSize: 11,
-                                  fontWeight: "600",
+                                  backgroundColor: "#F8FAFC",
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 4,
+                                  borderRadius: 8,
+                                  marginLeft: 8,
                                 }}
                               >
-                                {timeStr}
-                              </Text>
+                                <Text
+                                  style={{
+                                    color: "#94A3B8",
+                                    fontSize: 11,
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  {timeStr}
+                                </Text>
+                              </View>
                             </View>
                           </View>
-                        </View>
-                      );
-                    })
-                  ) : (
-                    <Text
-                      style={{
-                        color: "#64748B",
-                        fontSize: 13,
-                        textAlign: "center",
-                        paddingVertical: 20,
-                      }}
-                    >
-                      {t("dashboard.activity.no_activity")}
-                    </Text>
-                  )}
-                </View>
-              )}
-            </View>
+                        );
+                      })
+                    ) : (
+                      <Text
+                        style={{
+                          color: "#64748B",
+                          fontSize: 13,
+                          textAlign: "center",
+                          paddingVertical: 20,
+                        }}
+                      >
+                        {t("dashboard.activity.no_activity")}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
 
             {/* Tasks Section */}
             {todaysTasks.length > 0 && (
