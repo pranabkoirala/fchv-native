@@ -13,7 +13,7 @@ export const API_LIST = {
     delete: "/api/fchv/mothers/{id}/",
     details: "/api/mothers/{id}",
     phone_verify: "/api/mothers/phone-verify",
-    mother_sync: "/api/mothers/fchv-sync/",
+    mother_sync: "/api/fchv/mothers/sync/",
   },
   sync: {
     unsynced_table_list: "/api/fchv/sync-tables-list",

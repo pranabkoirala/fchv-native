@@ -150,7 +150,7 @@ export default function CounselingReferralSection({
               <Text className="text-slate-800 text-lg font-semibold">
                 {title}
               </Text>
-              <Text className="text-slate-400 text-[13px] mt-0.5">
+              <Text className="text-slate-400 text-[13px] italic mt-0.5">
                 {items.length} {t("counseling_section.records")}
               </Text>
             </View>

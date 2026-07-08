@@ -12,9 +12,10 @@ import {
   Plus,
   User,
 } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  BackHandler,
   Image,
   ScrollView,
   StatusBar,
@@ -33,7 +34,10 @@ import FamilyPlanningSection from "../../../components/profile/FamilyPlanningSec
 import PNCDetailModal from "../../../components/profile/PNCDetailModal";
 import PNCModal from "../../../components/profile/PNCModal";
 import { useToast } from "../../../context/ToastContext";
-import { getAbortionByMother, getAbortionByMotherAndPregnancy } from "../../../hooks/database/models/AbortionModel";
+import {
+  getAbortionByMother,
+  getAbortionByMotherAndPregnancy,
+} from "../../../hooks/database/models/AbortionModel";
 import { getInfantMonitoringsByMother } from "../../../hooks/database/models/InfantMonitoringModel";
 import { getMaternalDeathByMother } from "../../../hooks/database/models/MaternalDeathModel";
 import { getMotherProfile } from "../../../hooks/database/models/MotherModel";
@@ -295,7 +299,11 @@ const getInitials = (name: string) => {
 export default function HmisRecordProfileScreen() {
   const { language, t } = useLanguage();
   const router = useRouter();
-  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const { id, from, fromTab } = useLocalSearchParams<{
+    id: string;
+    from?: string;
+    fromTab?: string;
+  }>();
   const { showToast } = useToast();
 
   const [showHealthIssues, setShowHealthIssues] = useHealthIssues(id || "");
@@ -450,6 +458,28 @@ export default function HmisRecordProfileScreen() {
     }, [id]),
   );
 
+  useEffect(() => {
+    const onBackPress = () => {
+      if (from) {
+        router.replace({
+          pathname: from,
+          params: fromTab ? { tab: fromTab } : undefined,
+        } as any);
+      } else if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/dashboard/record");
+      }
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+    return () => backHandler.remove();
+  }, [from, fromTab, router]);
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -536,7 +566,10 @@ export default function HmisRecordProfileScreen() {
         title={t("profile.title")}
         onBackPress={() => {
           if (from) {
-            router.replace(from as any);
+            router.replace({
+              pathname: from,
+              params: fromTab ? { tab: fromTab } : undefined,
+            } as any);
           } else if (router.canGoBack()) {
             router.back();
           } else {
@@ -634,10 +667,10 @@ export default function HmisRecordProfileScreen() {
                   className={`mt-4 flex-row items-center px-4 py-3 rounded-xl ${remainingBadgeClass}`}
                 >
                   <View
-                    className={`w-8 h-8 rounded-full items-center justify-center ${isOverdue ? "bg-rose-100" : isDueToday ? "bg-emerald-100" : "bg-indigo-100"}`}
+                    className={`w-7 h-7 rounded-full items-center justify-center ${isOverdue ? "bg-rose-100" : isDueToday ? "bg-emerald-100" : "bg-indigo-100"}`}
                   >
                     <Hourglass
-                      size={15}
+                      size={14}
                       color={
                         isOverdue
                           ? "#BE123C"
@@ -648,7 +681,7 @@ export default function HmisRecordProfileScreen() {
                     />
                   </View>
                   <Text
-                    className={`text-lg font-semibold ml-3 ${remainingTextClass}`}
+                    className={`text-md font-semibold ml-3 ${remainingTextClass}`}
                   >
                     {remainingText}
                   </Text>
@@ -899,6 +932,7 @@ export default function HmisRecordProfileScreen() {
                       <TouchableOpacity
                         key={slot.key}
                         activeOpacity={0.8}
+                        disabled={!!existingDeathRecord}
                         onPress={() => {
                           setPncSlotIndex(idx);
                           if (done) {
@@ -909,7 +943,7 @@ export default function HmisRecordProfileScreen() {
                             setPncModalVisible(true);
                           }
                         }}
-                        className={`px-3 py-3 rounded-md border mb-3 w-[47%] ${done ? "bg-emerald-50/30 border-emerald-200" : "bg-white border-slate-200"}`}
+                        className={`px-3 py-3 rounded-md border mb-3 w-[47%] ${done ? "bg-emerald-50/30 border-emerald-200" : "bg-white border-slate-200"} ${!!existingDeathRecord ? "opacity-50" : ""}`}
                       >
                         {done ? (
                           <View className="flex-row items-center px-2 py-1 rounded-full">
@@ -968,7 +1002,7 @@ export default function HmisRecordProfileScreen() {
                           {t("profile.mortality.maternal_title")}
                         </Text>
                         <Text
-                          className={`text-[13px] font-medium mt-0.5 ${!!existingDeathRecord ? "text-rose-400" : "text-slate-500"}`}
+                          className={`text-[13px] italic mt-0.5 ${!!existingDeathRecord ? "text-rose-400" : "text-slate-500"}`}
                         >
                           {t("profile.mortality.maternal_sub")}
                         </Text>
@@ -993,18 +1027,12 @@ export default function HmisRecordProfileScreen() {
                         : "bg-white border-2 border-dashed border-slate-200"
                     }`}
                   >
-                    {!!existingDeathRecord ? (
-                      <Text className="text-rose-400 font-semibold text-[13px]">
-                        {t("profile.mortality.view_details") || "View Details"}
+                    <View className="flex-row items-center">
+                      <Plus size={15} color="#64748B" strokeWidth={3} />
+                      <Text className="text-slate-600 font-semibold text-[13px] ml-1.5">
+                        {t("profile.mortality.add")}
                       </Text>
-                    ) : (
-                      <>
-                        <Plus size={15} color="#64748B" strokeWidth={3} />
-                        <Text className="text-slate-600 font-semibold text-[13px] ml-1.5">
-                          {t("profile.mortality.add")}
-                        </Text>
-                      </>
-                    )}
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1036,7 +1064,7 @@ export default function HmisRecordProfileScreen() {
                           {t("newborn_death_modal.title")}
                         </Text>
                         <Text
-                          className={`text-[13px] font-medium mt-0.5 ${!!existingNewbornDeathRecord ? "text-rose-400" : "text-slate-500"}`}
+                          className={`text-[13px] italic mt-0.5 ${!!existingNewbornDeathRecord ? "text-rose-400" : "text-slate-500"}`}
                         >
                           {t("newborn_death_modal.subtitle")}
                         </Text>
@@ -1061,18 +1089,12 @@ export default function HmisRecordProfileScreen() {
                         : "bg-white border-2 border-dashed border-slate-200"
                     }`}
                   >
-                    {!!existingNewbornDeathRecord ? (
-                      <Text className="text-rose-400 font-semibold text-[13px]">
-                        {t("profile.mortality.view_details") || "View Details"}
+                    <View className="flex-row items-center">
+                      <Plus size={15} color="#64748B" strokeWidth={3} />
+                      <Text className="text-slate-600 font-semibold text-[13px] ml-1.5">
+                        {t("profile.mortality.add")}
                       </Text>
-                    ) : (
-                      <>
-                        <Plus size={15} color="#64748B" strokeWidth={3} />
-                        <Text className="text-slate-600 font-semibold text-[13px] ml-1.5">
-                          {t("profile.mortality.add")}
-                        </Text>
-                      </>
-                    )}
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>

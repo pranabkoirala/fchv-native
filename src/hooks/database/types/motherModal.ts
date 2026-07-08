@@ -76,14 +76,12 @@ export type MotherSyncPayload = {
   gravida?: number | null;
   parity?: number | null;
   photo?: string | null;
-  address: {
-    locality?: string | null;
-    house_number?: string | null;
-    province: string;
-    district: string;
-    municipality: string;
-    ward: string;
-  };
+  address_locality?: string | null;
+  address_house_number?: string | null;
+  address_province?: string;
+  address_district?: string;
+  address_municipality?: string;
+  address_ward?: string;
   income?: string | null;
   education?: string | null;
   occupation?: string | null;

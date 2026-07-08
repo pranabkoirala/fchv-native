@@ -12,6 +12,7 @@ import {
 } from "lucide-react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Dimensions,
   FlatList,
   Image,
   ScrollView,
@@ -191,6 +192,13 @@ const TYPE_COLORS: Record<
   },
 };
 
+const DANGER_COLORS = {
+  bg: "bg-rose-50",
+  iconBg: "bg-rose-500",
+  accent: "#F43F5E",
+  icon: "#F43F5E",
+};
+
 const RecordCard = memo(function RecordCard({
   record,
   onPress,
@@ -199,7 +207,10 @@ const RecordCard = memo(function RecordCard({
   onPress: () => void;
 }) {
   const { t } = useLanguage();
-  const colors = TYPE_COLORS[record.type] || TYPE_COLORS.mother;
+  const colors =
+    record.status === "deceased"
+      ? DANGER_COLORS
+      : TYPE_COLORS[record.type] || TYPE_COLORS.mother;
 
   const getTypeIcon = () => {
     if (
@@ -336,13 +347,18 @@ export default function ReportScreen() {
     }
   }, [tab]);
 
-  useEffect(() => {
-    const layout = tabLayouts.current[activeTab];
+  const scrollToTab = useCallback((tabKey: TabKey) => {
+    const layout = tabLayouts.current[tabKey];
     if (layout && tabScrollRef.current) {
-      const scrollX = Math.max(0, layout.x - 100);
+      const screenWidth = Dimensions.get("window").width;
+      const scrollX = Math.max(0, layout.x - (screenWidth - layout.width) / 2);
       tabScrollRef.current.scrollTo({ x: scrollX, animated: true });
     }
-  }, [activeTab]);
+  }, []);
+
+  useEffect(() => {
+    scrollToTab(activeTab);
+  }, [activeTab, scrollToTab]);
 
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -435,9 +451,14 @@ export default function ReportScreen() {
           ward: m.ward || "",
           municipality: m.municipality || "",
           registrationDate: m.createdAt || "",
-          status: m.pregnancy_count > 0 ? "normal" : "pending",
-          statusLabel:
-            m.pregnancy_count > 0
+          status: m.is_dead
+            ? "deceased"
+            : m.pregnancy_count > 0
+              ? "normal"
+              : "pending",
+          statusLabel: m.is_dead
+            ? t("reports.status.deceased")
+            : m.pregnancy_count > 0
               ? t("reports.status.normal")
               : t("reports.status.pending"),
           type: "mother",
@@ -459,8 +480,11 @@ export default function ReportScreen() {
           ward: childMotherWard,
           municipality: childMotherMunicipality,
           registrationDate: c.created_at || "",
-          status: "normal",
-          statusLabel: t("reports.status.normal"),
+          status: c.status === "dead" ? "deceased" : "normal",
+          statusLabel:
+            c.status === "dead"
+              ? t("reports.status.deceased")
+              : t("reports.status.normal"),
           type: "child",
           subtitle: `${t("reports.common.mother")}: ${c.mother_name || motherNameMap[c.mother || ""] || "-"}`,
           reg_month:
@@ -622,35 +646,36 @@ export default function ReportScreen() {
 
   const handleCardPress = useCallback(
     (record: UnifiedRecord) => {
+      const fromTab = activeTab;
       switch (record.type) {
         case "mother":
           router.push({
             pathname: "/dashboard/profile",
-            params: { id: record.id, from: "/dashboard/report" },
+            params: { id: record.id, from: "/dashboard/report", fromTab },
           } as any);
           break;
         case "child":
           router.push({
             pathname: "/dashboard/child/child-profile",
-            params: { id: record.id, from: "/dashboard/report" },
+            params: { id: record.id, from: "/dashboard/report", fromTab },
           } as any);
           break;
         case "pregnancy":
           router.push({
             pathname: "/dashboard/profile",
-            params: { id: record.motherId, from: "/dashboard/report" },
+            params: { id: record.motherId, from: "/dashboard/report", fromTab },
           } as any);
           break;
         case "dead_mother":
           if (record.motherId) {
             router.push({
               pathname: "/dashboard/profile",
-              params: { id: record.motherId, from: "/dashboard/report" },
+              params: { id: record.motherId, from: "/dashboard/report", fromTab },
             } as any);
           } else {
             router.push({
               pathname: "/dashboard/report/maternal-death-details",
-              params: { id: record.id },
+              params: { id: record.id, from: "/dashboard/report", fromTab },
             } as any);
           }
           break;
@@ -658,12 +683,12 @@ export default function ReportScreen() {
           if (record.childId) {
             router.push({
               pathname: "/dashboard/child/child-profile",
-              params: { id: record.childId, from: "/dashboard/report" },
+              params: { id: record.childId, from: "/dashboard/report", fromTab },
             } as any);
           } else if (record.motherId) {
             router.push({
               pathname: "/dashboard/profile",
-              params: { id: record.motherId, from: "/dashboard/report" },
+              params: { id: record.motherId, from: "/dashboard/report", fromTab },
             } as any);
           }
           break;
@@ -671,25 +696,25 @@ export default function ReportScreen() {
           if (record.motherId) {
             router.push({
               pathname: "/dashboard/profile",
-              params: { id: record.motherId, from: "/dashboard/report" },
+              params: { id: record.motherId, from: "/dashboard/report", fromTab },
             } as any);
           }
           break;
         case "mother_meeting":
           router.push({
             pathname: "/dashboard/report/mother-meeting-details",
-            params: { id: record.id },
+            params: { id: record.id, from: "/dashboard/report", fromTab },
           } as any);
           break;
         case "adolescent":
           router.push({
             pathname: "/dashboard/report/adolescent-details",
-            params: { id: record.id },
+            params: { id: record.id, from: "/dashboard/report", fromTab },
           } as any);
           break;
       }
     },
-    [router],
+    [router, activeTab],
   );
 
   const getTabCount = (key: TabKey): number => {
@@ -813,10 +838,11 @@ export default function ReportScreen() {
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
                 onLayout={(e) => {
-                  tabLayouts.current[tab.key] = {
-                    x: e.nativeEvent.layout.x,
-                    width: e.nativeEvent.layout.width,
-                  };
+                  const { x, width } = e.nativeEvent.layout;
+                  tabLayouts.current[tab.key] = { x, width };
+                  if (tab.key === activeTab) {
+                    scrollToTab(tab.key);
+                  }
                 }}
                 activeOpacity={0.7}
                 className={`flex-row items-center px-3.5 py-2.5 rounded-xl ${tabColors[tab.key]}`}

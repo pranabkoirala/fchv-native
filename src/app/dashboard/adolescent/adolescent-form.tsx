@@ -10,11 +10,11 @@ import {
 import * as Crypto from "expo-crypto";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { BackHandler, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AdolescentRegistrationForm() {
-  const { id, from } = useLocalSearchParams<{ id: string; from: string }>();
+  const { id, from, detailsFrom, detailsFromTab } = useLocalSearchParams<{ id: string; from: string; detailsFrom: string; detailsFromTab: string }>();
   const { showToast } = useToast();
   const router = useRouter();
   const { language, t } = useLanguage()
@@ -63,6 +63,16 @@ export default function AdolescentRegistrationForm() {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    const onBackPress = () => {
+      router.back();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => backHandler.remove();
+  }, [router]);
+
   const validate = () => {
     const e: Record<string, string> = {};
     if (!name.trim()) {
@@ -104,14 +114,7 @@ export default function AdolescentRegistrationForm() {
 
       await createAdolescentIfa(payload);
       showToast(t("adolescent_page.form.messages.save_success"));
-      if (from === "details") {
-        router.replace({
-          pathname: "/dashboard/report/adolescent-details",
-          params: { id: payload.id },
-        } as any);
-      } else {
-        router.back();
-      }
+      router.back();
     } catch (error) {
       console.error(error);
       showToast(t("adolescent_page.form.messages.save_error"));
@@ -159,16 +162,7 @@ export default function AdolescentRegistrationForm() {
             ? t("adolescent_page.edit_title")
             : t("adolescent_page.new_title")
         }
-        onBackPress={() => {
-          if (from === "details" && id) {
-            router.replace({
-              pathname: "/dashboard/report/adolescent-details",
-              params: { id },
-            } as any);
-          } else {
-            router.back();
-          }
-        }}
+        onBackPress={() => router.back()}
       />
       <ScrollView
         showsVerticalScrollIndicator={false}

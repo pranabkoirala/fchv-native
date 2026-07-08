@@ -9,11 +9,13 @@ import municipalitiesData from "../assets/json/municipalities.json";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../context/ToastContext";
 import { createMother, getMotherProfile } from "../hooks/database/models/MotherModel";
+import { createVisit } from "../hooks/database/models/VisitModel";
 import { Province } from "../types/profile";
 import { toNepaliNumbers } from "../utils/dateHelper";
 import { Button } from "./button";
 import { BoxInput, FieldLabel } from "./FormElements";
 import { ProfilePicker } from "./ProfilePicker";
+import MotherRegisterCounselingModal from "./forms/MotherRegisterCounselingModal";
 
 const provinces: Province[] = municipalitiesData as Province[];
 
@@ -45,6 +47,8 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
   const [showDobPicker, setShowDobPicker] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showCounselingModal, setShowCounselingModal] = useState(false);
+  const [savedMotherId, setSavedMotherId] = useState<string | null>(null);
 
   // Cascading address data
   const districts = useMemo(() => {
@@ -244,12 +248,17 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         is_synced: false,
       });
 
+      const todayAd = new Date().toISOString().split("T")[0];
+      const todayBs = AdToBs(todayAd);
+      await createVisit({
+        mother: dbId,
+        visit_date: todayBs,
+        visit_type: "OTHER",
+      });
+
       showToast(t("mother_form.messages.save_success"));
-      if (onSuccess) {
-        onSuccess(dbId);
-      } else {
-        router.back();
-      }
+      setSavedMotherId(dbId);
+      setShowCounselingModal(true);
     } catch (err) {
       console.error("Error saving form:", err);
       showToast(t("mother_form.messages.save_error"));
@@ -434,6 +443,18 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         isLoading={isLoading}
         title={id ? t("mother_form.buttons.update") : t("mother_form.buttons.save")}
       />
+
+      {savedMotherId && (
+        <MotherRegisterCounselingModal
+          visible={showCounselingModal}
+          onClose={() => {
+            setShowCounselingModal(false);
+            if (onSuccess) onSuccess(savedMotherId);
+            else router.back();
+          }}
+          motherId={savedMotherId}
+        />
+      )}
     </View>
   );
 }

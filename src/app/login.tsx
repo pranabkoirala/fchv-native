@@ -1,8 +1,14 @@
 import { API_LIST } from "@/api/API_LIST";
 import { httpClient } from "@/api/client/httpClient";
+import { getFchvData } from "@/api/services/fchv";
 import { doSync } from "@/api/services/sync/sync";
 import { Button } from "@/components/button";
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, STAFF_ID_KEY } from "@/constants/token";
+import {
+  ACCESS_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
+  STAFF_ID_KEY,
+} from "@/constants/token";
+import { useToast } from "@/context/ToastContext";
 import storage from "@/utils/storage";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -32,23 +38,19 @@ type LoginResponse = {
 export default function LoginScreen() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { showToast } = useToast();
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    // Validation
     if (!phone.trim() || !pin.trim()) {
-      setErrorMessage(
-        t("login.error_required") || "Username and password are required.",
-      );
+      showToast(t("login.error_required"));
       return;
     }
 
     setIsLoading(true);
-    setErrorMessage("");
 
     try {
       const response = await httpClient.post<LoginResponse>(
@@ -60,42 +62,41 @@ export default function LoginScreen() {
 
       const decoded = jwtDecode<{ staff_id: string }>(access);
 
-      // Store both tokens in AsyncStorage
       await storage.set(ACCESS_TOKEN_KEY, access);
       await storage.set(REFRESH_TOKEN_KEY, refresh);
-      await storage.set(STAFF_ID_KEY, decoded?.staff_id)
+      await storage.set(STAFF_ID_KEY, decoded?.staff_id);
 
       try {
         await doSync({ throwOnError: true });
       } catch (syncError) {
         console.error("Initial database sync failed:", syncError);
-        setErrorMessage(
-          "Login successful, but database sync failed. Please try again.",
-        );
+        showToast(t("login.sync_failed"));
         return;
       }
 
-      // Navigate to dashboard
+      try {
+        await getFchvData();
+      } catch (profileError) {
+        console.error("Failed to fetch FCHV profile after login:", profileError);
+      }
+
+      showToast(t("login.success"));
       router.replace("/dashboard");
     } catch (error: any) {
       if (error?.response) {
         const status = error.response.status;
         if (status === 401 || status === 400) {
-          setErrorMessage(
-            t("login.error_invalid") || "Invalid username or password.",
-          );
+          showToast(t("login.error_invalid"));
         } else {
-          setErrorMessage(`Server error (${status}). Please try again later.`);
+          showToast(t("login.error_server", { status }));
         }
       } else if (
         error?.code === "ERR_NETWORK" ||
         error?.message?.includes("Network")
       ) {
-        setErrorMessage(
-          "Cannot reach the server. Check your internet connection.",
-        );
+        showToast(t("login.error_network"));
       } else {
-        setErrorMessage("Something went wrong. Please try again.");
+        showToast(t("login.error_generic"));
       }
     } finally {
       setIsLoading(false);
@@ -140,7 +141,7 @@ export default function LoginScreen() {
             {/* USER ID Field */}
             <View className="mb-5">
               <Text
-                className="text-sm font-semibold uppercase tracking-widest mb-2"
+                className="text-md font-semibold uppercase tracking-widest mb-2"
                 style={{ color: "#0B2545" }}
               >
                 {t("login.health_id_label")}
@@ -148,15 +149,12 @@ export default function LoginScreen() {
               <View className="flex-row items-center h-14 rounded-xl border border-gray-300 px-4 bg-white">
                 <User size={20} color="#94A3B8" strokeWidth={2} />
                 <TextInput
-                  className="flex-1 ml-3 text-base"
+                  className="flex-1 ml-3 text-md"
                   style={{ color: "#1E293B" }}
                   placeholder={t("login.health_id_placeholder")}
                   placeholderTextColor="#B0B8C4"
                   value={phone}
-                  onChangeText={(text) => {
-                    setPhone(text);
-                    setErrorMessage("");
-                  }}
+                  onChangeText={setPhone}
                   autoCapitalize="none"
                 />
               </View>
@@ -166,7 +164,7 @@ export default function LoginScreen() {
             <View className="mb-6">
               <View className="flex-row items-center justify-between mb-2">
                 <Text
-                  className="text-sm uppercase tracking-widest"
+                  className="text-md uppercase font-semibold tracking-widest"
                   style={{ color: "#0B2545" }}
                 >
                   {t("login.password_label")}
@@ -175,16 +173,13 @@ export default function LoginScreen() {
               <View className="flex-row items-center h-14 rounded-xl border border-gray-300 px-4 bg-white">
                 <Lock size={20} color="#94A3B8" strokeWidth={2} />
                 <TextInput
-                  className="flex-1 ml-3 text-base"
+                  className="flex-1 ml-3 text-md"
                   style={{ color: "#1E293B" }}
                   placeholder={t("login.password_placeholder")}
                   placeholderTextColor="#B0B8C4"
                   secureTextEntry={!showPassword}
                   value={pin}
-                  onChangeText={(text) => {
-                    setPin(text);
-                    setErrorMessage("");
-                  }}
+                  onChangeText={setPin}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -198,13 +193,6 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {/* Error Message */}
-            {errorMessage ? (
-              <Text className="text-red-500 font-bold text-sm mb-4 text-center">
-                {errorMessage}
-              </Text>
-            ) : null}
-
             {/* Login Button */}
             <Button
               onPress={handleLogin}
@@ -214,15 +202,15 @@ export default function LoginScreen() {
           </View>
 
           {/* Footer moved outside ScrollView to stay at bottom */}
-          <View className="items-center w-full pt-10 px-10">
-            <Text className="text-center text-gray-400 text-sm leading-5">
+          {/* <View className="items-center w-full pt-10 px-10">
+            <Text className="text-center text-gray-400 text-md leading-5">
               {t("login.terms_text")}{" "}
               <Text className="text-primary font-semibold">
                 {t("login.terms_link")}
               </Text>
               .
             </Text>
-          </View>
+          </View> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

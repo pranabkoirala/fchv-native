@@ -14,14 +14,12 @@ const postBulkMother = async (data: CreateMotherPayload[]) => {
     date_of_birth: item.date_of_birth || "",
     gravida: item.gravida ?? null,
     parity: item.parity ?? null,
-    address: {
-      locality: item.address_locality || null,
-      house_number: item.address_house_number || null,
-      province: item.address_province || "",
-      district: item.address_district || "",
-      municipality: item.address_municipality || "",
-      ward: item.address_ward || "",
-    },
+    address_locality: item.address_locality || null,
+    address_house_number: item.address_house_number || null,
+    address_province: item.address_province || "",
+    address_district: item.address_district || "",
+    address_municipality: item.address_municipality || "",
+    address_ward: item.address_ward || "",
     income: item.income || null,
     education: item.education || null,
     occupation: item.occupation || null,
@@ -35,7 +33,6 @@ const postBulkMother = async (data: CreateMotherPayload[]) => {
     updated_at: item.updated_at || new Date().toISOString(),
     deleted: false,
   }));
-
   // The fchv-sync endpoint expects an array of records
   const response = await httpClient.post<MotherSyncPayload[]>(
     API_LIST.mother.mother_sync,

@@ -13,6 +13,8 @@ export default function ReportLayout() {
       <Stack.Screen name="pregnancy-details" />
       <Stack.Screen name="mother-meeting-details" />
       <Stack.Screen name="adolescent-details" />
+      <Stack.Screen name="adolescent-form" />
+      <Stack.Screen name="mothers-group-meeting-form" />
     </Stack>
   );
 }

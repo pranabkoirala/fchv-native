@@ -16,6 +16,7 @@ import {
   createPregnancy,
   getPregnancyByMotherId,
 } from "../hooks/database/models/PregnantWomenModal";
+import { createVisit } from "../hooks/database/models/VisitModel";
 import { toNepaliNumbers } from "../utils/dateHelper";
 import { BoxInput, FieldLabel } from "./FormElements";
 import { ProfilePicker } from "./ProfilePicker";
@@ -247,6 +248,14 @@ export default function PregnancyForm({
         lmp_date: lmp,
         gravida: parseInt(gravida) || 0,
         parity: parseInt(parity) || 0,
+      });
+
+      const todayAd = new Date().toISOString().split("T")[0];
+      const todayBs = AdToBs(todayAd);
+      await createVisit({
+        mother: selectedMotherId,
+        visit_date: todayBs,
+        visit_type: "ANC",
       });
 
       showToast(t("pregnancy_form.messages.save_success"));

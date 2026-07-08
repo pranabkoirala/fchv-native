@@ -11,8 +11,9 @@ import { getInfantMonitoringById } from "@/hooks/database/models/InfantMonitorin
 import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Activity, Baby, Edit2, MapPin, Smile } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  BackHandler,
   ScrollView,
   StatusBar,
   Text,
@@ -169,12 +170,39 @@ const calculateAge = (dobString: string, currentLanguage: string, t: any) => {
 export default function ChildProfileScreen() {
   const { t, language } = useLanguage();
   const router = useRouter();
-  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const { id, from, fromTab } = useLocalSearchParams<{ id: string; from?: string; fromTab?: string }>();
 
   const [record, setRecord] = useState<InfantMonitoringStoreType | null>(null);
   const [loading, setLoading] = useState(true);
   const [deathModalVisible, setDeathModalVisible] = useState(false);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (from === "/dashboard/report") {
+        router.replace({
+          pathname: from,
+          params: { tab: fromTab || "child" },
+        } as any);
+      } else if (from === "profile" && record?.mother) {
+        router.replace({
+          pathname: "/dashboard/profile",
+          params: { id: record.mother },
+        } as any);
+      } else if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/dashboard/child");
+      }
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+    return () => backHandler.remove();
+  }, [from, fromTab, record, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -203,6 +231,8 @@ export default function ChildProfileScreen() {
       };
     }, [id]),
   );
+
+
 
   if (loading) {
     return (
@@ -245,7 +275,7 @@ export default function ChildProfileScreen() {
           if (from === "/dashboard/report") {
             router.replace({
               pathname: from,
-              params: { tab: "child" },
+              params: { tab: fromTab || "child" },
             } as any);
           } else if (from === "profile" && record?.mother) {
             router.replace({
@@ -453,6 +483,7 @@ export default function ChildProfileScreen() {
             <VaccinationSection
               childId={record.id}
               childName={record.baby_name || ""}
+              dateOfBirth={record.date_of_birth}
               disabled={record.status === "dead"}
             />
             <ChildCounselingSection

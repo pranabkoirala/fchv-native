@@ -7,17 +7,20 @@ import { Calendar, Syringe } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
+import VaccinationListModal from "./VaccinationListModal";
 import VaccinationModal from "./VaccinationModal";
 
 interface VaccinationSectionProps {
     childId: string;
     childName: string;
+    dateOfBirth?: string;
     disabled?: boolean;
 }
 
-export default function VaccinationSection({ childId, childName, disabled }: VaccinationSectionProps) {
-    const { language } = useLanguage();
+export default function VaccinationSection({ childId, childName, dateOfBirth, disabled }: VaccinationSectionProps) {
+    const { language, t } = useLanguage();
     const [modalVisible, setModalVisible] = useState(false);
+    const [listModalVisible, setListModalVisible] = useState(false);
     const [takenVaccines, setTakenVaccines] = useState<any[]>([]);
 
     const takenCount = takenVaccines.length;
@@ -67,87 +70,133 @@ export default function VaccinationSection({ childId, childName, disabled }: Vac
     return (
         <View className="mb-4">
 
-            <View className="bg-white p-6 rounded-2xl border border-slate-100">
-                <View className="flex-row items-center mb-3 ml-1">
-                    <Syringe size={20} color="#475569" strokeWidth={2.5} />
-                    <Text className="text-slate-800 font-semibold text-xl ml-2">
-                        {language === "np" ? "खोप विवरण" : "Vaccination Details"}
-                    </Text>
-                </View>
-                <View className="mb-5 flex-row items-center justify-between">
-                    <View>
-                        <Text className="text-slate-600 text-[15px] font-semibold mb-1">
-                            {takenCount > 0
-                                ? (language === "np"
-                                    ? `${toNepaliNumbers(takenCount)}/${toNepaliNumbers(totalVaccines)} खोप लगाइएको छ`
-                                    : `${takenCount}/${totalVaccines} vaccines taken`)
-                                : (language === "np" ? "खोप रेकर्ड गरिएको छैन" : "No vaccinations recorded")
-                            }
-                        </Text>
-                        <View className="w-16 h-1 bg-emerald-500 rounded-full" />
-                    </View>
-                    {takenCount === totalVaccines && totalVaccines > 0 && (
-                        <View className="bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex-row items-center">
-                            <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2" />
-                            <Text className="text-emerald-700 font-bold text-[12px]">
-                                {language === "np" ? "पूर्ण खोप" : "Fully Vaccinated"}
-                            </Text>
+            <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden"
+                style={{
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 3,
+                    elevation: 1,
+                }}
+            >
+                {/* Header with progress */}
+                <View className="px-5 pt-5 pb-4">
+                    <View className="flex-row items-center justify-between mb-4">
+                        <View className="flex-row items-center">
+                            <View className="w-10 h-10 rounded-xl bg-[#F1F5F9] items-center justify-center mr-3">
+                                <Syringe size={20} color="#475569" strokeWidth={2} />
+                            </View>
+                            <View>
+                                <Text className="text-[17px] font-bold text-slate-800">
+                                    {t("child_profile.vaccination.title")}
+                                </Text>
+                                <Text className="text-[12px] text-slate-500 font-medium mt-0.5">
+                                    {takenCount > 0
+                                        ? t("child_profile.vaccination.vaccines_taken", {
+                                            taken: language === "np" ? toNepaliNumbers(takenCount) : String(takenCount),
+                                            total: language === "np" ? toNepaliNumbers(totalVaccines) : String(totalVaccines),
+                                          })
+                                        : t("child_profile.vaccination.no_vaccinations")
+                                    }
+                                </Text>
+                            </View>
                         </View>
-                    )}
+                        {isFullyVaccinated && (
+                            <View className="bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex-row items-center">
+                                <View className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5" />
+                                <Text className="text-emerald-700 font-bold text-[11px]">
+                                    {t("child_profile.vaccination.fully_vaccinated")}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Progress bar */}
+                    <View className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <View
+                            className="h-full bg-emerald-500 rounded-full"
+                            style={{ width: `${totalVaccines > 0 ? (takenCount / totalVaccines) * 100 : 0}%` }}
+                        />
+                    </View>
                 </View>
 
+                {/* Taken vaccines list */}
                 {takenCount > 0 && (
-                    <View className="w-full mb-6 gap-y-2">
-                        {takenVaccines.map((v, idx) => (
-                            <View key={idx} className="bg-slate-50 px-3 py-2.5 rounded-lg border border-slate-100/50">
-                                <View className="flex-row items-center justify-between mb-1.5">
+                    <View className="px-5 pb-4 gap-y-2">
+                        {takenVaccines.slice(0, 3).map((v, idx) => (
+                            <View key={idx} className="bg-[#F8FAFC] px-4 py-3 rounded-xl border border-slate-100">
+                                <View className="flex-row items-center justify-between">
                                     <View className="flex-row items-center flex-1 mr-2">
-                                        <Text className="text-slate-800 font-bold text-[14px]">
+                                        <View className="w-2 h-2 rounded-full bg-emerald-500 mr-2.5" />
+                                        <Text className="text-slate-800 font-bold text-[14px] flex-1">
                                             {language === 'np' ? v.ne : v.en}
                                         </Text>
-                                        <View className="bg-emerald-100 px-1.5 py-0.5 rounded ml-2">
-                                            <Text className="text-emerald-700 font-bold text-[8px] uppercase tracking-tighter">
+                                        <View className="bg-emerald-100 px-2 py-0.5 rounded-md ml-2">
+                                            <Text className="text-emerald-700 font-bold text-[9px] uppercase tracking-tight">
                                                 {language === 'np' ? v.timeNe : v.timeEn}
                                             </Text>
                                         </View>
                                     </View>
-                                    <View className="w-5 h-5 rounded-full bg-emerald-500 items-center justify-center">
+                                    <View className="w-5 h-5 rounded-full bg-emerald-500 items-center justify-center ml-2">
                                         <Syringe size={10} color="white" />
                                     </View>
                                 </View>
                                 {v.given_date && (
-                                    <View className="flex-row items-center">
-                                        <Calendar size={10} color="#64748B" />
-                                        <Text className="text-slate-500 text-[11px] ml-1 font-medium">
-                                            {language === 'np' ? "मिति:" : "Date:"} {language === 'en' ? v.given_date.split('T')[0] : formatDate(v.given_date)}
+                                    <View className="flex-row items-center mt-2 ml-4.5">
+                                        <Calendar size={10} color="#94A3B8" />
+                                        <Text className="text-slate-400 text-[11px] ml-1.5 font-medium">
+                                            {t("child_profile.vaccination.date_label")} {language === 'en' ? v.given_date.split('T')[0] : formatDate(v.given_date)}
                                         </Text>
                                     </View>
                                 )}
                             </View>
                         ))}
+                        {takenCount > 3 && (
+                            <TouchableOpacity
+                                onPress={() => setListModalVisible(true)}
+                                activeOpacity={0.7}
+                                className="flex-row items-center justify-center py-2.5"
+                            >
+                                <Text className="text-slate-500 font-semibold text-[13px]">
+                                    {t("child_profile.vaccination.show_all", {
+                                        count: language === "np" ? toNepaliNumbers(takenCount) : String(takenCount),
+                                    })}
+                                </Text>
+                                <Text className="text-slate-400 ml-1 text-[16px]">{">"}</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 )}
 
+                {/* Empty state */}
                 {takenCount === 0 && (
-                    <Text className="text-slate-400 text-[14px] font-medium mb-6 text-center">
-                        {language === "np" ? "अहिलेसम्म कुनै खोप रेकर्ड गरिएको छैन।" : "No vaccinations recorded yet."}
-                    </Text>
+                    <View className="px-5 pb-6 items-center">
+                        <View className="w-14 h-14 rounded-2xl bg-[#F1F5F9] items-center justify-center mb-3">
+                            <Syringe size={26} color="#94A3B8" strokeWidth={1.5} />
+                        </View>
+                        <Text className="text-slate-400 text-[13px] font-medium text-center">
+                            {t("child_profile.vaccination.no_vaccinations_yet")}
+                        </Text>
+                    </View>
                 )}
 
-                <TouchableOpacity
-                    onPress={() => setModalVisible(true)}
-                    activeOpacity={0.8}
-                    disabled={isEntryDisabled}
-                    className={`${isEntryDisabled ? "bg-slate-200" : "bg-[#475569]"} px-6 py-3 rounded-full flex-row items-center justify-center`}
-                >
-                    <Syringe size={18} color={isEntryDisabled ? "#94a3b8" : "white"} strokeWidth={2.5} />
-                    <Text className={`${isEntryDisabled ? "text-slate-400" : "text-white"} font-bold ml-2 text-[15px]`}>
-                        {isFullyVaccinated
-                            ? (language === "np" ? "सबै खोप पुरा भयो" : "All Vaccines Taken")
-                            : (language === "np" ? "खोप थप्नुहोस्" : "Add Vaccination")
-                        }
-                    </Text>
-                </TouchableOpacity>
+                {/* Action button */}
+                <View className="px-5 pb-5">
+                    <TouchableOpacity
+                        onPress={() => setModalVisible(true)}
+                        activeOpacity={0.8}
+                        disabled={isEntryDisabled}
+                        className={`${isEntryDisabled ? "bg-slate-100" : "bg-[#475569]"} py-3.5 rounded-xl flex-row items-center justify-center`}
+                    >
+                        <Syringe size={18} color={isEntryDisabled ? "#94A3B8" : "white"} strokeWidth={2.5} />
+                        <Text className={`${isEntryDisabled ? "text-slate-400" : "text-white"} font-bold ml-2 text-[15px]`}>
+                            {isFullyVaccinated
+                                ? t("child_profile.vaccination.all_taken")
+                                : t("child_profile.vaccination.add_vaccination")
+                            }
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <VaccinationModal
@@ -155,7 +204,15 @@ export default function VaccinationSection({ childId, childName, disabled }: Vac
                 onClose={() => setModalVisible(false)}
                 childId={childId}
                 childName={childName}
+                childDateOfBirth={dateOfBirth}
                 onSuccess={loadTakenData}
+            />
+
+            <VaccinationListModal
+                visible={listModalVisible}
+                onClose={() => setListModalVisible(false)}
+                takenVaccines={takenVaccines}
+                childName={childName}
             />
         </View>
     );

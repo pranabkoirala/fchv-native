@@ -22,7 +22,6 @@ export const Button = ({
       <ActivityIndicator color="white" size="small" />
     ) : (
       <>
-        {/* {Icon && <Icon size={19} color="white" strokeWidth={2} />} */}
         <Text className="text-white font-semibold text-lg ml-2">{title}</Text>
       </>
     )}

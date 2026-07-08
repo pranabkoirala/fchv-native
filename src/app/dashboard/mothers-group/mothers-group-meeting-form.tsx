@@ -83,23 +83,13 @@ export default function MothersGroupMeetingForm() {
   }, [params.id]);
 
   useEffect(() => {
-    if (params.from === "details" && params.id) {
-      const backAction = () => {
-        router.replace({
-          pathname: "/dashboard/report/mother-meeting-details",
-          params: { id: params.id },
-        } as any);
-        return true;
-      };
-
-      const backHandler = BackHandler.addEventListener(
-        "hardwareBackPress",
-        backAction,
-      );
-
-      return () => backHandler.remove();
-    }
-  }, [params.from, params.id]);
+    const backAction = () => {
+      router.back();
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => backHandler.remove();
+  }, [router]);
 
   useEffect(() => {
     (async () => {
@@ -168,14 +158,7 @@ export default function MothersGroupMeetingForm() {
 
       if (isEditMode && params.id) {
         await updateMothersGroupMeeting(params.id, payload);
-        if (params.from === "details") {
-          router.replace({
-            pathname: "/dashboard/report/mother-meeting-details",
-            params: { id: params.id },
-          } as any);
-        } else {
-          router.back();
-        }
+        router.back();
       } else {
         await createMothersGroupMeeting({
           ...payload,
@@ -196,16 +179,7 @@ export default function MothersGroupMeetingForm() {
       <StatusBar barStyle="dark-content" backgroundColor="#f9fafb" />
       <CustomHeader
         title={t("mothers_group_meeting.title")}
-        onBackPress={() => {
-          if (params.from === "details" && params.id) {
-            router.replace({
-              pathname: "/dashboard/report/mother-meeting-details",
-              params: { id: params.id },
-            } as any);
-          } else {
-            router.back();
-          }
-        }}
+        onBackPress={() => router.back()}
       />
 
       <KeyboardAvoidingView

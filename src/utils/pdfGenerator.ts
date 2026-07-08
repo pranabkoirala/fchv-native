@@ -485,9 +485,6 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
     if (hasChildCounselingAnswer(item, "newborn_vaccination_facility")) {
       addCount(counts, 17, month);
     }
-    if (hasChildCounselingAnswer(item, "all_vaccines_23_months")) {
-      addCount(counts, 18, month);
-    }
 
     // ── Diarrhoea rows (28-33) ────────────────────────────────
     if (hasChildCounselingAnswer(item, "has_diarrhea")) {
@@ -605,21 +602,32 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
   const vaccineIds = VACCINE_SCHEDULE.flatMap((slot) =>
     slot.vaccines.map((vaccine) => vaccine.id),
   );
-  const vaccineCountByChild = vaccinations.reduce<Record<string, Set<string>>>(
-    (acc, item) => {
-      if (!item.child || item.is_given !== 1) return acc;
-      acc[item.child] = acc[item.child] || new Set<string>();
-      acc[item.child].add(item.vaccine_id);
-      return acc;
-    },
-    {},
-  );
-  infants.forEach((child) => {
-    const given = vaccineCountByChild[child.id];
-    if (!given || !vaccineIds.every((id) => given.has(id))) return;
-    const ageDays = getAgeInDays(child.date_of_birth, new Date().toISOString());
+  const childVaccineData = vaccinations.reduce<
+    Record<string, { given: Set<string>; maxDate: string | null }>
+  >((acc, item) => {
+    if (!item.child || item.is_given !== 1) return acc;
+    if (!acc[item.child]) {
+      acc[item.child] = { given: new Set<string>(), maxDate: null };
+    }
+    acc[item.child].given.add(item.vaccine_id);
+    const dateStr = item.given_date || item.created_at;
+    const prevMax = acc[item.child].maxDate;
+    if (dateStr && (!prevMax || dateStr > prevMax)) {
+      acc[item.child].maxDate = dateStr;
+    }
+    return acc;
+  }, {});
+  Object.entries(childVaccineData).forEach(([childId, data]) => {
+    if (!vaccineIds.every((id) => data.given.has(id))) return;
+    const child = childById[childId];
+    if (!child) return;
+    const ageDays = getAgeInDays(child.date_of_birth, data.maxDate);
     if (ageDays === null || ageDays >= 700) return;
-    addCount(counts, 18, getRecordMonth(child, filter));
+    const completionMonth = getRecordMonth(
+      { created_at: data.maxDate },
+      filter,
+    );
+    addCount(counts, 18, completionMonth);
   });
 
   deaths.forEach((item) => {
@@ -1698,9 +1706,18 @@ const generateInfantCareTable = (data: any[]) => {
   return html;
 };
 
+const stripEmojis = (str: string): string => {
+  if (!str) return "";
+  return str.replace(
+    /[\uD800-\uDBFF][\uDC00-\uDFFF]|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDDFF]|\uD83D[\uDE00-\uDE4F]|\uD83D[\uDE80-\uDEFF]|\uD83E[\uDD00-\uDDFF]|[\u2600-\u27BF]|[\uFE0E\uFE0F]/g,
+    "",
+  );
+};
+
 const savePdfToDevice = async (htmlContent: string, fileName: string) => {
+  const sanitizedHtml = stripEmojis(htmlContent);
   const { uri } = await Print.printToFileAsync({
-    html: htmlContent,
+    html: sanitizedHtml,
     base64: false,
   });
 

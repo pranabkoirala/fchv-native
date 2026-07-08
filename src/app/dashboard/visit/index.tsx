@@ -27,7 +27,10 @@ import {
   getCounselingReferralHistory,
   saveCounselingReferral,
 } from "@/hooks/database/models/CounselingReferralModel";
-import { getInfantMonitoringsByMother } from "@/hooks/database/models/InfantMonitoringModel";
+import {
+  getChildrenByPregnancy,
+  getInfantMonitoringsByMother,
+} from "@/hooks/database/models/InfantMonitoringModel";
 import {
   getAllMothersList,
   getDeliveredMotherIds,
@@ -48,7 +51,7 @@ import {
 } from "@/hooks/database/models/VisitModel";
 import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
 import { getCurrentNepaliDate, toNepaliNumbers } from "@/utils/dateHelper";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Calendar, Check, Minus, Plus } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -389,10 +392,6 @@ const StepSlider = ({
   );
 };
 
-const ONE_TIME_IDS = new Set(
-  ONE_TIME_CHILD_COUNSELING_QUESTIONS.map((q) => q.id),
-);
-
 const CHILD_QUANTITY_DEFAULTS: Record<string, number> = {
   ors_for_child: 1,
   zinc_for_child: 1,
@@ -400,6 +399,8 @@ const CHILD_QUANTITY_DEFAULTS: Record<string, number> = {
 
 export default function VisitScreen() {
   const router = useRouter();
+  const { motherId: urlMotherId, visitType: urlVisitType } =
+    useLocalSearchParams<{ motherId?: string; visitType?: string }>();
   const { showToast } = useToast();
   const { t, language } = useLanguage();
 
@@ -410,7 +411,9 @@ export default function VisitScreen() {
   const [deliveredMotherIds, setDeliveredMotherIds] = useState<Set<string>>(
     new Set(),
   );
-  const [selectedMotherId, setSelectedMotherId] = useState("");
+  const [selectedMotherId, setSelectedMotherId] = useState(
+    (urlMotherId as string) || "",
+  );
   const [selectedMotherDetails, setSelectedMotherDetails] = useState<any>(null);
   const [pregnancyId, setPregnancyId] = useState<string | null>(null);
   const [children, setChildren] = useState<InfantMonitoringStoreType[]>([]);
@@ -424,7 +427,9 @@ export default function VisitScreen() {
   const [visitDateBs, setVisitDateBs] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const [visitType, setVisitType] = useState<"ANC" | "PNC" | "OTHER">("PNC");
+  const [visitType, setVisitType] = useState<"ANC" | "PNC" | "OTHER">(
+    (urlVisitType as "ANC" | "PNC" | "OTHER") || "PNC",
+  );
   const [address, setAddress] = useState("");
 
   const [visitNumber, setVisitNumber] = useState(1);
@@ -462,6 +467,16 @@ export default function VisitScreen() {
   const [questionQuantities, setQuestionQuantities] = useState<
     Record<string, number>
   >({});
+
+  // Sync URL params to state so the page works when navigated to via router.push with params
+  useEffect(() => {
+    if (urlMotherId) {
+      setSelectedMotherId(urlMotherId);
+    }
+    if (urlVisitType) {
+      setVisitType(urlVisitType as "ANC" | "PNC" | "OTHER");
+    }
+  }, [urlMotherId, urlVisitType]);
 
   // Get questions filtered by visit type — memoized so it only recalculates when visitType changes
   const { counselingQuestions, referralQuestions } = useMemo(
@@ -536,8 +551,8 @@ export default function VisitScreen() {
         const preg = await getPregnancyByMotherId(selectedMotherId);
         setPregnancyId(preg?.id || null);
 
-        // Load all-time counseling history to mark one-time questions as already answered
-        const history = await getCounselingReferralHistory(selectedMotherId);
+        // Load counseling history for this pregnancy only so previous deliveries don't leak
+        const history = await getCounselingReferralHistory(selectedMotherId, preg?.id);
         const answeredIds = new Set<string>();
         history.forEach((record) => {
           if (record.answers) {
@@ -570,14 +585,18 @@ export default function VisitScreen() {
     }
     const fetchChildren = async () => {
       try {
-        const childList = await getInfantMonitoringsByMother(selectedMotherId);
+        // When a pregnancy is linked (e.g. after a delivery), only fetch
+        // children from this pregnancy so previous deliveries don't leak in.
+        const childList = pregnancyId
+          ? await getChildrenByPregnancy(pregnancyId)
+          : await getInfantMonitoringsByMother(selectedMotherId);
         setChildren(childList);
       } catch (e) {
         console.error("Failed to load children:", e);
       }
     };
     fetchChildren();
-  }, [selectedMotherId, visitType]);
+  }, [selectedMotherId, visitType, pregnancyId]);
 
   // Seed checkedQuestions with previously answered one-time questions
   useEffect(() => {
@@ -1142,18 +1161,14 @@ export default function VisitScreen() {
                           title: t("visit.sections.one_time_counseling", {
                             defaultValue: "One-Time Counseling",
                           }),
-                          questions: ONE_TIME_CHILD_COUNSELING_QUESTIONS.filter(
-                            (q) => !oneTimeAnswered.has(q.id),
-                          ),
+                          questions: ONE_TIME_CHILD_COUNSELING_QUESTIONS,
                         },
                         {
                           key: "routine",
                           title: t("visit.sections.routine_counseling", {
                             defaultValue: "Routine Counseling",
                           }),
-                          questions: CHILD_COUNSELING_QUESTIONS.filter(
-                            (q) => !ONE_TIME_IDS.has(q.id),
-                          ),
+                          questions: CHILD_COUNSELING_QUESTIONS,
                         },
                         {
                           key: "health",

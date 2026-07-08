@@ -14,7 +14,12 @@
     "terms_text": "लगइन गरेर, तपाईं हाम्रा",
     "terms_link": "अभ्यासका सर्तहरूसँग सहमत हुनुहुन्छ",
     "error_required": "प्रयोगकर्ता आईडी र पासवर्ड आवश्यक छ।",
-    "error_invalid": "अवैध प्रयोगकर्ता आईडी वा पासवर्ड"
+    "error_invalid": "अवैध प्रयोगकर्ता आईडी वा पासवर्ड",
+    "error_server": "सर्भर त्रुटि ({{status}})। कृपया पछि फेरि प्रयास गर्नुहोस्।",
+    "error_network": "सर्भरमा पुग्न सकिएन। आफ्नो इन्टरनेट जडान जाँच गर्नुहोस्।",
+    "error_generic": "केही गलत भयो। कृपया फेरि प्रयास गर्नुहोस्।",
+    "sync_failed": "लगइन सफल भयो, तर डाटाबेस सिङ्क असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।",
+    "success": "लगइन सफल भयो"
   },
   "common": {
     "english": "English",
@@ -30,7 +35,8 @@
     "unnamed_mother": "अनाम आमा",
     "loading": "लोड हुँदैछ...",
     "mother": "आमा",
-    "child": "बच्चा"
+    "child": "बच्चा",
+    "hospital": "अस्पताल"
   },
   "dashboard": {
     "title": "FCHV डैशबोर्ड",
@@ -65,7 +71,7 @@
       "children": "बालबालिका",
       "delivery": "सुत्केरी दर्ता",
       "follow_up": "फलो-अप",
-      "fchv_council": "एफ सीए चभी",
+      "fchv_council": "एफ सी एच भी",
       "nutrition": "बाल पोषण"
     },
     "nutrition_page": {
@@ -78,9 +84,10 @@
       "child_age": "बच्चाको उमेर",
       "months": "महिना",
       "nutrition_names": "पोषण सामग्रीहरू",
+      "nutrition_count": "पोषण सामग्रीको संख्या",
       "add_nutrition": "पोषण थप्नुहोस्",
       "nutrition_placeholder": "जस्तै: भिटामिन ए, आइरन सिरप",
-      "balvita_packets": "बालभिटा प्याकेटको संख्या",
+      "balvita_packets": "बालभिटाको प्याकेट संख्या",
       "balvita_placeholder": "प्याकेट संख्या प्रविष्ट गर्नुहोस्",
       "save": "सेभ गर्नुहोस्",
       "saving": "सेभ हुँदै...",
@@ -89,6 +96,7 @@
       "select_mother_first": "कृपया पहिले आमा चयन गर्नुहोस्",
       "add_nutrition_first": "कृपया कम्तीमा एउटा पोषण सामग्री थप्नुहोस्",
       "balvita_required": "कृपया बालभिटा प्याकेटको संख्या प्रविष्ट गर्नुहोस्",
+      "mother_subtitle": "बच्चा ६-२३ महिनाको हुनुपर्छ",
       "child_not_found": "यस आमाको १८ महिना भन्दा कम उमेरको बच्चा फेला परेन",
       "mother_not_delivered": "यस आमाको सुत्केरी विवरण छैन",
       "child_age_group": "बच्चाको उमेर समूह",
@@ -522,8 +530,8 @@
       "newborn_sub": "(जन्मेको २८ दिन भित्र मृत्यु भएका नवजात शिशुको लागि मात्र)",
       "child_title": "२८ दिन देखि ५९ महिना सम्मका बच्चाहरूको मृत्यु विवरण",
       "child_sub": "(बालबालिका मृत्यु विवरण)",
-      "add_more": "थप थप्नुहोस् +",
-      "add": "थप्नुहोस् +",
+      "add_more": "थप थप्नुहोस्",
+      "add": "थप्नुहोस्",
       "submitted": "दर्ता भइसक्यो"
     },
     "countdown": {
@@ -778,6 +786,8 @@
     "success": "मातृ मृत्यु विवरण सफलतापूर्वक सुरक्षित भयो।",
     "error": "विवरण सुरक्षित गर्न असफल भयो।",
     "error_title": "त्रुटि",
+    "specify_condition": "अवस्था खुलाउनुहोस्...",
+    "specify_condition_error": "कृपया अवस्था खुलाउनुहोस्।",
     "child_condition": "बच्चाको अवस्था",
     "child_alive": "जीवित",
     "child_dead": "मृत"
@@ -836,7 +846,10 @@
     "save": "विवरण सुरक्षित गर्नुहोस्",
     "success": "मृत्यु विवरण सफलतापूर्वक सुरक्षित भयो।",
     "error": "विवरण सुरक्षित गर्न असफल भयो।",
-    "error_title": "त्रुटि"
+    "error_title": "त्रुटि",
+    "child_status": "बच्चाको अवस्था",
+    "alive": "जीवित",
+    "dead": "मृत"
   },
   "add_mother": {
     "title_new": "दर्ता",
@@ -861,7 +874,7 @@
       "ward": "वडा",
       "select_province": "प्रदेश छान्नुहोस्",
       "select_district": "जिल्ला छान्नुहोस्",
-      "select_municipality": "पालिका छान्नुहोस्",
+      "select_municipality": "नगरपालिका/गाउँपालिका छान्नुहोस्",
       "select_ward": "वडा छान्नुहोस्",
       "select_province_first": "पहिले प्रदेश छान्नुहोस्",
       "select_district_first": "पहिले जिल्ला छान्नुहोस्",
@@ -877,7 +890,7 @@
       "phone_invalid": "कृपया ९८ वा ९७ बाट सुरु हुने मान्य फोन नम्बर प्रविष्ट गर्नुहोस्",
       "province_req": "प्रदेश आवश्यक छ",
       "district_req": "जिल्ला आवश्यक छ",
-      "municipality_req": "पालिका आवश्यक छ",
+      "municipality_req": "नगरपालिका/गाउँपालिका आवश्यक छ",
       "ward_req": "वडा आवश्यक छ"
     },
     "messages": {
@@ -885,8 +898,8 @@
       "save_error": "आमाको विवरण सुरक्षित गर्न असफल भयो"
     },
     "buttons": {
-      "save": "विवरण सुरक्षित गर्नुहोस्",
-      "update": "विवरण अपडेट गर्नुहोस्"
+      "save": "सेभ गर्नुहोस्",
+      "update": "अपडेट गर्नुहोस्"
     }
   },
   "pregnancy_form": {
@@ -921,8 +934,8 @@
       "save_error": "गर्भावस्था विवरण सुरक्षित गर्न असफल भयो"
     },
     "buttons": {
-      "save": "विवरण सुरक्षित गर्नुहोस्",
-      "update": "विवरण अपडेट गर्नुहोस्"
+      "save": "सेभ गर्नुहोस्",
+      "update": "अपडेट गर्नुहोस्"
     }
   },
   "complete_form": {
@@ -943,7 +956,7 @@
       "phone": "फोन नम्बर",
       "province": "प्रदेश",
       "district": "जिल्ला",
-      "municipality": "पालिका",
+      "municipality": "नगरपालिका/गाउँपालिका",
       "ward": "वडा",
       "locality": "टोल",
       "locality_placeholder": "जस्तै: शान्ति चोक",
@@ -1249,15 +1262,29 @@
     "gender": "लिङ्ग",
     "boy": "छोरा",
     "girl": "छोरी",
-    "dob_label": "जन्म मिति"
+    "dob_label": "जन्म मिति",
+    "vaccination": {
+      "title": "खोप विवरण",
+      "vaccines_taken": "{{taken}}/{{total}} खोप लगाइएको छ",
+      "no_vaccinations": "खोप रेकर्ड गरिएको छैन",
+      "no_vaccinations_yet": "अहिलेसम्म कुनै खोप रेकर्ड गरिएको छैन।",
+      "fully_vaccinated": "पूर्ण खोप",
+      "show_all": "सबै हेर्नुहोस् ({{count}})",
+      "all_taken": "सबै खोप पुरा भयो",
+      "add_vaccination": "खोप थप्नुहोस्",
+      "date_label": "मिति:",
+      "date_given": "खोप लगाएको मिति:",
+      "vaccine_list": "खोप सूची",
+      "not_old_enough": "बच्चा {{time}} भएको छैन"
+    }
   },
   "child_form": {
     "edit_child": "शिशु सम्पादन",
     "new_child": "शिशु दर्ता",
     "select_mother": "आमा छनौट गर्नुहोस्",
     "select_mother_placeholder": "आमा छान्नुहोस्",
-    "baby_name": "शिशुको नाम",
-    "baby_name_placeholder": "शिशुको नाम लेख्नुहोस्",
+    "baby_name": "शिशुको पूरा नाम",
+    "baby_name_placeholder": "शिशुको पूरा नाम लेख्नुहोस्",
     "date_of_birth": "जन्म मिति",
     "gender": "लिङ्ग",
     "select_date": "मिति चयन गर्नुहोस्",
@@ -1372,6 +1399,8 @@
     "edit_record": "विवरण सम्पादन",
     "add_record": "विवरण थप्नुहोस्",
     "add_another_record": "अर्को रेकर्ड थप्नुहोस्",
+    "mother_register_title": "आमा दर्ता परामर्श",
+    "mother_register_subtitle": "आमा दर्ताको समयमा दिइएको परामर्श रेकर्ड गर्नुहोस्",
     "prenatal_register_title": "गर्भ दर्ता परामर्श",
     "prenatal_register_subtitle": "दर्ताको समयमा दिइएको परामर्श रेकर्ड गर्नुहोस्",
     "skip": "छोड्नुहोस्",

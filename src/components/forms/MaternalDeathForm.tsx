@@ -91,12 +91,14 @@ export default function MaternalDeathForm({
   }, [record]);
 
   const motherOptions = useMemo(() => {
-    return mothersList.map((m) => ({
-      value: m.id,
-      label:
-        m.name ||
-        t("common.unnamed_mother", { defaultValue: "Unnamed Mother" }),
-    }));
+    return mothersList
+      .filter((m) => !m.is_dead)
+      .map((m) => ({
+        value: m.id,
+        label:
+          m.name ||
+          t("common.unnamed_mother", { defaultValue: "Unnamed Mother" }),
+      }));
   }, [mothersList, t]);
 
   const handleSaveMaternalDeath = async () => {
@@ -129,6 +131,12 @@ export default function MaternalDeathForm({
     } else {
       setErrDeathConditionOther(false);
     }
+    if (deathCondition === "Other" && !deathConditionOther.trim()) {
+      setErrDeathConditionOther(true);
+      hasError = true;
+    } else {
+      setErrDeathConditionOther(false);
+    }
     if (!deathPlace) {
       setErrDeathPlace(true);
       hasError = true;
@@ -141,9 +149,13 @@ export default function MaternalDeathForm({
     } else {
       setErrDeathPlaceOther(false);
     }
-    if (!childCondition) {
-      setErrChildCondition(true);
-      hasError = true;
+    if (deathCondition === "Pregnant") {
+      if (!childCondition) {
+        setErrChildCondition(true);
+        hasError = true;
+      } else {
+        setErrChildCondition(false);
+      }
     } else {
       setErrChildCondition(false);
     }
@@ -347,6 +359,7 @@ export default function MaternalDeathForm({
                 value: "Post_delivery",
                 label: t("maternal_death_modal.postpartum"),
               },
+              { value: "Other", label: t("maternal_death_modal.other") },
             ].map((c) => (
               <View className="w-[48%]" key={c.value}>
                 {radio(
@@ -356,6 +369,10 @@ export default function MaternalDeathForm({
                   (v) => {
                     setDeathCondition(v);
                     setErrDeathCondition(false);
+                    if (v !== "Pregnant") {
+                      setChildCondition("");
+                      setErrChildCondition(false);
+                    }
                   },
                   errDeathCondition,
                 )}
@@ -366,6 +383,33 @@ export default function MaternalDeathForm({
             <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
               {t("maternal_death_modal.condition_error")}
             </Text>
+          )}
+          {deathCondition === "Other" && (
+            <View className="gap-y-1.5 mt-1.5">
+              <View
+                className={`h-14 flex-row items-center rounded-xl px-4 border ${
+                  errDeathConditionOther
+                    ? "border-rose-400 bg-rose-50"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <TextInput
+                  placeholder={t("maternal_death_modal.specify_condition")}
+                  placeholderTextColor="#94a3b8"
+                  className="flex-1 text-slate-800 text-[16px] h-full"
+                  onChangeText={(v) => {
+                    setDeathConditionOther(v);
+                    if (v.trim()) setErrDeathConditionOther(false);
+                  }}
+                  value={deathConditionOther}
+                />
+              </View>
+              {errDeathConditionOther && (
+                <Text className="text-rose-500 text-xs ml-1 font-semibold">
+                  {t("maternal_death_modal.specify_condition_error")}
+                </Text>
+              )}
+            </View>
           )}
         </View>
 
@@ -426,6 +470,7 @@ export default function MaternalDeathForm({
           )}
         </View>
 
+        {deathCondition === "Pregnant" && (
         <View className="gap-y-1.5">
           <FieldLabel
             label={t("maternal_death_modal.child_condition")}
@@ -476,6 +521,7 @@ export default function MaternalDeathForm({
             ))}
           </View>
         </View>
+        )}
 
         <TextArea
           label={t("maternal_death_modal.remarks")}

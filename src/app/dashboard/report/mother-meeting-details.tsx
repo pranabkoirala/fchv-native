@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { useLanguage } from "@/context/LanguageContext";
 import { getDb } from "@/hooks/database/db";
 import { MothersGroupMeetingStoreType } from "@/hooks/database/types/mothersGroupMeetingModal";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import {
   Activity,
   Calendar,
@@ -18,8 +18,9 @@ import {
   User,
   Users,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  BackHandler,
   ScrollView,
   StatusBar,
   Text,
@@ -110,7 +111,7 @@ const InfoRow = ({ label, value, icon: Icon, color = "#64748B" }: any) => (
 );
 
 export default function MeetingDetails() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from, fromTab } = useLocalSearchParams<{ id: string; from?: string; fromTab?: string }>();
   const { language, t } = useLanguage();
   const router = useRouter();
   const [meeting, setMeeting] = useState<MothersGroupMeetingStoreType | null>(
@@ -121,10 +122,34 @@ export default function MeetingDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      fetchMeetingDetails();
-    }
-  }, [id]);
+    const onBackPress = () => {
+      if (from) {
+        router.replace({
+          pathname: from,
+          params: fromTab ? { tab: fromTab } : undefined,
+        } as any);
+      } else if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/dashboard/report");
+      }
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+    return () => backHandler.remove();
+  }, [from, fromTab, router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        fetchMeetingDetails();
+      }
+    }, [id]),
+  );
 
   const fetchMeetingDetails = async () => {
     try {
@@ -160,14 +185,25 @@ export default function MeetingDetails() {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <CustomHeader
         title={t("mothers_group_meeting.title")}
-        onBackPress={() => router.back()}
+        onBackPress={() => {
+          if (from) {
+            router.replace({
+              pathname: from,
+              params: fromTab ? { tab: fromTab } : undefined,
+            } as any);
+          } else if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace("/dashboard/report");
+          }
+        }}
         rightNode={
           meeting ? (
             <TouchableOpacity
               onPress={() =>
                 router.push({
                   pathname:
-                    "/dashboard/mothers-group/mothers-group-meeting-form",
+                    "/dashboard/report/mothers-group-meeting-form",
                   params: {
                     id: meeting.id,
                     meeting_date: meeting.meeting_date,

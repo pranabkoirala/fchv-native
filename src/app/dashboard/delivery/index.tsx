@@ -210,7 +210,10 @@ export default function DeliveryRegistrationForm() {
           console.error("Failed to deactivate pregnancy:", e);
         }
       }
-      router.push("/dashboard");
+      router.push({
+        pathname: "/dashboard/visit",
+        params: { motherId: selectedMotherId, visitType: "PNC" },
+      } as any);
 
       showToast(t("delivery.messages.save_success"));
       resetForm();

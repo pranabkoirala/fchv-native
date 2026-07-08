@@ -5,6 +5,7 @@ import Dropdown from "react-native-input-select";
 export const ProfilePicker = ({
   label,
   selectedValue,
+  subtitle,
   onValueChange,
   options,
   placeholder,
@@ -12,7 +13,7 @@ export const ProfilePicker = ({
   error,
   isSearchable = false,
   disabled = false,
-  required = false
+  required = false,
 }: {
   label?: string;
   selectedValue: string;
@@ -24,8 +25,8 @@ export const ProfilePicker = ({
   isSearchable?: boolean;
   disabled?: boolean;
   required?: boolean;
+  subtitle?: string;
 }) => {
-
   return (
     <View>
       {label ? (
@@ -35,19 +36,28 @@ export const ProfilePicker = ({
         </Text>
       ) : null}
 
+      {subtitle && (
+        <Text className="text-slate-500 text-sm italic">{subtitle}</Text>
+      )}
+
       <Dropdown
         placeholder={placeholder}
         options={options.map((option) => {
-          if (typeof option === 'object' && option !== null && 'value' in option) {
+          if (
+            typeof option === "object" &&
+            option !== null &&
+            "value" in option
+          ) {
             return {
-              label: option.label || getOptionLabel?.(option.value) || option.value,
+              label:
+                option.label || getOptionLabel?.(option.value) || option.value,
               value: option.value,
               disabled: option.disabled,
             };
           }
           return {
             label: getOptionLabel ? getOptionLabel(option) : option,
-            value: option
+            value: option,
           };
         })}
         selectedValue={selectedValue}
@@ -66,20 +76,20 @@ export const ProfilePicker = ({
           borderRadius: 9,
           paddingVertical: 10,
           paddingHorizontal: 14,
-          marginBottom: 0
+          marginBottom: 0,
         }}
         dropdownIcon={<ChevronDown size={18} color="#0f172a" />}
         dropdownIconStyle={{
           top: 15,
-          right: 15
+          right: 15,
         }}
         selectedItemStyle={{
           fontSize: 16,
-          color: "#0f172a"
+          color: "#0f172a",
         }}
         placeholderStyle={{
           fontSize: 16,
-          color: "#94a3b8"
+          color: "#94a3b8",
         }}
       />
       {error ? (

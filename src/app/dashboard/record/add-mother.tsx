@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Baby, User } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
+  BackHandler,
   Dimensions,
   StatusBar,
   Text,
@@ -77,9 +78,18 @@ export default function AddMotherScreen() {
   }>();
   const [step, setStep] = useState(initialStep === "1" ? 1 : 0);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const hasSetInitialStep = useRef(false);
 
-  // Smooth sliding animation
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  // Sync step when params arrive (Expo Router can deliver params after mount)
+  useEffect(() => {
+    if (!hasSetInitialStep.current && initialStep === "1") {
+      setStep(1);
+      hasSetInitialStep.current = true;
+    }
+  }, [initialStep]);
+
+  // Smooth sliding animation — initialize directly to avoid flash when starting at step 1
+  const slideAnim = useRef(new Animated.Value(initialStep === "1" ? -SCREEN_WIDTH : 0)).current;
 
   useEffect(() => {
     Animated.spring(slideAnim, {
@@ -90,6 +100,28 @@ export default function AddMotherScreen() {
     }).start();
   }, [step]);
 
+  const handleBackPress = useCallback(() => {
+    if (from === "profile" && id) {
+      router.replace({
+        pathname: "/dashboard/profile",
+        params: { id },
+      } as any);
+    } else if (step === 1 && !id) {
+      setStep(0);
+    } else {
+      router.replace("/dashboard");
+    }
+    return true;
+  }, [from, id, step, router]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      handleBackPress,
+    );
+    return () => backHandler.remove();
+  }, [handleBackPress]);
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
@@ -98,18 +130,7 @@ export default function AddMotherScreen() {
       <CustomHeader
         title={id ? t("add_mother.title_edit") : t("add_mother.title_new")}
         subtitle=""
-        onBackPress={() => {
-          if (from === "profile" && id) {
-            router.replace({
-              pathname: "/dashboard/profile",
-              params: { id },
-            } as any);
-          } else if (step === 1 && !id) {
-            setStep(0);
-          } else {
-            router.replace("/dashboard");
-          }
-        }}
+        onBackPress={handleBackPress}
       />
 
       {/* Tab Indicator */}

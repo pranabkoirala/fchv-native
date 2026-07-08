@@ -807,8 +807,8 @@ CREATE INDEX IF NOT EXISTS idx_delivery_mother ON delivery(mother);
 
   CREATE TABLE IF NOT EXISTS child_nutrition (
     id TEXT PRIMARY KEY,
-    mother_id TEXT NOT NULL,
-    child_id TEXT NOT NULL,
+    mother TEXT NOT NULL,
+    child TEXT NOT NULL,
     nutrition_names TEXT NOT NULL,
     balvita_packets INTEGER DEFAULT 0,
     child_age_group TEXT,
@@ -819,14 +819,14 @@ CREATE INDEX IF NOT EXISTS idx_delivery_mother ON delivery(mother);
     is_deleted INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
-    FOREIGN KEY(mother_id) REFERENCES mother(id),
-    FOREIGN KEY(child_id) REFERENCES child_monitoring(id)
+    FOREIGN KEY(mother) REFERENCES mother(id),
+    FOREIGN KEY(child) REFERENCES child_monitoring(id)
   );
 
   CREATE TABLE IF NOT EXISTS child_nutrition_staging (
     id TEXT PRIMARY KEY,
-    mother_id TEXT,
-    child_id TEXT,
+    mother TEXT,
+    child TEXT,
     nutrition_names TEXT,
     balvita_packets INTEGER DEFAULT 0,
     child_age_group TEXT,

@@ -4,8 +4,8 @@ import { ChildNutritionStoreType } from "@/hooks/database/models/ChildNutritionM
 
 const mapChildNutritionToSyncPayload = (data: ChildNutritionStoreType) => ({
   id: data.id,
-  mother_id: data.mother_id,
-  child_id: data.child_id,
+  mother: data.mother,
+  child: data.child,
   nutrition_names: data.nutrition_names,
   balvita_packets: data.balvita_packets,
   child_age_group: data.child_age_group ?? null,
@@ -17,6 +17,7 @@ const mapChildNutritionToSyncPayload = (data: ChildNutritionStoreType) => ({
 });
 
 const postBulkChildNutrition = async (data: ChildNutritionStoreType[]) => {
+  console.log(data.map(mapChildNutritionToSyncPayload));
   const response = await httpClient.post<ChildNutritionStoreType[]>(
     API_LIST.child_nutrition.post,
     data.map(mapChildNutritionToSyncPayload),

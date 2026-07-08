@@ -148,8 +148,8 @@ export default function ChildNutritionScreen() {
       // Fetch children from child_monitoring joined with mother.
       // Filter mothers having at least one child aged 6-24 months.
       const rows = await db.getAllAsync<any>(
-        `SELECT cm.id as child_id, cm.baby_name, cm.date_of_birth, cm.status,
-                m.id as mother_id, m.first_name, m.last_name
+        `SELECT cm.id as child, cm.baby_name, cm.date_of_birth, cm.status,
+                m.id as mother, m.first_name, m.last_name
          FROM child_monitoring cm
          JOIN mother m ON m.id = cm.mother
          WHERE cm.is_deleted = 0 AND m.is_deleted = 0 AND (cm.status IS NULL OR cm.status != 'dead')
@@ -178,15 +178,15 @@ export default function ChildNutritionScreen() {
             .filter(Boolean)
             .join(" ");
 
-          if (!motherMap.has(row.mother_id)) {
-            motherMap.set(row.mother_id, {
+          if (!motherMap.has(row.mother)) {
+            motherMap.set(row.mother, {
               motherName,
               children: [],
             });
           }
 
-          motherMap.get(row.mother_id)!.children.push({
-            id: row.child_id,
+          motherMap.get(row.mother)!.children.push({
+            id: row.child,
             name: row.baby_name || t("reports.unnamed_baby"),
             ageMonths: months,
             date_of_birth: row.date_of_birth,
@@ -294,9 +294,7 @@ export default function ChildNutritionScreen() {
         );
         const nextAvailable = count + 1;
         setTimesPerMonth(
-          nextAvailable <= maxTimes
-            ? String(nextAvailable)
-            : String(maxTimes),
+          nextAvailable <= maxTimes ? String(nextAvailable) : String(maxTimes),
         );
       }
     }
@@ -307,15 +305,10 @@ export default function ChildNutritionScreen() {
     setErrors({ ...errors, childAgeGroup: "" });
     const maxTimes = getMaxTimesForAgeGroup(value);
     if (childInfo) {
-      const { count } = await checkExistingMonthRecords(
-        childInfo.id,
-        value,
-      );
+      const { count } = await checkExistingMonthRecords(childInfo.id, value);
       const nextAvailable = count + 1;
       setTimesPerMonth(
-        nextAvailable <= maxTimes
-          ? String(nextAvailable)
-          : String(maxTimes),
+        nextAvailable <= maxTimes ? String(nextAvailable) : String(maxTimes),
       );
     } else {
       setTimesPerMonth(String(maxTimes));
@@ -386,8 +379,8 @@ export default function ChildNutritionScreen() {
       const filledItems = nutritionItems.filter((item) => item.trim());
 
       await saveChildNutrition({
-        mother_id: selectedMotherId,
-        child_id: childInfo!.id,
+        mother: selectedMotherId,
+        child: childInfo!.id,
         nutrition_names: filledItems,
         balvita_packets: parseInt(balvitaPackets, 10),
         child_age_group: childAgeGroup,
@@ -416,7 +409,7 @@ export default function ChildNutritionScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 30 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff", paddingTop: 40 }}>
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
       <CustomHeader
@@ -442,6 +435,7 @@ export default function ChildNutritionScreen() {
           <View style={{ paddingVertical: 20, paddingHorizontal: 15, gap: 20 }}>
             <ProfilePicker
               label={t("dashboard.nutrition_page.select_mother")}
+              subtitle={t("dashboard.nutrition_page.mother_subtitle")}
               required
               placeholder={t(
                 "dashboard.nutrition_page.select_mother_placeholder",
@@ -571,7 +565,7 @@ export default function ChildNutritionScreen() {
               </Text>
             </TouchableOpacity>
 
-            <View>
+            <View className="mb-8">
               <View className="flex-row items-center justify-between mb-1.5">
                 <Text className="text-slate-800 font-medium text-[16px] ml-1">
                   {t("dashboard.nutrition_page.balvita_packets")}

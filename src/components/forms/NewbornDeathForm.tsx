@@ -3,7 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
-import { getInfantMonitoringsByMother } from "../../hooks/database/models/InfantMonitoringModel";
+import {
+  getAllInfantMonitorings,
+  getInfantMonitoringsByMother,
+} from "../../hooks/database/models/InfantMonitoringModel";
 import {
   getAllMothersList,
   MotherListDbItem,
@@ -50,6 +53,9 @@ export default function NewbornDeathForm({
   const [selectedMotherId, setSelectedMotherId] = useState<string>("");
   const [loadingMothers, setLoadingMothers] = useState(false);
   const [errMother, setErrMother] = useState(false);
+  const [motherIdsWithAliveChildren, setMotherIdsWithAliveChildren] = useState<
+    Set<string>
+  >(new Set());
 
   const [motherChildren, setMotherChildren] = useState<
     InfantMonitoringStoreType[]
@@ -133,27 +139,38 @@ export default function NewbornDeathForm({
 
   useEffect(() => {
     if (!record) {
-      const loadMothers = async () => {
+      const loadData = async () => {
         setLoadingMothers(true);
         try {
-          const mList = await getAllMothersList();
+          const [mList, allChildren] = await Promise.all([
+            getAllMothersList(),
+            getAllInfantMonitorings(),
+          ]);
           setMothersList(mList);
+          const aliveMotherIds = new Set<string>(
+            allChildren
+              .filter((c) => c.status !== "dead" && c.mother)
+              .map((c) => c.mother as string),
+          );
+          setMotherIdsWithAliveChildren(aliveMotherIds);
         } catch (error) {
-          console.error("Failed to load mothers:", error);
+          console.error("Failed to load data:", error);
         } finally {
           setLoadingMothers(false);
         }
       };
-      loadMothers();
+      loadData();
     }
   }, [record]);
 
   const motherOptions = useMemo(() => {
-    return mothersList.map((m) => ({
-      value: m.id,
-      label: m.name || t("common.unnamed_mother"),
-    }));
-  }, [mothersList, t]);
+    return mothersList
+      .filter((m) => motherIdsWithAliveChildren.has(m.id))
+      .map((m) => ({
+        value: m.id,
+        label: m.name || t("common.unnamed_mother"),
+      }));
+  }, [mothersList, motherIdsWithAliveChildren, t]);
 
   useEffect(() => {
     if (initialChildren) {

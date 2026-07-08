@@ -11,22 +11,20 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { COUNSELING_QUESTIONS_ONE_TIME_PREGNANT_REGISTER_TIME } from "../../constants/CounselingQuestions";
+import { COUNSELING_REFERRAL_QUESTIONS_ONE_TIME_MOTHER } from "../../constants/CounselingQuestions";
 import ModalWithSafeArea from "../common/ModalWithSafeArea";
 
-interface PrenatalRegisterCounselingModalProps {
+interface MotherRegisterCounselingModalProps {
   visible: boolean;
   onClose: () => void;
   motherId: string;
-  pregnancyId: string;
 }
 
-export default function PrenatalRegisterCounselingModal({
+export default function MotherRegisterCounselingModal({
   visible,
   onClose,
   motherId,
-  pregnancyId,
-}: PrenatalRegisterCounselingModalProps) {
+}: MotherRegisterCounselingModalProps) {
   const { language, t } = useLanguage();
   const { showToast } = useToast();
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
@@ -53,7 +51,7 @@ export default function PrenatalRegisterCounselingModal({
 
       await saveCounselingReferral({
         mother: motherId,
-        pregnancy: pregnancyId,
+        pregnancy: null,
         answers: JSON.stringify(answersForSave),
       });
 
@@ -86,7 +84,7 @@ export default function PrenatalRegisterCounselingModal({
           {/* Header */}
           <View className="px-5 pt-5 pb-3 flex-row items-center justify-between border-b border-slate-100">
             <Text className="text-[16px] font-bold text-slate-800">
-              {t("counseling_section.prenatal_register_title")}
+              {t("counseling_section.mother_register_title")}
             </Text>
             <TouchableOpacity onPress={handleSkip} className="p-1.5 bg-slate-100 rounded-full active:bg-slate-200">
               <X size={16} color="#64748B" />
@@ -95,7 +93,7 @@ export default function PrenatalRegisterCounselingModal({
 
           {/* Questions */}
           <ScrollView className="px-5 py-3" showsVerticalScrollIndicator={false}>
-            {COUNSELING_QUESTIONS_ONE_TIME_PREGNANT_REGISTER_TIME.map((question) => {
+            {COUNSELING_REFERRAL_QUESTIONS_ONE_TIME_MOTHER.map((question) => {
               const isCompleted = !!answers[question.id];
               return (
                 <TouchableOpacity

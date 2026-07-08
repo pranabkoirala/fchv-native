@@ -6,8 +6,8 @@ import { setSyncTimestamp } from "./SyncModel";
 
 export interface ChildNutritionStoreType {
   id: string;
-  mother_id: string;
-  child_id: string;
+  mother: string;
+  child: string;
   nutrition_names: string;
   balvita_packets: number;
   child_age_group?: string | null;
@@ -21,8 +21,8 @@ export interface ChildNutritionStoreType {
 }
 
 export interface ChildNutritionPayload {
-  mother_id: string;
-  child_id: string;
+  mother: string;
+  child: string;
   nutrition_names: string[];
   balvita_packets: number;
   child_age_group: string;
@@ -31,8 +31,8 @@ export interface ChildNutritionPayload {
 
 const CHILD_NUTRITION_COLUMNS = [
   "id",
-  "mother_id",
-  "child_id",
+  "mother",
+  "child",
   "nutrition_names",
   "balvita_packets",
   "child_age_group",
@@ -55,8 +55,8 @@ const getChildNutritionValues = (
   },
 ) => [
   item.id ?? null,
-  item.mother_id ?? null,
-  item.child_id ?? null,
+  item.mother ?? null,
+  item.child ?? null,
   item.nutrition_names ?? null,
   item.balvita_packets ?? 0,
   item.child_age_group ?? null,
@@ -80,14 +80,14 @@ export async function saveChildNutrition(
 
   await db.runAsync(
     `INSERT INTO child_nutrition (
-      id, mother_id, child_id, nutrition_names, balvita_packets,
+      id, mother, child, nutrition_names, balvita_packets,
       child_age_group, times_per_month,
       is_synced, is_deleted, reg_year, reg_month, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?)`,
     [
       id,
-      payload.mother_id,
-      payload.child_id,
+      payload.mother,
+      payload.child,
       nutritionNamesJson,
       payload.balvita_packets,
       payload.child_age_group,
@@ -101,8 +101,8 @@ export async function saveChildNutrition(
 
   return {
     id,
-    mother_id: payload.mother_id,
-    child_id: payload.child_id,
+    mother: payload.mother,
+    child: payload.child,
     nutrition_names: nutritionNamesJson,
     balvita_packets: payload.balvita_packets,
     child_age_group: payload.child_age_group,
@@ -121,7 +121,7 @@ export async function getChildNutritionByMother(
 ): Promise<ChildNutritionStoreType[]> {
   const db = await getDb();
   return await db.getAllAsync<ChildNutritionStoreType>(
-    `SELECT * FROM child_nutrition WHERE mother_id = ? AND is_deleted = 0 ORDER BY created_at DESC`,
+    `SELECT * FROM child_nutrition WHERE mother = ? AND is_deleted = 0 ORDER BY created_at DESC`,
     [motherId],
   );
 }
@@ -131,7 +131,7 @@ export async function getChildNutritionByChild(
 ): Promise<ChildNutritionStoreType[]> {
   const db = await getDb();
   return await db.getAllAsync<ChildNutritionStoreType>(
-    `SELECT * FROM child_nutrition WHERE child_id = ? AND is_deleted = 0 ORDER BY created_at DESC`,
+    `SELECT * FROM child_nutrition WHERE child = ? AND is_deleted = 0 ORDER BY created_at DESC`,
     [childId],
   );
 }
@@ -144,7 +144,7 @@ export async function getChildNutritionCountByMonth(
   const db = await getDb();
   const result = await db.getFirstAsync<{ count: number }>(
     `SELECT COUNT(*) as count FROM child_nutrition
-     WHERE child_id = ? AND reg_year = ? AND reg_month = ? AND is_deleted = 0`,
+     WHERE child = ? AND reg_year = ? AND reg_month = ? AND is_deleted = 0`,
     [childId, year, month],
   );
   return result?.count ?? 0;
@@ -159,8 +159,8 @@ export async function getAllChildNutrition(): Promise<
             COALESCE(NULLIF(m.first_name, ''), '') || ' ' || COALESCE(NULLIF(m.last_name, ''), '') as mother_name,
             cm.baby_name
      FROM child_nutrition cn
-     LEFT JOIN mother m ON m.id = cn.mother_id
-     LEFT JOIN child_monitoring cm ON cm.id = cn.child_id
+     LEFT JOIN mother m ON m.id = cn.mother
+     LEFT JOIN child_monitoring cm ON cm.id = cn.child
      WHERE cn.is_deleted = 0
      ORDER BY cn.created_at DESC`,
   );
@@ -193,8 +193,8 @@ export async function insertToTempChildNutritionTable(apiRes: any[]) {
         return getChildNutritionValues(
           {
             id: item.id,
-            mother_id: item.mother_id,
-            child_id: item.child_id,
+            mother: item.mother ?? item.mother_id,
+            child: item.child ?? item.child_id,
             nutrition_names: item.nutrition_names,
             balvita_packets: item.balvita_packets,
             child_age_group: item.child_age_group,

@@ -1,4 +1,4 @@
-import { Plus, Trash2, X } from "lucide-react-native";
+import { Minus, Plus, Trash2, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -32,6 +32,9 @@ export default function FchvCounseling({
   const [fchvName, setFchvName] = useState("");
   const [fchvId, setFchvId] = useState("");
   const [formData, setFormData] = useState<FormData>({});
+  const [originalNameCounts, setOriginalNameCounts] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     loadExisting();
@@ -47,6 +50,13 @@ export default function FchvCounseling({
         if (existing.data) {
           const parsed = JSON.parse(existing.data);
           setFormData(parsed);
+          const counts: Record<string, number> = {};
+          for (const key of Object.keys(parsed)) {
+            if (Array.isArray(parsed[key])) {
+              counts[key] = parsed[key].length;
+            }
+          }
+          setOriginalNameCounts(counts);
         }
       }
     } catch (e) {
@@ -79,6 +89,24 @@ export default function FchvCounseling({
     } else {
       setValue(key, names);
     }
+  };
+
+  const updateCount = (countKey: string, namesKey: string, newVal: number) => {
+    const min = originalNameCounts[namesKey] || 0;
+    const clamped = Math.max(min, newVal);
+    setFormData((prev) => {
+      const currentNames = (prev[namesKey] as string[]) || [];
+      const updated: FormData = { ...prev, [countKey]: String(clamped) };
+      if (clamped > currentNames.length) {
+        updated[namesKey] = [
+          ...currentNames,
+          ...Array(clamped - currentNames.length).fill(""),
+        ];
+      } else if (clamped < currentNames.length) {
+        updated[namesKey] = currentNames.slice(0, clamped);
+      }
+      return updated;
+    });
   };
 
   const handleSave = async () => {
@@ -178,13 +206,48 @@ export default function FchvCounseling({
                 {count.en}
               </Text>
             </View>
-            <BoxInput
-              label={count.ne}
-              placeholder="0"
-              value={String(formData[count.key] ?? "")}
-              onChangeText={(t) => setValue(count.key, t)}
-              keyboardType="numeric"
-            />
+            <View className="mb-4">
+              <Text className="text-slate-800 font-medium text-[16px] mb-1.5 ml-1">
+                {count.ne}
+              </Text>
+              <View className="flex-row items-center gap-4">
+                <TouchableOpacity
+                  onPress={() =>
+                    updateCount(
+                      count.key,
+                      names.key,
+                      (parseInt(formData[count.key] as string, 10) || 0) - 1,
+                    )
+                  }
+                  className="w-12 h-12 rounded-full bg-rose-100 items-center justify-center"
+                >
+                  <Minus size={22} color="#E11D48" strokeWidth={3} />
+                </TouchableOpacity>
+                <View className="flex-1">
+                  <View className="h-14 rounded-xl px-4 border border-slate-200 bg-white items-center justify-center">
+                    <TextInput
+                      className="text-slate-800 text-[18px] font-bold text-center w-full h-full"
+                      value={String(formData[count.key] ?? "0")}
+                      editable={false}
+                      placeholder="0"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
+                </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    updateCount(
+                      count.key,
+                      names.key,
+                      (parseInt(formData[count.key] as string, 10) || 0) + 1,
+                    )
+                  }
+                  className="w-12 h-12 rounded-full bg-emerald-100 items-center justify-center"
+                >
+                  <Plus size={22} color="#059669" strokeWidth={3} />
+                </TouchableOpacity>
+              </View>
+            </View>
             <View className="h-px bg-slate-100 my-3" />
             <Text className="text-slate-700 font-medium text-[14px] mb-2">
               {names.ne}

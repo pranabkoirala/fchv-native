@@ -255,7 +255,7 @@ export default function FamilyPlanningSection({
           <Text className="text-slate-700 text-[14px] font-bold text-center">
             {t("profile.birth_pnc.fp_used")}
           </Text>
-          <Text className="text-slate-400 text-[12px] mt-1 text-center">
+          <Text className="text-slate-400 text-[12px] mt-1 text-center italic">
             {t("family_planning.not_addet_yet")}
           </Text>
           <TouchableOpacity

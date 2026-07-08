@@ -1,22 +1,39 @@
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   BLOOD_GROUP_OPTIONS,
   EDUCATION_LEVELS,
   JATI_CODES,
   MONTHLY_INCOME_OPTIONS,
-  OCCUPATIONS
+  OCCUPATIONS,
 } from "@/utils/data";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Briefcase, Calendar, Camera, ChevronLeft, ChevronRight, HeartPulse, MapPin, User } from "lucide-react-native";
+import {
+  Calendar,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, StatusBar, Text, TouchableOpacity, View } from "react-native";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { SafeAreaView } from "react-native-safe-area-context";
 import municipalitiesData from "../../assets/json/municipalities.json";
 import { useLanguage } from "../../context/LanguageContext";
 import { useToast } from "../../context/ToastContext";
-import { getMotherProfile, updateMother } from "../../hooks/database/models/MotherModel";
+import {
+  getMotherProfile,
+  updateMother,
+} from "../../hooks/database/models/MotherModel";
 import { Province } from "../../types/profile";
 import CameraCapture from "../CameraCapture";
 import CustomHeader from "../CustomHeader";
@@ -25,7 +42,13 @@ import { ProfilePicker } from "../ProfilePicker";
 
 const provinces: Province[] = municipalitiesData as Province[];
 
-export default function CompleteForm({ id, from }: { id?: string; from?: string }) {
+export default function CompleteForm({
+  id,
+  from,
+}: {
+  id?: string;
+  from?: string;
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const { t, language } = useLanguage();
@@ -72,17 +95,17 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
 
   // Address Cascading
   const districts = useMemo(() => {
-    const prov = provinces.find(p => p.id === selectedProvince);
+    const prov = provinces.find((p) => p.id === selectedProvince);
     return prov?.districts || [];
   }, [selectedProvince]);
 
   const municipalities = useMemo(() => {
-    const dist = districts.find(d => d.id === selectedDistrict);
+    const dist = districts.find((d) => d.id === selectedDistrict);
     return dist?.municipalities || [];
   }, [selectedDistrict, districts]);
 
   const wards = useMemo(() => {
-    const muni = municipalities.find(m => m.id === selectedMunicipality);
+    const muni = municipalities.find((m) => m.id === selectedMunicipality);
     return muni?.wards || [];
   }, [selectedMunicipality, municipalities]);
 
@@ -98,7 +121,9 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
             setPhone(data.phone || "");
             setDobAd(data.dateOfBirth || "");
             if (data.dateOfBirth) {
-              try { setDobBs(AdToBs(data.dateOfBirth)); } catch (e) { }
+              try {
+                setDobBs(AdToBs(data.dateOfBirth));
+              } catch (e) {}
             }
             setSelectedProvince(data.addressProvince || "");
             setSelectedDistrict(data.addressDistrict || "");
@@ -118,8 +143,10 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
             setEthnicity(data.ethnicity || "");
             setEducation(data.education || "");
 
-            if (data.gravida !== undefined && data.gravida !== null) setGravida(String(data.gravida));
-            if (data.parity !== undefined && data.parity !== null) setParity(String(data.parity));
+            if (data.gravida !== undefined && data.gravida !== null)
+              setGravida(String(data.gravida));
+            if (data.parity !== undefined && data.parity !== null)
+              setParity(String(data.parity));
 
             if (data.image && !data.image.includes("vectorified")) {
               setPhotoUrl(data.image);
@@ -140,15 +167,21 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
   const validateStep = (step: number) => {
     const e: Record<string, string> = {};
     if (step === 1) {
-      if (!firstName.trim()) e.firstName = t("mother_form.validation.first_name_req");
-      if (!lastName.trim()) e.lastName = t("mother_form.validation.last_name_req");
+      if (!firstName.trim())
+        e.firstName = t("mother_form.validation.first_name_req");
+      if (!lastName.trim())
+        e.lastName = t("mother_form.validation.last_name_req");
       if (!dobAd) e.dob = t("mother_form.validation.dob_req");
-      if (phone && phone.length !== 10) e.phone = t("mother_form.validation.phone_digits");
+      if (phone && phone.length !== 10)
+        e.phone = t("mother_form.validation.phone_digits");
     }
     if (step === 2) {
-      if (!selectedProvince) e.province = t("mother_form.validation.province_req");
-      if (!selectedDistrict) e.district = t("mother_form.validation.district_req");
-      if (!selectedMunicipality) e.municipality = t("mother_form.validation.municipality_req");
+      if (!selectedProvince)
+        e.province = t("mother_form.validation.province_req");
+      if (!selectedDistrict)
+        e.district = t("mother_form.validation.district_req");
+      if (!selectedMunicipality)
+        e.municipality = t("mother_form.validation.municipality_req");
       if (!selectedWard) e.ward = t("mother_form.validation.ward_req");
     }
     if (step === 4) {
@@ -177,7 +210,7 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
 
     setIsLoading(true);
     try {
-      if (!id || typeof id !== 'string') {
+      if (!id || typeof id !== "string") {
         showToast(t("complete_form.messages.missing_id"));
         setIsLoading(false);
         return;
@@ -227,20 +260,39 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
       t("complete_form.photo_options.title"),
       t("complete_form.photo_options.subtitle"),
       [
-        { text: t("complete_form.photo_options.take"), onPress: () => setShowCamera(true) },
-        { text: t("complete_form.photo_options.gallery"), onPress: chooseFromGallery },
+        {
+          text: t("complete_form.photo_options.take"),
+          onPress: () => setShowCamera(true),
+        },
+        {
+          text: t("complete_form.photo_options.gallery"),
+          onPress: chooseFromGallery,
+        },
         ...(photoUrl
-          ? [{ text: t("complete_form.photo_options.remove"), onPress: () => { setPhotoUrl(null); showToast(t("complete_form.messages.photo_removed")); }, style: "destructive" as const }]
+          ? [
+              {
+                text: t("complete_form.photo_options.remove"),
+                onPress: () => {
+                  setPhotoUrl(null);
+                  showToast(t("complete_form.messages.photo_removed"));
+                },
+                style: "destructive" as const,
+              },
+            ]
           : []),
-        { text: t("complete_form.photo_options.cancel"), style: "cancel" as const },
+        {
+          text: t("complete_form.photo_options.cancel"),
+          style: "cancel" as const,
+        },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
   const chooseFromGallery = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         showToast(t("complete_form.messages.gallery_permission"));
         return;
@@ -263,18 +315,30 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
     <View className="flex-row items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
       {[1, 2, 3, 4].map((step) => (
         <View key={step} className="flex-row items-center">
-          <View className={`w-8 h-8 rounded-full items-center justify-center ${currentStep === step ? "bg-primary" :
-            currentStep > step ? "bg-gray-500" : "bg-gray-200"
-            }`}>
+          <View
+            className={`w-8 h-8 rounded-full items-center justify-center ${
+              currentStep === step
+                ? "bg-primary"
+                : currentStep > step
+                  ? "bg-gray-500"
+                  : "bg-gray-200"
+            }`}
+          >
             {currentStep > step ? (
               <Text className="text-white text-xs font-bold">✓</Text>
             ) : (
-              <Text className={`text-xs font-bold ${currentStep === step ? "text-white" : "text-gray-500"}`}>
+              <Text
+                className={`text-xs font-bold ${currentStep === step ? "text-white" : "text-gray-500"}`}
+              >
                 {step}
               </Text>
             )}
           </View>
-          {step < 4 && <View className={`w-10 h-[2px] mx-1 ${currentStep > step ? "bg-gray-500" : "bg-gray-200"}`} />}
+          {step < 4 && (
+            <View
+              className={`w-10 h-[2px] mx-1 ${currentStep > step ? "bg-gray-500" : "bg-gray-200"}`}
+            />
+          )}
         </View>
       ))}
     </View>
@@ -289,7 +353,10 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
               <User size={20} color="#475569" />  {t("complete_form.steps.personal")}
             </Text> */}
 
-            <TouchableOpacity onPress={handlePhotoUpload} className="items-center mb-8">
+            <TouchableOpacity
+              onPress={handlePhotoUpload}
+              className="items-center mb-8"
+            >
               <View className="w-28 h-28 rounded-full border-2 border-dashed border-slate-300 items-center justify-center overflow-hidden">
                 {photoUrl ? (
                   <Image source={{ uri: photoUrl }} className="w-full h-full" />
@@ -297,46 +364,71 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
                   <Camera size={32} color="#94a3b8" />
                 )}
               </View>
-              <Text className="text-primary font-semibold mt-2 text-sm">{t("complete_form.fields.upload_photo")}</Text>
+              <Text className="text-primary font-semibold mt-2 text-sm">
+                {t("complete_form.fields.upload_photo")}
+              </Text>
             </TouchableOpacity>
 
             <View className="flex-row gap-4">
               <View className="flex-1">
-                <FieldLabel label={t("complete_form.fields.first_name")} />
+                <FieldLabel
+                  label={t("complete_form.fields.first_name")}
+                  required
+                />
                 <BoxInput
                   placeholder={t("complete_form.fields.first_name")}
                   value={firstName}
-                  onChangeText={(t) => { setFirstName(t); setErrors({ ...errors, firstName: "" }); }}
+                  onChangeText={(t) => {
+                    setFirstName(t);
+                    setErrors({ ...errors, firstName: "" });
+                  }}
                   error={errors.firstName}
                 />
               </View>
               <View className="flex-1">
-                <FieldLabel label={t("complete_form.fields.last_name")} />
+                <FieldLabel
+                  label={t("complete_form.fields.last_name")}
+                  required
+                />
                 <BoxInput
                   placeholder={t("complete_form.fields.last_name")}
                   value={lastName}
-                  onChangeText={(t) => { setLastName(t); setErrors({ ...errors, lastName: "" }); }}
+                  onChangeText={(t) => {
+                    setLastName(t);
+                    setErrors({ ...errors, lastName: "" });
+                  }}
                   error={errors.lastName}
                 />
               </View>
             </View>
 
-            <FieldLabel label={t("complete_form.fields.dob")} />
+            <FieldLabel label={t("complete_form.fields.dob")} required />
             <Pressable onPress={() => setShowDobPicker(true)} className="mb-6">
-              <View className={`rounded-md px-4 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between bg-white`}>
-                <Text className={`text-base ${dobBs ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}>
+              <View
+                className={`rounded-md px-4 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between bg-white`}
+              >
+                <Text
+                  className={`text-base ${dobBs ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}
+                >
                   {dobBs || t("complete_form.fields.dob_placeholder")}
                 </Text>
                 <Calendar size={18} color="#0056D2" />
               </View>
-              {errors.dob && <Text className="text-red-500 text-xs mt-1 ml-1">{errors.dob}</Text>}
+              {errors.dob && (
+                <Text className="text-red-500 text-xs mt-1 ml-1">
+                  {errors.dob}
+                </Text>
+              )}
             </Pressable>
 
             <FieldLabel label={t("complete_form.fields.phone")} />
             <BoxInput
               placeholder="98*******"
               value={phone}
-              onChangeText={(t) => { setPhone(t.replace(/\D/g, "")); setErrors({ ...errors, phone: "" }); }}
+              onChangeText={(t) => {
+                setPhone(t.replace(/\D/g, ""));
+                setErrors({ ...errors, phone: "" });
+              }}
               keyboardType="phone-pad"
               maxLength={10}
               error={errors.phone}
@@ -352,6 +444,7 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
 
             <ProfilePicker
               label={t("complete_form.fields.province")}
+              required
               placeholder={t("complete_form.fields.province")}
               selectedValue={selectedProvince}
               onValueChange={(val) => {
@@ -360,16 +453,21 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
                 setSelectedMunicipality("");
                 setSelectedWard("");
               }}
-              options={provinces.map(p => p.id)}
+              options={provinces.map((p) => p.id)}
               getOptionLabel={(pid) => {
-                const p = provinces.find(pr => pr.id === pid);
-                return p ? (language === "np" ? `${p.name_ne} (${p.name_en})` : `${p.name_en} (${p.name_ne})`) : pid;
+                const p = provinces.find((pr) => pr.id === pid);
+                return p
+                  ? language === "np"
+                    ? `${p.name_ne}`
+                    : `${p.name_en}`
+                  : pid;
               }}
               error={errors.province}
             />
 
             <ProfilePicker
               label={t("complete_form.fields.district")}
+              required
               placeholder={t("complete_form.fields.district")}
               selectedValue={selectedDistrict}
               onValueChange={(val) => {
@@ -377,48 +475,70 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
                 setSelectedMunicipality("");
                 setSelectedWard("");
               }}
-              options={districts.map(d => d.id)}
+              options={districts.map((d) => d.id)}
               getOptionLabel={(did) => {
-                const d = districts.find(di => di.id === did);
-                return d ? (language === "np" ? `${d.name_ne} (${d.name_en})` : `${d.name_en} (${d.name_ne})`) : did;
+                const d = districts.find((di) => di.id === did);
+                return d
+                  ? language === "np"
+                    ? `${d.name_ne}`
+                    : `${d.name_en}`
+                  : did;
               }}
               error={errors.district}
             />
 
             <ProfilePicker
               label={t("complete_form.fields.municipality")}
+              required
               placeholder={t("complete_form.fields.municipality")}
               selectedValue={selectedMunicipality}
               onValueChange={(val) => {
                 setSelectedMunicipality(val);
                 setSelectedWard("");
               }}
-              options={municipalities.map(m => m.id)}
+              options={municipalities.map((m) => m.id)}
               getOptionLabel={(mid) => {
-                const m = municipalities.find(mu => mu.id === mid);
-                return m ? (language === "np" ? `${m.name_ne} (${m.name_en})` : `${m.name_en} (${m.name_ne})`) : mid;
+                const m = municipalities.find((mu) => mu.id === mid);
+                return m
+                  ? language === "np"
+                    ? `${m.name_ne}`
+                    : `(${m.name_ne})`
+                  : mid;
               }}
               error={errors.municipality}
             />
 
             <ProfilePicker
               label={t("complete_form.fields.ward")}
+              required
               placeholder={t("complete_form.fields.ward")}
               selectedValue={selectedWard}
               onValueChange={setSelectedWard}
-              options={wards.map(w => w.id)}
+              options={wards.map((w) => w.id)}
               getOptionLabel={(wid) => {
-                const w = wards.find(wa => wa.id === wid);
-                return w ? (language === "np" ? `वडा ${w.number}` : `Ward ${w.number}`) : wid;
+                const w = wards.find((wa) => wa.id === wid);
+                return w
+                  ? language === "np"
+                    ? `वडा ${w.number}`
+                    : `Ward ${w.number}`
+                  : wid;
               }}
               error={errors.ward}
             />
 
             <FieldLabel label={t("complete_form.fields.locality")} />
-            <BoxInput placeholder={t("complete_form.fields.locality_placeholder")} value={locality} onChangeText={setLocality} />
+            <BoxInput
+              placeholder={t("complete_form.fields.locality_placeholder")}
+              value={locality}
+              onChangeText={setLocality}
+            />
 
             <FieldLabel label={t("complete_form.fields.house_number")} />
-            <BoxInput placeholder={t("complete_form.fields.house_number_placeholder")} value={houseNumber} onChangeText={setHouseNumber} />
+            <BoxInput
+              placeholder={t("complete_form.fields.house_number_placeholder")}
+              value={houseNumber}
+              onChangeText={setHouseNumber}
+            />
           </View>
         );
       case 3:
@@ -432,7 +552,10 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
               label={t("complete_form.fields.ethnicity")}
               placeholder={t("complete_form.fields.ethnicity")}
               selectedValue={ethnicity}
-              options={JATI_CODES.map(j => ({ value: j.code, label: j.name }))}
+              options={JATI_CODES.map((j) => ({
+                value: j.code,
+                label: j.name,
+              }))}
               onValueChange={setEthnicity}
             />
 
@@ -477,7 +600,11 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
             </Text> */}
 
             <FieldLabel label={t("complete_form.fields.partner_name")} />
-            <BoxInput placeholder={t("complete_form.fields.partner_name_placeholder")} value={partnerName} onChangeText={setPartnerName} />
+            <BoxInput
+              placeholder={t("complete_form.fields.partner_name_placeholder")}
+              value={partnerName}
+              onChangeText={setPartnerName}
+            />
 
             <View className="flex-row gap-4">
               <View className="flex-1">
@@ -504,11 +631,22 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
             <View className="flex-row gap-4">
               <View className="flex-1">
                 <FieldLabel label={t("complete_form.fields.gravida")} />
-                <BoxInput placeholder="0" value={gravida} onChangeText={setGravida} keyboardType="numeric" />
+                <BoxInput
+                  placeholder="0"
+                  value={gravida}
+                  onChangeText={setGravida}
+                  keyboardType="numeric"
+                />
               </View>
               <View className="flex-1">
                 <FieldLabel label={t("complete_form.fields.parity")} />
-                <BoxInput placeholder="0" value={parity} onChangeText={setParity} keyboardType="numeric" error={errors.parity} />
+                <BoxInput
+                  placeholder="0"
+                  value={parity}
+                  onChangeText={setParity}
+                  keyboardType="numeric"
+                  error={errors.parity}
+                />
               </View>
             </View>
 
@@ -531,7 +669,9 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
     <SafeAreaView className="flex-1 bg-white pt-8 pb-10">
       <StatusBar barStyle="dark-content" />
       <CustomHeader
-        title={id ? t("complete_form.title_edit") : t("complete_form.title_new")}
+        title={
+          id ? t("complete_form.title_edit") : t("complete_form.title_new")
+        }
         onBackPress={() => {
           if (from === "profile" && id) {
             router.replace({
@@ -562,7 +702,7 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
             onPress={handlePrev}
             className="flex-1 h-14 rounded-md bg-slate-100 items-center justify-center flex-row"
           >
-            <ChevronLeft size={20} color="#64748b" className="mt-1"/>
+            <ChevronLeft size={20} color="#64748b" className="mt-1" />
           </TouchableOpacity>
         )}
 
@@ -571,22 +711,35 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
             onPress={handleNext}
             className="flex-[2] h-14 rounded-md bg-primary items-center justify-center flex-row"
           >
-            <Text className="text-white font-semibold text-lg mr-2">{t("complete_form.buttons.continue")}</Text>
-            <ChevronRight size={20} color="#fff" className="mt-1"/>
+            <Text className="text-white font-semibold text-lg mr-2">
+              {t("complete_form.buttons.continue")}
+            </Text>
+            <ChevronRight size={20} color="#fff" className="mt-1" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             onPress={save}
             className="flex-[2] h-14 rounded-md bg-primary items-center justify-center flex-row"
           >
-            {isLoading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-semibold text-lg">{id ? t("complete_form.buttons.finish_update") : t("complete_form.buttons.complete_reg")}</Text>}
+            {isLoading ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text className="text-white font-semibold text-lg">
+                {id
+                  ? t("complete_form.buttons.finish_update")
+                  : t("complete_form.buttons.complete_reg")}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       </View>
 
       <CameraCapture
         visible={showCamera}
-        onCapture={(uri) => { setPhotoUrl(uri); setShowCamera(false); }}
+        onCapture={(uri) => {
+          setPhotoUrl(uri);
+          setShowCamera(false);
+        }}
         onClose={() => setShowCamera(false)}
       />
 
@@ -597,14 +750,15 @@ export default function CompleteForm({ id, from }: { id?: string; from?: string 
           setShowDobPicker(false);
           setDobBs(bsDate);
           setErrors({ ...errors, dob: "" });
-          try { setDobAd(BsToAd(bsDate)); } catch (e) { }
+          try {
+            setDobAd(BsToAd(bsDate));
+          } catch (e) {}
         }}
         language={language === "np" ? "np" : "en"}
         theme="light"
         brandColor="#0056D2"
         date={dobBs || undefined}
       />
-
-    </SafeAreaView >
+    </SafeAreaView>
   );
 }

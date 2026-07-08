@@ -10,24 +10,9 @@ export const ONE_TIME_CHILD_COUNSELING_QUESTIONS = [
     en: "Did you bathe the baby only after 24 hours of birth?",
     ne: "बच्चा जन्मिएको २४ घण्टा पूरा भएपछि मात्र नुहाउनुभएको थियो?",
   },
-  {
-    id: "all_vaccines_23_months",
-    en: "Have you given all necessary vaccines to the child within 23 months?",
-    ne: "बच्चालाई २३ महिनाभित्र सबै आवश्यक खोपहरू लगाउनु भएको हो?",
-  },
-  {
-    id: "bathe_within_24_hours",
-    en: "Did you bathe within 24 hours after giving birth?",
-    ne: "बच्चा जन्मेपछि २४ घण्टाभित्र नुहाउनुभएको थियो?",
-  },
 ];
 
 export const CHILD_COUNSELING_QUESTIONS: ChildCounselingQuestion[] = [
-  {
-    id: "bathe_within_24_hours",
-    en: "Did you bathe within 24 hours after giving birth?",
-    ne: "बच्चा जन्मेपछि २४ घण्टाभित्र नुहाउनुभएको थियो?",
-  },
   {
     id: "newborn_vaccination_facility",
     en: "Did you send the newborn baby to the health facility for vaccination?",

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { useLanguage } from "@/context/LanguageContext";
 import { getAdolescentIfaById } from "@/hooks/database/models/AdolescentIfaModel";
 import { AdolescentIfaStoreType } from "@/hooks/database/types/adolescentIfaModal";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import {
   Calendar,
   CheckCircle2,
@@ -13,8 +13,9 @@ import {
   User,
   XCircle,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  BackHandler,
   ScrollView,
   StatusBar,
   Text,
@@ -148,17 +149,41 @@ const PhaseWeekGrid = ({
 };
 
 export default function AdolescentDetails() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from, fromTab } = useLocalSearchParams<{ id: string; from?: string; fromTab?: string }>();
   const { language, t } = useLanguage();
   const router = useRouter();
   const [record, setRecord] = useState<AdolescentIfaStoreType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      fetchDetails();
-    }
-  }, [id]);
+    const onBackPress = () => {
+      if (from) {
+        router.replace({
+          pathname: from,
+          params: fromTab ? { tab: fromTab } : undefined,
+        } as any);
+      } else if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/dashboard/report");
+      }
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+    return () => backHandler.remove();
+  }, [from, fromTab, router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        fetchDetails();
+      }
+    }, [id]),
+  );
 
   const fetchDetails = async () => {
     try {
@@ -176,14 +201,25 @@ export default function AdolescentDetails() {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <CustomHeader
         title={t("adolescent_page.title")}
-        onBackPress={() => router.back()}
+        onBackPress={() => {
+          if (from) {
+            router.replace({
+              pathname: from,
+              params: fromTab ? { tab: fromTab } : undefined,
+            } as any);
+          } else if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace("/dashboard/report");
+          }
+        }}
         rightNode={
           record ? (
             <TouchableOpacity
               onPress={() =>
                 router.push({
-                  pathname: "/dashboard/adolescent/adolescent-form",
-                  params: { id: record.id, from: "details" },
+                  pathname: "/dashboard/report/adolescent-form",
+                  params: { id: record.id, from: "details", detailsFrom: from, detailsFromTab: fromTab },
                 } as any)
               }
               className="w-10 h-10 bg-violet-50 rounded-xl items-center justify-center active:bg-violet-100"

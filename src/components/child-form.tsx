@@ -8,6 +8,8 @@ import {
   createInfantMonitoring,
   getAllInfantMonitorings,
 } from "@/hooks/database/models/InfantMonitoringModel";
+import { createDelivery } from "@/hooks/database/models/DeliveryModel";
+import { createNewbornDeath } from "@/hooks/database/models/NewbornDeathModel";
 import {
   getAllMothersList,
   MotherListDbItem,
@@ -16,6 +18,7 @@ import {
   getPregnanciesByMotherId,
   updatePregnancy,
 } from "@/hooks/database/models/PregnantWomenModal";
+
 import { PregnancyStoreType } from "@/hooks/database/types/pregnancyModal";
 import {
   BIRTH_PLACE_OPTIONS,
@@ -226,6 +229,7 @@ export default function ChildRegistrationForm() {
 
   const handleSave = async () => {
     const vErrors = validate();
+
     if (Object.keys(vErrors).length > 0) {
       setErrors(vErrors);
       return;
@@ -238,8 +242,10 @@ export default function ChildRegistrationForm() {
       const targetPregnancyId =
         pregnancyId || activePregnancyObj?.id || suggestedPregnancy?.id;
 
+      const childId = id || Crypto.randomUUID();
+
       const payload = {
-        id: id || Crypto.randomUUID(),
+        id: childId,
         mother: selectedMotherId,
         baby_name: babyName,
         date_of_birth: birthDateAd,
@@ -249,15 +255,12 @@ export default function ChildRegistrationForm() {
         baby_weight: babyWeight,
         umbilical_ointment: newbornCare.includes("umbilical_ointment") ? 1 : 0,
         skin_to_skin: newbornCare.includes("skin_to_skin") ? 1 : 0,
-        early_breastfeeding: newbornCare.includes("early_breastfeeding")
-          ? 1
-          : 0,
+        early_breastfeeding: newbornCare.includes("early_breastfeeding") ? 1 : 0,
         asphyxiated_newborn: asphyxiatedNewborn,
         status: status,
         is_all_given: allGiven,
         gender: gender || undefined,
         remarks: remarks,
-        // Pregnancy linkage
         pregnancy_id:
           linkToPregnancy && targetPregnancyId ? targetPregnancyId : null,
         registration_source: (linkToPregnancy && targetPregnancyId
@@ -268,9 +271,35 @@ export default function ChildRegistrationForm() {
       };
       await createInfantMonitoring(payload);
 
-      // Deactivate current pregnancy and mark as delivered if child was linked to one
+      // Create delivery record if child was born from a pregnancy
       const linkedPregId =
         linkToPregnancy && targetPregnancyId ? targetPregnancyId : null;
+      if (linkedPregId) {
+        try {
+          const deliveryPayload = {
+            id: Crypto.randomUUID(),
+            mother: selectedMotherId,
+            delivery_date: birthDateAd,
+            delivery_place: birthPlace,
+            baby_weight: babyWeight,
+            gender: gender || undefined,
+            status: status,
+            fchv_present: fchvPresent,
+            skilled_birth_attended: skilledBirthAttended,
+            asphyxiated_newborn: asphyxiatedNewborn,
+            umbilical_ointment: newbornCare.includes("umbilical_ointment") ? 1 : 0,
+            skin_to_skin: newbornCare.includes("skin_to_skin") ? 1 : 0,
+            early_breastfeeding: newbornCare.includes("early_breastfeeding") ? 1 : 0,
+            remarks: remarks,
+            pregnancy_id: linkedPregId,
+          };
+          await createDelivery(deliveryPayload);
+        } catch (e) {
+          console.error("Failed to create delivery record:", e);
+        }
+      }
+
+      // Deactivate current pregnancy and mark as delivered if child was linked to one
       if (linkedPregId) {
         try {
           await updatePregnancy(linkedPregId, {
@@ -282,9 +311,51 @@ export default function ChildRegistrationForm() {
         }
       }
 
+      // If child is dead, also record in hmis_newborn_death table
+      if (status === "dead") {
+        try {
+          const motherObj = mothers.find((m) => m.id === selectedMotherId);
+          const motherName = motherObj?.name || "";
+          const [birthYear, birthMonth, birthDay] = birthDateAd.split("-").map(Number);
+
+          const deathPlaceMap: Record<string, string> = {
+            home: "Home",
+            institution: "Institution",
+          };
+
+          const birthConditionMap: Record<string, string> = {
+            normal: "Normal",
+            low: "LowWeight",
+            very_low: "LowWeight",
+          };
+
+          await createNewbornDeath({
+            child_id: childId,
+            mother: selectedMotherId,
+            mother_name: motherName,
+            baby_name: babyName,
+            birth_day: birthDay,
+            birth_month: birthMonth,
+            birth_year: birthYear,
+            death_day: birthDay,
+            death_month: birthMonth,
+            death_year: birthYear,
+            death_age_days: 0,
+            death_age_unit: "days",
+            birth_condition: birthConditionMap[babyWeight] || "Normal",
+            death_place: deathPlaceMap[birthPlace] || "",
+            gender: gender || undefined,
+            remarks: remarks,
+          });
+        } catch (e) {
+          console.error("Failed to create newborn death record:", e);
+        }
+      }
+
       showToast(
         t("child_form.messages.save_success", "Record saved successfully"),
       );
+      resetForm();
       if (!id && from === "profile" && selectedMotherId) {
         router.replace({
           pathname: "/dashboard/profile",
@@ -326,6 +397,27 @@ export default function ChildRegistrationForm() {
     } else {
       setNewbornCare([...newbornCare, val]);
     }
+  };
+
+  const resetForm = () => {
+    setSelectedMotherId("");
+    setBabyName("");
+    setBirthDateAd("");
+    setBirthDateBs("");
+    setBirthPlace("institution");
+    setBabyWeight("normal");
+    setStatus("alive");
+    setRemarks("");
+    setAllGiven(0);
+    setGender("");
+    setFchvPresent(0);
+    setSkilledBirthAttended(0);
+    setAsphyxiatedNewborn(0);
+    setNewbornCare([]);
+    setErrors({});
+    setMotherPregnancies([]);
+    setSuggestedPregnancy(null);
+    setHasCurrentPregnancy(false);
   };
 
   const motherOptions = mothers
@@ -623,8 +715,8 @@ export default function ChildRegistrationForm() {
           </View>
 
           {status !== "dead" && (
-            <>
-              {/* Indicators */}
+          <>
+          {/* Indicators */}
               <View className="gap-y-3">
                 <TouchableOpacity
                   activeOpacity={0.7}
@@ -735,7 +827,6 @@ export default function ChildRegistrationForm() {
               </View>
             </>
           )}
-
           {/* Remarks & Save */}
           <View className="mt-6">
             <TextArea

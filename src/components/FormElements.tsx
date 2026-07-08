@@ -1,23 +1,44 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, ActivityIndicator } from "react-native";
-import { X, ChevronDown, Save } from "lucide-react-native";
-import Dropdown from "react-native-input-select";
+import { ChevronDown, X } from "lucide-react-native";
+import { useState } from "react";
+import {
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-export const FieldLabel = ({ label, required }: { label: string, required?: boolean }) => (
+export const FieldLabel = ({
+  label,
+  required,
+}: {
+  label: string;
+  required?: boolean;
+}) => (
   <Text className="text-gray-800 text-[16px]">
     {label}
     {required && <Text className="text-red-500"> *</Text>}
   </Text>
 );
 
-export const SelectInput = ({ label, placeholder, value, options, onSelect, error, disabled }: any) => {
+export const SelectInput = ({
+  label,
+  placeholder,
+  value,
+  options,
+  onSelect,
+  error,
+  disabled,
+}: any) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [search, setSearch] = useState("");
-  
-  const selectedLabel = options.find((opt: any) => opt.value === value)?.label || placeholder;
 
-  const filteredOptions = options.filter((opt: any) => 
-    opt.label.toLowerCase().includes(search.toLowerCase())
+  const selectedLabel =
+    options.find((opt: any) => opt.value === value)?.label || placeholder;
+
+  const filteredOptions = options.filter((opt: any) =>
+    opt.label.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -32,7 +53,9 @@ export const SelectInput = ({ label, placeholder, value, options, onSelect, erro
           activeOpacity={disabled ? 1 : 0.7}
           className="flex-1 h-full px-4 justify-center"
         >
-          <Text className={`text-base ${value ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}>
+          <Text
+            className={`text-base ${value ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}
+          >
             {selectedLabel ? selectedLabel : placeholder}
           </Text>
         </TouchableOpacity>
@@ -40,13 +63,19 @@ export const SelectInput = ({ label, placeholder, value, options, onSelect, erro
         {!disabled && (
           <View className="flex-row items-center pr-3">
             {value ? (
-              <TouchableOpacity onPress={() => onSelect("")} className="mr-2 p-1">
+              <TouchableOpacity
+                onPress={() => onSelect("")}
+                className="mr-2 p-1"
+              >
                 <View className="bg-gray-100 rounded-full p-[3px]">
                   <X size={12} color="#64748B" strokeWidth={3} />
                 </View>
               </TouchableOpacity>
             ) : null}
-            <TouchableOpacity onPress={() => setModalVisible(true)} className="p-1">
+            <TouchableOpacity
+              onPress={() => setModalVisible(true)}
+              className="p-1"
+            >
               <ChevronDown size={18} color="#9CA3AF" />
             </TouchableOpacity>
           </View>
@@ -69,7 +98,9 @@ export const SelectInput = ({ label, placeholder, value, options, onSelect, erro
             className="bg-white w-full max-h-[70%] rounded-[32px] overflow-hidden"
           >
             <View className="p-6 border-b border-gray-100 flex-row items-center justify-between">
-              <Text className="text-xl font-semibold text-[#1E293B]">{label || "Select Option"}</Text>
+              <Text className="text-xl font-semibold text-[#1E293B]">
+                {label || "Select Option"}
+              </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <X size={24} color="#64748B" />
               </TouchableOpacity>
@@ -99,21 +130,33 @@ export const SelectInput = ({ label, placeholder, value, options, onSelect, erro
                       value === opt.value ? "bg-blue-50" : "transparent"
                     }`}
                   >
-                    <View className={`w-5 h-5 rounded-full border-2 mr-3 items-center justify-center ${
-                      value === opt.value ? "border-primary bg-primary" : "border-gray-300"
-                    }`}>
-                      {value === opt.value && <View className="w-2 h-2 rounded-full bg-white" />}
+                    <View
+                      className={`w-5 h-5 rounded-full border-2 mr-3 items-center justify-center ${
+                        value === opt.value
+                          ? "border-primary bg-primary"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {value === opt.value && (
+                        <View className="w-2 h-2 rounded-full bg-white" />
+                      )}
                     </View>
-                    <Text className={`text-base flex-1 ${
-                      value === opt.value ? "text-primary font-semibold" : "text-[#1E293B] font-medium"
-                    }`}>
+                    <Text
+                      className={`text-base flex-1 ${
+                        value === opt.value
+                          ? "text-primary font-semibold"
+                          : "text-[#1E293B] font-medium"
+                      }`}
+                    >
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
                 ))
               ) : (
                 <View className="py-10 items-center">
-                  <Text className="text-gray-400 font-semibold">No options found</Text>
+                  <Text className="text-gray-400 font-semibold">
+                    No options found
+                  </Text>
                 </View>
               )}
             </ScrollView>
@@ -121,7 +164,11 @@ export const SelectInput = ({ label, placeholder, value, options, onSelect, erro
         </TouchableOpacity>
       </Modal>
 
-      {error ? <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{error}</Text> : null}
+      {error ? (
+        <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 };
@@ -171,7 +218,7 @@ export const BoxInput = ({
       />
     </View>
     {helperText && !error ? (
-      <Text className="text-gray-600 text-[12px] mt-1 ml-1 leading-4 font-normal">
+      <Text className="text-gray-600 text-[12px] italic mt-1 ml-1 leading-4 font-normal">
         {helperText}
       </Text>
     ) : null}
@@ -182,4 +229,3 @@ export const BoxInput = ({
     ) : null}
   </View>
 );
-

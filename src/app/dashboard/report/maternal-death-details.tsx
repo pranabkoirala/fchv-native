@@ -12,7 +12,7 @@ import {
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, StatusBar, Text, View } from "react-native";
+import { BackHandler, ScrollView, StatusBar, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import municipalitiesData from "../../../assets/json/municipalities.json";
 import CustomHeader from "../../../components/CustomHeader";
@@ -24,7 +24,7 @@ import {
 import { MaternalDeathStoreType } from "../../../hooks/database/types/maternalDeathModal";
 
 export default function MaternalDeathDetailsScreen() {
-  const { id } = useLocalSearchParams();
+  const { id, from, fromTab } = useLocalSearchParams<{ id: string; from?: string; fromTab?: string }>();
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -33,6 +33,32 @@ export default function MaternalDeathDetailsScreen() {
     null,
   );
   const [loading, setLoading] = useState(true);
+
+  const handleBack = () => {
+    if (from) {
+      router.replace({
+        pathname: from,
+        params: fromTab ? { tab: fromTab } : undefined,
+      } as any);
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/dashboard/report");
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+    return () => backHandler.remove();
+  }, [from, fromTab, router]);
 
   useEffect(() => {
     async function loadData() {
@@ -61,7 +87,7 @@ export default function MaternalDeathDetailsScreen() {
         <StatusBar barStyle="dark-content" />
         <CustomHeader
           title={t("reports.maternal_death_report.title")}
-          onBackPress={() => router.back()}
+          onBackPress={handleBack}
         />
         <ReportDetailsSkeleton />
       </SafeAreaView>
@@ -73,7 +99,7 @@ export default function MaternalDeathDetailsScreen() {
       <SafeAreaView className="flex-1 bg-slate-50">
         <CustomHeader
           title={t("reports.maternal_death_report.title")}
-          onBackPress={() => router.back()}
+          onBackPress={handleBack}
         />
         <View className="flex-1 items-center justify-center p-4">
           <Text className="text-slate-500 font-medium">
@@ -181,7 +207,7 @@ export default function MaternalDeathDetailsScreen() {
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title="Maternal Death Details"
-        onBackPress={() => router.back()}
+        onBackPress={handleBack}
       />
 
       <ScrollView

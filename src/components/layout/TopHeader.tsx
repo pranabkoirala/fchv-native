@@ -4,7 +4,6 @@ import {
   getLocalFchvProfile,
 } from "@/hooks/database/models/FchvProfileModel";
 import { useRouter } from "expo-router";
-import { CircleUserRound } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
@@ -42,7 +41,7 @@ const TopHeader = () => {
   const orgName = profile?.organization?.name || "";
 
   return (
-    <View className="px-5 pt-10 pb-3 flex-row items-center justify-between bg-white border-b border-slate-100">
+    <View className="px-5 pt-14 pb-3 flex-row items-center justify-between bg-white border-b border-slate-100">
       <View className="flex-row items-center flex-1">
         <View className="bg-white p-1 rounded-full mr-3">
           <Image
@@ -70,11 +69,11 @@ const TopHeader = () => {
                   className="text-slate-500 text-[12px] font-medium mt-0.5"
                   numberOfLines={1}
                 >
-                  {orgName} Hospital
+                  {orgName} {t("common.hospital")}
                 </Text>
               ) : (
                 <Text className="text-slate-400 text-[11px] font-medium mt-0.5">
-                  {language === "np" ? "स्वास्थ्य स्वयंसेविका" : "FCHV"}
+                  {t("header.fchv")}
                 </Text>
               )}
             </>
@@ -87,12 +86,10 @@ const TopHeader = () => {
         onPress={() => router.push("/dashboard/fchv-profile")}
         className={`w-9 h-9 rounded-full items-center justify-center ${!loading && profile ? "bg-slate-700" : "bg-slate-100"}`}
       >
-        {!loading && profile ? (
+        {!loading && profile && (
           <Text className="text-white text-[13px] font-bold">
             {getInitials(fchvName)}
           </Text>
-        ) : (
-          <CircleUserRound size={22} color="#475569" strokeWidth={2} />
         )}
       </TouchableOpacity>
     </View>

@@ -14,7 +14,12 @@
     "terms_text": "By logging in, you agree to our",
     "terms_link": "Terms of Practice",
     "error_required": "User ID and Password are required.",
-    "error_invalid": "Invalid User ID or Password"
+    "error_invalid": "Invalid User ID or Password",
+    "error_server": "Server error ({{status}}). Please try again later.",
+    "error_network": "Cannot reach the server. Check your internet connection.",
+    "error_generic": "Something went wrong. Please try again.",
+    "sync_failed": "Login successful, but database sync failed. Please try again.",
+    "success": "Login successful"
   },
   "common": {
     "english": "English",
@@ -30,7 +35,8 @@
     "unnamed_mother": "Unnamed Mother",
     "loading": "Loading...",
     "mother": "Mother",
-    "child": "Child"
+    "child": "Child",
+    "hospital": "Hospital"
   },
   "dashboard": {
     "title": "FCHV Dashboard",
@@ -78,6 +84,7 @@
       "child_age": "Child Age",
       "months": "months",
       "nutrition_names": "Add Nutrition",
+      "nutrition_count": "Number of items",
       "add_nutrition": "Add Nutrition Item",
       "nutrition_placeholder": "e.g. Vitamin A, Iron Syrup",
       "balvita_packets": "Number of Balvita Packets",
@@ -89,6 +96,7 @@
       "select_mother_first": "Please select a mother first",
       "add_nutrition_first": "Please add at least one nutrition item",
       "balvita_required": "Please enter number of Balvita packets",
+      "mother_subtitle": "Child should be 6-23 months",
       "child_not_found": "No eligible child (under 18 months) found for this mother",
       "mother_not_delivered": "This mother has no delivery records",
       "child_age_group": "Child Age Group",
@@ -780,6 +788,8 @@
     "success": "Maternal death record updated successfully.",
     "error": "Failed to save record.",
     "error_title": "Error",
+    "specify_condition": "Specify condition...",
+    "specify_condition_error": "Please specify.",
     "child_condition": "Child Condition",
     "child_alive": "Alive",
     "child_dead": "Dead"
@@ -838,7 +848,10 @@
     "save": "Save Record",
     "success": "Death record saved successfully.",
     "error": "Failed to save record.",
-    "error_title": "Error"
+    "error_title": "Error",
+    "child_status": "Child Status",
+    "alive": "Alive",
+    "dead": "Dead"
   },
   "add_mother": {
     "title_new": "Registration",
@@ -1251,7 +1264,21 @@
     "gender": "Gender",
     "boy": "Boy",
     "girl": "Girl",
-    "dob_label": "Birth Date"
+    "dob_label": "Birth Date",
+    "vaccination": {
+      "title": "Vaccination Details",
+      "vaccines_taken": "{{taken}}/{{total}} vaccines taken",
+      "no_vaccinations": "No vaccinations recorded",
+      "no_vaccinations_yet": "No vaccinations recorded yet.",
+      "fully_vaccinated": "Fully Vaccinated",
+      "show_all": "Show All ({{count}})",
+      "all_taken": "All Vaccines Taken",
+      "add_vaccination": "Add Vaccination",
+      "date_label": "Date:",
+      "date_given": "Date Given:",
+      "vaccine_list": "Vaccine List",
+      "not_old_enough": "Child not yet {{time}} old"
+    }
   },
   "child_form": {
     "edit_child": "Edit Child",
@@ -1374,6 +1401,8 @@
     "edit_record": "Edit Record",
     "add_record": "Add Record",
     "add_another_record": "Add Another Record",
+    "mother_register_title": "Mother Registration Counseling",
+    "mother_register_subtitle": "Record counseling provided during mother registration",
     "prenatal_register_title": "Pregnancy Registration Counseling",
     "prenatal_register_subtitle": "Record counseling provided during registration",
     "skip": "Skip",

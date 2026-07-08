@@ -29,7 +29,9 @@ export async function getFamilyPlanningByMother(
   const params: any[] = [mother];
 
   if (pregnancy_id) {
-    query += ` AND pregnancy_id = ?`;
+    query += ` AND (pregnancy_id IS NULL OR pregnancy_id = ?)`;
+    params.push(pregnancy_id);
+    query += ` ORDER BY CASE WHEN pregnancy_id = ? THEN 0 ELSE 1 END`;
     params.push(pregnancy_id);
   } else {
     query += ` AND pregnancy_id IS NULL`;

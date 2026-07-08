@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 85;
+export const SCHEMA_VERSION = 86;
 
 type Migration = {
   version: number;
@@ -2753,6 +2753,46 @@ export const MIGRATIONS: Migration[] = [
         );
       } catch (e) {
         console.log("Migration 85: seeding sync for abortion failed:", e);
+      }
+    },
+  },
+  {
+    version: 86,
+    up: async (db) => {
+      // 1. child_nutrition table column updates
+      try {
+        const hasMotherId = await tableHasColumn(db, "child_nutrition", "mother_id");
+        if (hasMotherId) {
+          await db.execAsync(`ALTER TABLE child_nutrition RENAME COLUMN mother_id TO mother;`);
+        }
+      } catch (e) {
+        console.log("Migration 86: renaming mother_id to mother in child_nutrition failed:", e);
+      }
+      try {
+        const hasChildId = await tableHasColumn(db, "child_nutrition", "child_id");
+        if (hasChildId) {
+          await db.execAsync(`ALTER TABLE child_nutrition RENAME COLUMN child_id TO child;`);
+        }
+      } catch (e) {
+        console.log("Migration 86: renaming child_id to child in child_nutrition failed:", e);
+      }
+
+      // 2. child_nutrition_staging table column updates
+      try {
+        const hasStagingMotherId = await tableHasColumn(db, "child_nutrition_staging", "mother_id");
+        if (hasStagingMotherId) {
+          await db.execAsync(`ALTER TABLE child_nutrition_staging RENAME COLUMN mother_id TO mother;`);
+        }
+      } catch (e) {
+        console.log("Migration 86: renaming mother_id to mother in child_nutrition_staging failed:", e);
+      }
+      try {
+        const hasStagingChildId = await tableHasColumn(db, "child_nutrition_staging", "child_id");
+        if (hasStagingChildId) {
+          await db.execAsync(`ALTER TABLE child_nutrition_staging RENAME COLUMN child_id TO child;`);
+        }
+      } catch (e) {
+        console.log("Migration 86: renaming child_id to child in child_nutrition_staging failed:", e);
       }
     },
   },
