@@ -62,7 +62,7 @@
       "title": "Quick Access",
       "register_mother": "Register Mother",
       "register_child": "Register Child",
-      "add_adolescent": "Adolescent Girls IFA",
+      "add_adolescent": "Adolescent",
       "pregnant_woman": "Pregnant Woman",
       "newborn": "Newborn Child",
       "pnc_visit": "Postnatal Visit",
@@ -130,7 +130,7 @@
       "child_deaths": "Child Deaths",
       "mothers_meetings": "Mothers Meetings",
       "pending_tasks": "Pending Tasks",
-      "adolescents": "Iadolescents"
+      "adolescents": "Adolescents"
     },
     "charts": {
       "monthly_trend": "Monthly Trend",
@@ -976,8 +976,8 @@
       "years_placeholder": "Years",
       "lmp": "Last Menstrual Period (LMP) - BS",
       "lmp_placeholder": "Select LMP",
-      "gravida": "Gravida (Pregnancies)",
-      "parity": "Parity (Live Births)",
+      "gravida": "Gravida",
+      "parity": "Parity",
       "emergency_contact": "Emergency Contact Number"
     },
     "buttons": {
@@ -1092,6 +1092,7 @@
     "ward_region": "Ward 4, Kathmandu Region",
     "preferences": "Preferences & Settings",
     "language": "Language",
+    "language_selector": "Language Selector",
     "language_sub": "Choose your preferred language",
     "data_sync": "Data Sync",
     "last_synced": "Last synced: Today, 10:30 AM",

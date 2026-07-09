@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Modal, Pressable } from "react-native";
-import { Globe, ChevronDown, Check } from "lucide-react-native";
-import { useLanguage } from "../context/LanguageContext";
-import { twMerge } from "tailwind-merge";
+import { Check, ChevronDown, Globe } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { twMerge } from "tailwind-merge";
 import Colors from "../constants/Colors";
-
+import { useLanguage } from "../context/LanguageContext";
 
 export default function LanguageSwitcher() {
   const { language, setLanguage } = useLanguage();

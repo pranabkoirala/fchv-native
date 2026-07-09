@@ -1,33 +1,53 @@
 export const JATI_CODES = [
-  { code: "1", name: "दलित (Dalit)" },
-  { code: "2", name: "जनजाति (Janajati)" },
-  { code: "3", name: "मधेसी (Madhesi)" },
-  { code: "4", name: "मुस्लिम (Muslim)" },
-  { code: "5", name: "ब्राह्मण/छेत्री (Brahmin/Chhetri)" },
-  { code: "6", name: "अन्य (Other)" },
+  { code: "1", np_label: "दलित", en_label: "Dalit" },
+  { code: "2", np_label: "जनजाति", en_label: "Janajati" },
+  { code: "3", np_label: "मधेसी", en_label: "Madhesi" },
+  { code: "4", np_label: "मुस्लिम", en_label: "Muslim" },
+  { code: "5", np_label: "ब्राह्मण/छेत्री", en_label: "Brahmin/Chhetri" },
+  { code: "6", np_label: "अन्य", en_label: "Other" },
 ];
 
 export const EDUCATION_LEVELS = [
   {
     value: "no_formal",
-    label: "कुनै औपचारिक शिक्षा छैन (No Formal Education)",
+    np_label: "कुनै औपचारिक शिक्षा छैन",
+    en_label: "No Formal Education",
   },
-  { value: "primary", label: "प्राथमिक तह – कक्षा १–५ (Primary Level)" },
+  {
+    value: "primary",
+    np_label: "प्राथमिक तह – कक्षा १–५",
+    en_label: "Primary Level",
+  },
   {
     value: "lower_secondary",
-    label: "निम्न माध्यमिक तह – कक्षा ६–८ (Lower Secondary Level)",
+    np_label: "निम्न माध्यमिक तह – कक्षा ६–८",
+    en_label: "Lower Secondary Level",
   },
   {
     value: "secondary",
-    label: "माध्यमिक तह – कक्षा ९–१० (Secondary Level / SEE)",
+    np_label: "माध्यमिक तह – कक्षा ९–१०",
+    en_label: "Secondary Level / SEE",
   },
   {
     value: "higher_secondary",
-    label: "उच्च माध्यमिक तह – कक्षा ११–१२ (+2 / Higher Secondary)",
+    np_label: "उच्च माध्यमिक तह – कक्षा ११–१२",
+    en_label: "Higher Secondary (+2)",
   },
-  { value: "bachelor", label: "स्नातक तह (Bachelor’s Degree)" },
-  { value: "master", label: "स्नातकोत्तर तह (Master’s Degree)" },
-  { value: "doctoral", label: "विद्यावारिधि तह (Doctoral / PhD)" },
+  {
+    value: "bachelor",
+    np_label: "स्नातक तह",
+    en_label: "Bachelor’s Degree",
+  },
+  {
+    value: "master",
+    np_label: "स्नातकोत्तर तह",
+    en_label: "Master’s Degree",
+  },
+  {
+    value: "doctoral",
+    np_label: "विद्यावारिधि तह",
+    en_label: "Doctoral / PhD",
+  },
 ];
 
 export const BLOOD_GROUP_OPTIONS = [
@@ -44,82 +64,71 @@ export const BLOOD_GROUP_OPTIONS = [
 export const EDUCATION_OPTIONS = [
   {
     value: "No formal education",
-    labelKey:
-      "home.profile.complete-profile.education-options.no-formal-education",
-    label: "No formal education",
+    np_label: "कुनै औपचारिक शिक्षा छैन",
+    en_label: "No formal education",
   },
   {
     value: "Primary",
-    labelKey: "home.profile.complete-profile.education-options.primary",
-    label: "Primary",
+    np_label: "प्राथमिक",
+    en_label: "Primary",
   },
   {
     value: "Secondary",
-    labelKey: "home.profile.complete-profile.education-options.secondary",
-    label: "Secondary",
+    np_label: "माध्यमिक",
+    en_label: "Secondary",
   },
   {
     value: "Higher Secondary",
-    labelKey:
-      "home.profile.complete-profile.education-options.higher-secondary",
-    label: "Higher Secondary",
+    np_label: "उच्च माध्यमिक",
+    en_label: "Higher Secondary",
   },
   {
     value: "Bachelor or above",
-    labelKey:
-      "home.profile.complete-profile.education-options.bachelor-or-above",
-    label: "Bachelor or above",
+    np_label: "स्नातक वा सोभन्दा माथि",
+    en_label: "Bachelor or above",
   },
 ];
 
 export const MONTHLY_INCOME_OPTIONS = [
   {
     value: "below_10000",
-    label: "Below 10,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.below_10000",
+    np_label: "१०,००० भन्दा कम",
+    en_label: "Below 10,000",
   },
   {
     value: "10000_20000",
-    label: "10,000 - 20,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.10000_20000",
+    np_label: "१०,००० - २०,०००",
+    en_label: "10,000 - 20,000",
   },
   {
     value: "20001_30000",
-    label: "20,001 - 30,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.20001_30000",
+    np_label: "२०,००१ - ३०,०००",
+    en_label: "20,001 - 30,000",
   },
   {
     value: "30001_40000",
-    label: "30,001 - 40,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.30001_40000",
+    np_label: "३०,००१ - ४०,०००",
+    en_label: "30,001 - 40,000",
   },
   {
     value: "40001_50000",
-    label: "40,001 - 50,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.40001_50000",
+    np_label: "४०,००१ - ५०,०००",
+    en_label: "40,001 - 50,000",
   },
   {
     value: "50001_75000",
-    label: "50,001 - 75,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.50001_75000",
+    np_label: "५०,००१ - ७५,०००",
+    en_label: "50,001 - 75,000",
   },
   {
     value: "75001_100000",
-    label: "75,001 - 100,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.75001_100000",
+    np_label: "७५,००१ - १,००,०००",
+    en_label: "75,001 - 100,000",
   },
   {
     value: "above_100000",
-    label: "Above 100,000",
-    labelKey:
-      "home.profile.complete-profile.monthly-income-options.above_100000",
+    np_label: "१,००,००० भन्दा बढी",
+    en_label: "Above 100,000",
   },
 ];
 

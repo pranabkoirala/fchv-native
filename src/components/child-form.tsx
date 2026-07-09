@@ -356,14 +356,10 @@ export default function ChildRegistrationForm() {
         t("child_form.messages.save_success", "Record saved successfully"),
       );
       resetForm();
-      if (!id && from === "profile" && selectedMotherId) {
-        router.replace({
-          pathname: "/dashboard/profile",
-          params: { id: selectedMotherId },
-        } as any);
-      } else {
-        router.back();
-      }
+      router.replace({
+        pathname: "/dashboard/visit",
+        params: { motherId: selectedMotherId, visitType: "PNC" },
+      } as any);
     } catch (error) {
       console.error(error);
       Alert.alert(

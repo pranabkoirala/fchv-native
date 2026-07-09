@@ -245,7 +245,7 @@ export default function CompleteForm({
         is_synced: false,
       });
 
-      showToast("Mother details updated successfully");
+      showToast(t("complete_form.messages.update_success"));
       router.back();
     } catch (err) {
       console.error("Error saving form:", err);
@@ -502,7 +502,7 @@ export default function CompleteForm({
                 return m
                   ? language === "np"
                     ? `${m.name_ne}`
-                    : `(${m.name_ne})`
+                    : `${m.name_en}`
                   : mid;
               }}
               error={errors.municipality}
@@ -554,7 +554,7 @@ export default function CompleteForm({
               selectedValue={ethnicity}
               options={JATI_CODES.map((j) => ({
                 value: j.code,
-                label: j.name,
+                label: language === "np" ? j.np_label : j.en_label,
               }))}
               onValueChange={setEthnicity}
             />
@@ -563,7 +563,10 @@ export default function CompleteForm({
               label={t("complete_form.fields.education")}
               placeholder={t("complete_form.fields.education")}
               selectedValue={education}
-              options={EDUCATION_LEVELS}
+              options={EDUCATION_LEVELS.map((e) => ({
+                value: e.value,
+                label: language === "np" ? e.np_label : e.en_label,
+              }))}
               onValueChange={setEducation}
             />
 
@@ -579,7 +582,10 @@ export default function CompleteForm({
               label={t("complete_form.fields.income")}
               placeholder={t("complete_form.fields.income")}
               selectedValue={income}
-              options={MONTHLY_INCOME_OPTIONS}
+              options={MONTHLY_INCOME_OPTIONS.map((i) => ({
+                value: i.value,
+                label: language === "np" ? i.np_label : i.en_label,
+              }))}
               onValueChange={setIncome}
             />
 

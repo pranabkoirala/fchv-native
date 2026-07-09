@@ -1000,8 +1000,7 @@ export default function VisitScreen() {
     .filter((m) => !m.is_dead)
     .filter((m) => {
       if (visitType === "ANC") return pregnantMotherIds.has(m.id);
-      if (visitType === "PNC")
-        return deliveredMotherIds.has(m.id) && !pregnantMotherIds.has(m.id);
+      if (visitType === "PNC") return deliveredMotherIds.has(m.id);
       return true;
     })
     .map((m) => {

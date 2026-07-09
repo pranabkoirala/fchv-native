@@ -202,7 +202,7 @@ export const BoxInput = ({
       </Text>
     )}
     <View
-      className={`h-14 flex-row items-center rounded-xl px-4 border ${
+      className={`h-14 flex-row items-center rounded-xl px-4 border mt-2 ${
         error ? "border-rose-400 bg-rose-50" : "border-slate-200 bg-white"
       }`}
     >

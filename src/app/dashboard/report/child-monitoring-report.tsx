@@ -92,7 +92,7 @@ export default function ChildMonitoringReportScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC]">
+    <SafeAreaView className="flex-1 bg-[#fff]">
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title={t("reports.child_monitoring_report.title")}

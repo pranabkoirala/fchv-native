@@ -1,8 +1,14 @@
-import NavigationLayout from "@/components/NavigationLayout";
+import CustomHeader from "@/components/CustomHeader";
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Animated from "react-native-reanimated";
 import { useLanguage } from "../../context/LanguageContext";
 
@@ -41,10 +47,11 @@ export default function ChangeLanguageScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <NavigationLayout
+    <View className="flex-1 bg-white pt-10">
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+      <CustomHeader
         onBackPress={() => router.push("/dashboard/fchv-profile")}
-        title="Language Selector"
+        title={t("profile_settings.language_selector")}
       />
       <ScrollView
         className="flex-1 px-5"

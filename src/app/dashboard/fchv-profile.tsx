@@ -145,7 +145,7 @@ export default function UserProfileScreen() {
     Alert.alert(
       t("profile_settings.logout_alert_title") || "Log Out",
       t("profile_settings.logout_alert_msg") ||
-      "Are you sure you want to log out? Ensure all data is synced.",
+        "Are you sure you want to log out? Ensure all data is synced.",
       [
         { text: t("profile_settings.cancel") || "Cancel", style: "cancel" },
         {
@@ -199,7 +199,7 @@ export default function UserProfileScreen() {
       Alert.alert(
         t("profile_settings.export_error_title") || "Export Failed",
         t("profile_settings.export_error_msg") ||
-        "Could not export database data.",
+          "Could not export database data.",
       );
     }
   };
@@ -266,11 +266,11 @@ export default function UserProfileScreen() {
     name === "—"
       ? ""
       : name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
   const userType = profile?.user?.user_type || "FCHV";
   const username = profile?.user?.username || "";
 
@@ -290,7 +290,7 @@ export default function UserProfileScreen() {
 
   return (
     <View className="flex-1 bg-[#F8FAFC] pb-32">
-      <StatusBar backgroundColor="#F8FAFC" barStyle="dark-content" />
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
       {isExporting && (
         <Animated.View
@@ -532,29 +532,29 @@ export default function UserProfileScreen() {
 
               {(profile.organization.contact_name ||
                 profile.organization.contact_phone) && (
-                  <View className="bg-slate-50 rounded-xl p-3 mt-3.5 gap-2 border border-slate-100">
-                    {profile.organization.contact_name && (
-                      <View className="flex-row justify-between items-center">
-                        <Text className="text-[14px] text-slate-500">
-                          {t("profile_settings.contact_person")}
-                        </Text>
-                        <Text className="text-[14px] font-semibold text-slate-700">
-                          {profile.organization.contact_name}
-                        </Text>
-                      </View>
-                    )}
-                    {profile.organization.contact_phone && (
-                      <View className="flex-row justify-between items-center">
-                        <Text className="text-[14px] text-slate-500">
-                          {t("profile_settings.phone")}
-                        </Text>
-                        <Text className="text-[14px] font-semibold text-slate-700">
-                          {profile.organization.contact_phone}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
+                <View className="bg-slate-50 rounded-xl p-3 mt-3.5 gap-2 border border-slate-100">
+                  {profile.organization.contact_name && (
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-[14px] text-slate-500">
+                        {t("profile_settings.contact_person")}
+                      </Text>
+                      <Text className="text-[14px] font-semibold text-slate-700">
+                        {profile.organization.contact_name}
+                      </Text>
+                    </View>
+                  )}
+                  {profile.organization.contact_phone && (
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-[14px] text-slate-500">
+                        {t("profile_settings.phone")}
+                      </Text>
+                      <Text className="text-[14px] font-semibold text-slate-700">
+                        {profile.organization.contact_phone}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           </Animated.View>
         )}
@@ -859,7 +859,7 @@ export default function UserProfileScreen() {
           }}
         >
           <Pressable
-            onPress={() => { }}
+            onPress={() => {}}
             style={{
               backgroundColor: "white",
               borderTopLeftRadius: 28,
@@ -880,14 +880,14 @@ export default function UserProfileScreen() {
                     <Text className="text-[19px] font-semibold text-slate-800">
                       {pendingExportKey === "collected_data"
                         ? t("profile_settings.select_collected_period") ||
-                        "Select Period"
+                          "Select Period"
                         : t("profile_settings.select_month")}
                     </Text>
                     <Text className="text-[13px] text-slate-500 font-medium mt-0.5">
                       {pendingExportKey === "collected_data"
                         ? t(
-                          "profile_settings.select_collected_period_subtitle",
-                        ) || "Choose a Nepali year or a single month"
+                            "profile_settings.select_collected_period_subtitle",
+                          ) || "Choose a Nepali year or a single month"
                         : t("profile_settings.select_month_subtitle")}
                     </Text>
                   </View>
@@ -921,8 +921,9 @@ export default function UserProfileScreen() {
                     }}
                   >
                     <Text
-                      className={`text-[15px] font-semibold ${isSelected ? "text-white" : "text-slate-600"
-                        }`}
+                      className={`text-[15px] font-semibold ${
+                        isSelected ? "text-white" : "text-slate-600"
+                      }`}
                     >
                       {language === "np"
                         ? convertToNepaliNumber(yr)
@@ -953,14 +954,14 @@ export default function UserProfileScreen() {
                   <Text className="text-[16px] font-semibold text-slate-800">
                     {pendingExportKey === "collected_data"
                       ? t("profile_settings.download_yearly_collected_data") ||
-                      "Download Yearly Data"
+                        "Download Yearly Data"
                       : t("profile_settings.download_all_data")}
                   </Text>
                   <Text className="text-[13px] text-slate-500 font-medium mt-0.5">
                     {pendingExportKey === "collected_data"
                       ? t(
-                        "profile_settings.download_yearly_collected_data_subtitle",
-                      ) || "Export all months for the selected Nepali year"
+                          "profile_settings.download_yearly_collected_data_subtitle",
+                        ) || "Export all months for the selected Nepali year"
                       : t("profile_settings.download_all_data_subtitle")}
                   </Text>
                 </View>

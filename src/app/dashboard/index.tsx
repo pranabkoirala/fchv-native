@@ -1056,8 +1056,7 @@ export default function DashboardScreen() {
               />
             </View>
 
-            {/* Health Summary */}
-            <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
+            {/* <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
               <View
                 style={{
                   flexDirection: "row",
@@ -1113,7 +1112,7 @@ export default function DashboardScreen() {
                 label={t("dashboard.health_summary.29_to_59_months")}
                 delay={200}
               />
-            </View>
+            </View> */}
 
             {/* Recent Activity */}
             {recentActivity.length > 0 && (
