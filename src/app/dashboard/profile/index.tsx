@@ -1,6 +1,5 @@
 import { Skeleton } from "@/components/common/Skeleton";
 import { useLanguage } from "@/context/LanguageContext";
-import { useHealthIssues } from "@/store/healthIssuesStore";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
   AlertTriangle,
@@ -12,7 +11,7 @@ import {
   Plus,
   User,
 } from "lucide-react-native";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   BackHandler,
@@ -158,21 +157,6 @@ const SectionTitle = ({
   </View>
 );
 
-const VisitBadge = ({ label, val }: any) => (
-  <View
-    className={`px-3 py-3 rounded-lg flex-row items-center justify-between border mb-3 w-[47%] ${val ? "bg-emerald-50/30 border-emerald-200" : "bg-white border-slate-200"}`}
-  >
-    <Text
-      className={`text-[15px] flex-1 mr-2 ${val ? "text-emerald-800 font-medium" : "text-slate-700 font-medium"}`}
-    >
-      {label}
-    </Text>
-    <View
-      className={`w-1.5 h-1.5 rounded-full ${val ? "bg-emerald-500" : "bg-slate-200"}`}
-    />
-  </View>
-);
-
 type DateFormat = "BS" | "AD";
 
 const normalizeDateString = (dateStr: string | null | undefined) => {
@@ -306,7 +290,6 @@ export default function HmisRecordProfileScreen() {
   }>();
   const { showToast } = useToast();
 
-  const [showHealthIssues, setShowHealthIssues] = useHealthIssues(id || "");
   const [record, setRecord] = useState<HmisRecordStoreType | null>(null);
   const [supplementsRecord, setSupplementsRecord] =
     useState<SupplementStoreType | null>(null);
@@ -317,7 +300,6 @@ export default function HmisRecordProfileScreen() {
   const [abortionRecord, setAbortionRecord] =
     useState<AbortionStoreType | null>(null);
   const [children, setChildren] = useState<any[]>([]);
-  const [allChildren, setAllChildren] = useState<any[]>([]);
   const [mother, setMother] = useState<any>(null);
   const [pregnancy, setPregnancy] = useState<any>(null);
 
@@ -329,7 +311,6 @@ export default function HmisRecordProfileScreen() {
   const [pncSlotIndex, setPncSlotIndex] = useState(0);
   const [selectedPncVisit, setSelectedPncVisit] =
     useState<PncVisitStoreType | null>(null);
-  const [isSavingPnc, setIsSavingPnc] = useState(false);
 
   const [maternalDeathModalVisible, setMaternalDeathModalVisible] =
     useState(false);
@@ -337,15 +318,18 @@ export default function HmisRecordProfileScreen() {
     useState(false);
 
   // children linked to the CURRENT pregnancy
-  const currentPregnancyChildren = children.filter(
-    (c) => pregnancy && c.pregnancy_id === pregnancy.id,
+  const currentPregnancyChildren = useMemo(
+    () => children.filter((c) => pregnancy && c.pregnancy_id === pregnancy.id),
+    [children, pregnancy],
   );
   // children not linked to current pregnancy (direct or old pregnancies)
-  const otherChildren = allChildren.filter(
-    (c) => !pregnancy || c.pregnancy_id !== pregnancy.id,
+  const otherChildren = useMemo(
+    () =>
+      children.filter((c) => !pregnancy || c.pregnancy_id !== pregnancy.id),
+    [children, pregnancy],
   );
 
-  const totalChildCount = allChildren.length;
+  const totalChildCount = children.length;
 
   const loadSupplements = async (motherId: string) => {
     try {
@@ -430,7 +414,6 @@ export default function HmisRecordProfileScreen() {
               setMother(mother);
               setPregnancy(pregnancy);
               setChildren(allChildrenList);
-              setAllChildren(allChildrenList);
               setPncVisits(pncVisitsLocal);
               const deathData = await getMaternalDeathByMother(mother.id);
               setExistingDeathRecord(deathData);
@@ -1140,7 +1123,6 @@ export default function HmisRecordProfileScreen() {
               existingVisits={pncVisits}
               editingVisit={selectedPncVisit}
               onDone={async (bsDate, place) => {
-                setIsSavingPnc(true);
                 try {
                   if (selectedPncVisit?.id) {
                     await updatePncVisit(selectedPncVisit.id, {
@@ -1178,8 +1160,6 @@ export default function HmisRecordProfileScreen() {
                     t("profile.pnc_modal.save_failed_title"),
                     t("profile.pnc_modal.save_failed"),
                   );
-                } finally {
-                  setIsSavingPnc(false);
                 }
               }}
             />

@@ -78,7 +78,7 @@ export default function ChildManagementScreen() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const loadInfants = async () => {
+  const loadInfants = useCallback(async () => {
     try {
       const data = await getAllInfantMonitorings();
       setInfants(data);
@@ -87,12 +87,12 @@ export default function ChildManagementScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       loadInfants();
-    }, [])
+    }, [loadInfants])
   );
 
   const filteredInfants = useMemo(() => {
@@ -112,19 +112,22 @@ export default function ChildManagementScreen() {
     <ChildCard item={item} language={language} t={t} onPress={handleProfileClick} />
   ), [handleProfileClick, language, t]);
 
-  const listHeader = (
-    <View className="px-5 mt-3 flex-row items-center gap-3">
-      <View className="flex-1 flex-row items-center bg-white px-4 h-14 rounded-md border border-gray-100">
-        <Search size={20} color="#94A3B8" />
-        <TextInput
-          className="flex-1 ml-3 text-base text-[#1E293B]"
-          placeholder={t("child_page.search_placeholder")}
-          placeholderTextColor="#94A3B8"
-          value={search}
-          onChangeText={setSearch}
-        />
+  const listHeader = useMemo(
+    () => (
+      <View className="px-5 mt-3 flex-row items-center gap-3">
+        <View className="flex-1 flex-row items-center bg-white px-4 h-14 rounded-md border border-gray-100">
+          <Search size={20} color="#94A3B8" />
+          <TextInput
+            className="flex-1 ml-3 text-base text-[#1E293B]"
+            placeholder={t("child_page.search_placeholder")}
+            placeholderTextColor="#94A3B8"
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
       </View>
-    </View>
+    ),
+    [search, t],
   );
 
   return (

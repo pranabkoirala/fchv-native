@@ -334,7 +334,7 @@ const RecordCard = memo(function RecordCard({
 
 export default function ReportScreen() {
   const router = useRouter();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   const { tab } = useGlobalSearchParams<{ tab: TabKey }>();
   const [activeTab, setActiveTab] = useState<TabKey>(tab || "all");
@@ -374,15 +374,21 @@ export default function ReportScreen() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [adolescents, setAdolescents] = useState<AdolescentIfaStoreType[]>([]);
 
-  const [motherNameMap, setMotherNameMap] = useState<Record<string, string>>(
-    {},
-  );
-  const [motherWardMap, setMotherWardMap] = useState<Record<string, string>>(
-    {},
-  );
-  const [motherMunicipalityMap, setMotherMunicipalityMap] = useState<
-    Record<string, string>
-  >({});
+  const { motherNameMap, motherWardMap, motherMunicipalityMap } = useMemo(() => {
+    const nameMap: Record<string, string> = {};
+    const wardMap: Record<string, string> = {};
+    const municipalityMap: Record<string, string> = {};
+    mothers.forEach((m) => {
+      nameMap[m.id] = m.name;
+      if (m.ward) wardMap[m.id] = m.ward;
+      if (m.municipality) municipalityMap[m.id] = m.municipality;
+    });
+    return {
+      motherNameMap: nameMap,
+      motherWardMap: wardMap,
+      motherMunicipalityMap: municipalityMap,
+    };
+  }, [mothers]);
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -415,18 +421,6 @@ export default function ReportScreen() {
       setDeliveries(deliveryList);
       setMeetings(meetingList);
       setAdolescents(adolescentList);
-
-      const nameMap: Record<string, string> = {};
-      const wardMap: Record<string, string> = {};
-      const municipalityMap: Record<string, string> = {};
-      motherList.forEach((m) => {
-        nameMap[m.id] = m.name;
-        if (m.ward) wardMap[m.id] = m.ward;
-        if (m.municipality) municipalityMap[m.id] = m.municipality;
-      });
-      setMotherNameMap(nameMap);
-      setMotherWardMap(wardMap);
-      setMotherMunicipalityMap(municipalityMap);
     } catch (error) {
       console.error("Error fetching report data:", error);
     } finally {
@@ -440,7 +434,7 @@ export default function ReportScreen() {
     }, [fetchAllData]),
   );
 
-  const getUnifiedRecords = useCallback((): UnifiedRecord[] => {
+  const allRecords = useMemo((): UnifiedRecord[] => {
     const records: UnifiedRecord[] = [];
 
     if (activeTab === "all" || activeTab === "mother") {
@@ -494,15 +488,15 @@ export default function ReportScreen() {
     }
 
     if (activeTab === "pregnancy") {
+      const riskMap: Record<
+        string,
+        { status: UnifiedRecord["status"]; label: string }
+      > = {
+        high: { status: "high_risk", label: t("reports.status.high_risk") },
+        moderate: { status: "pending", label: t("reports.status.moderate") },
+        normal: { status: "normal", label: t("reports.status.normal") },
+      };
       pregnancies.forEach((p) => {
-        const riskMap: Record<
-          string,
-          { status: UnifiedRecord["status"]; label: string }
-        > = {
-          high: { status: "high_risk", label: t("reports.status.high_risk") },
-          moderate: { status: "pending", label: t("reports.status.moderate") },
-          normal: { status: "normal", label: t("reports.status.normal") },
-        };
         const risk = riskMap[p.risk_level] || riskMap.normal;
 
         records.push({
@@ -629,20 +623,19 @@ export default function ReportScreen() {
     adolescents,
     motherNameMap,
     motherWardMap,
-    language,
+    motherMunicipalityMap,
     t,
   ]);
 
   const records = useMemo(() => {
-    const records = getUnifiedRecords();
-    if (!search.trim()) return records;
+    if (!search.trim()) return allRecords;
     const q = search.toLowerCase();
-    return records.filter(
+    return allRecords.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         (r.ward || "").toLowerCase().includes(q),
     );
-  }, [getUnifiedRecords, search]);
+  }, [allRecords, search]);
 
   const handleCardPress = useCallback(
     (record: UnifiedRecord) => {
@@ -791,17 +784,7 @@ export default function ReportScreen() {
           {TAB_KEYS.map((tab) => {
             const isActive = activeTab === tab.key;
             const count = getTabCount(tab.key);
-            const tabColors: Record<string, string> = {
-              all: isActive ? "bg-indigo-50" : "bg-transparent",
-              mother: isActive ? "bg-indigo-50" : "bg-transparent",
-              pregnancy: isActive ? "bg-indigo-50" : "bg-transparent",
-              child: isActive ? "bg-indigo-50" : "bg-transparent",
-              delivery: isActive ? "bg-indigo-50" : "bg-transparent",
-              mother_meeting: isActive ? "bg-indigo-50" : "bg-transparent",
-              dead_mother: isActive ? "bg-indigo-50" : "bg-transparent",
-              dead_child: isActive ? "bg-indigo-50" : "bg-transparent",
-              adolescent: isActive ? "bg-indigo-50" : "bg-transparent",
-            };
+            const tabBg = isActive ? "bg-indigo-50" : "bg-transparent";
             const tabIcon = () => {
               const s = 14;
               const c = isActive ? "#4338CA" : "#94A3B8";
@@ -845,7 +828,7 @@ export default function ReportScreen() {
                   }
                 }}
                 activeOpacity={0.7}
-                className={`flex-row items-center px-3.5 py-2.5 rounded-xl ${tabColors[tab.key]}`}
+                className={`flex-row items-center px-3.5 py-2.5 rounded-xl ${tabBg}`}
               >
                 {tabIcon()}
                 <Text

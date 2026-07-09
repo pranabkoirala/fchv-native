@@ -19,7 +19,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -83,20 +83,109 @@ const buildDashboardTrend = (rows: TrendRow[], isNepali: boolean) => {
   });
 };
 
+const buildLocation = (municipality?: any, ward?: any) => {
+  const muniName = municipality ? getMunicipalityById(municipality) : "";
+  const wardNum = ward ? getWardById(ward) : "";
+  return (
+    [muniName, wardNum ? `Ward ${wardNum}` : ""].filter(Boolean).join(", ") || ""
+  );
+};
+
+const cardStyle = {
+  flex: 1,
+  backgroundColor: "#FFFFFF",
+  borderRadius: 20,
+  paddingVertical: 20,
+  paddingHorizontal: 8,
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 120,
+  borderWidth: 1,
+  borderColor: "#F0F2F5",
+} as const;
+
+const cardIconWrapStyle = {
+  borderRadius: 16,
+  width: 48,
+  height: 48,
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 12,
+} as const;
+
+const cardLabelStyle = {
+  color: "#1E293B",
+  fontWeight: "600",
+  fontSize: 13,
+  textAlign: "center",
+  lineHeight: 18,
+} as const;
+
+type QuickActionCardProps = {
+  onPress: () => void;
+  Icon: React.ComponentType<{ size?: number; color?: string }>;
+  iconColor: string;
+  iconBg: string;
+  label: string;
+  className?: string;
+};
+
+const QuickActionCard = ({
+  onPress,
+  Icon,
+  iconColor,
+  iconBg,
+  label,
+  className,
+}: QuickActionCardProps) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.7}
+    className={className}
+    style={className ? { ...cardStyle, flex: undefined } : cardStyle}
+  >
+    <View style={{ ...cardIconWrapStyle, backgroundColor: iconBg }}>
+      <Icon size={24} color={iconColor} />
+    </View>
+    <Text style={cardLabelStyle}>{label}</Text>
+  </TouchableOpacity>
+);
+
+const sectionBarStyle = {
+  width: 3,
+  height: 20,
+  backgroundColor: "#0891B2",
+  borderRadius: 2,
+} as const;
+
+const sectionTitleStyle = {
+  fontSize: 17,
+  fontWeight: "700",
+  color: "#0F172A",
+  letterSpacing: 0.5,
+} as const;
+
+const sectionSubtitleStyle = {
+  fontSize: 13,
+  color: "#94A3B8",
+  fontWeight: "400",
+  marginLeft: 13,
+} as const;
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { language, t } = useLanguage();
   const { isConnected } = useOnlineStatus();
-  const formatNum = (n: number) =>
-    language === "np" ? toNepaliNumbers(n) : String(n);
+  const formatNum = useCallback(
+    (n: number) => (language === "np" ? toNepaliNumbers(n) : String(n)),
+    [language],
+  );
   const [motherCount, setMotherCount] = useState(0);
   const [pregnancyCount, setPregnancyCount] = useState(0);
   const [childCount, setChildCount] = useState(0);
   const [adolescentCount, setAdolescentCount] = useState(0);
   const [maternalDeathCount, setMaternalDeathCount] = useState(0);
   const [childDeathCount, setChildDeathCount] = useState(0);
-  const [under29Days, setUnder29Days] = useState(0);
-  const [days29To59Months, setDays29To59Months] = useState(0);
   const [highRiskPregnancyCount, setHighRiskPregnancyCount] = useState(0);
   const [deliveryCount, setDeliveryCount] = useState(0);
   const [mothersMeetingCount, setMothersMeetingCount] = useState(0);
@@ -107,9 +196,10 @@ export default function DashboardScreen() {
   const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
 
   // Initial 3-month BS placeholder
-  const initialTrend = Array.from({ length: 3 }, () => {
-    return { label: "", value: 0 };
-  });
+  const initialTrend = useMemo(
+    () => Array.from({ length: 3 }, () => ({ label: "", value: 0 })),
+    [],
+  );
 
   const [pregnancyTrend, setPregnancyTrend] =
     useState<{ label: string; value: number }[]>(initialTrend);
@@ -122,15 +212,18 @@ export default function DashboardScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const { todos, fetchTodos, toggleTodo, removeTodo } = useTodo();
 
-  const todayBsDate = (() => {
+  const todayBsDate = useMemo(() => {
     try {
       return AdToBs(new Date().toISOString().split("T")[0]);
     } catch (e) {
       return "";
     }
-  })();
+  }, []);
 
-  const todaysTasks = todos.filter((t) => t.task_date === todayBsDate);
+  const todaysTasks = useMemo(
+    () => todos.filter((t) => t.task_date === todayBsDate),
+    [todos, todayBsDate],
+  );
 
   const handleDashboardTaskSubmit = async (data: TaskModalData) => {
     setIsTaskSubmitting(true);
@@ -205,59 +298,42 @@ export default function DashboardScreen() {
             getAllMothersGroupMeetings(),
           ]);
 
+          const nowIso = new Date().toISOString();
+          const motherById = new Map<any, any>(
+            mothers.map((m: any) => [m.id, m]),
+          );
+
           const activities: any[] = [];
           mothers.forEach((m: any) => {
-            const muniName = getMunicipalityById(m.municipality);
-            const wardNum = getWardById(m.ward);
-            const loc =
-              [muniName, wardNum ? `Ward ${wardNum}` : ""]
-                .filter(Boolean)
-                .join(", ") || "";
             activities.push({
               id: `m-${m.id}`,
               title: `${t("dashboard.activity.new_mother")}: ${m.name || "Unknown"}`,
-              subtitle: loc,
-              date: m.createdAt || m.created_at || new Date().toISOString(),
+              subtitle: buildLocation(m.municipality, m.ward),
+              date: m.createdAt || m.created_at || nowIso,
               icon: Users,
               color: "#059669",
               bg: "#D1FAE5",
             });
           });
           pregnancies.forEach((p: any) => {
-            const mother = mothers.find((m: any) => m.id === p.mother);
-            const muniName = mother
-              ? getMunicipalityById(mother.municipality)
-              : "";
-            const wardNum = mother ? getWardById(mother.ward) : "";
-            const loc =
-              [muniName, wardNum ? `Ward ${wardNum}` : ""]
-                .filter(Boolean)
-                .join(", ") || "";
+            const mother = motherById.get(p.mother);
             activities.push({
               id: `p-${p.id}`,
               title: `${t("dashboard.activity.new_pregnancy")}: ${p.name || "Unknown"}`,
-              subtitle: loc,
-              date: p.created_at || new Date().toISOString(),
+              subtitle: buildLocation(mother?.municipality, mother?.ward),
+              date: p.created_at || nowIso,
               icon: Activity,
               color: "#0284C7",
               bg: "#E0F2FE",
             });
           });
           children.forEach((c: any) => {
-            const mother = mothers.find((m: any) => m.id === c.mother);
-            const muniName = mother
-              ? getMunicipalityById(mother.municipality)
-              : "";
-            const wardNum = mother ? getWardById(mother.ward) : "";
-            const loc =
-              [muniName, wardNum ? `Ward ${wardNum}` : ""]
-                .filter(Boolean)
-                .join(", ") || "";
+            const mother = motherById.get(c.mother);
             activities.push({
               id: `c-${c.id}`,
               title: `${t("dashboard.activity.child_added")}: ${c.baby_name || c.mother_name || "Baby"}`,
-              subtitle: loc,
-              date: c.created_at || new Date().toISOString(),
+              subtitle: buildLocation(mother?.municipality, mother?.ward),
+              date: c.created_at || nowIso,
               icon: Smile,
               color: "#D97706",
               bg: "#FEF3C7",
@@ -284,35 +360,6 @@ export default function DashboardScreen() {
           ).length;
           setHighRiskPregnancyCount(highRisk);
 
-          let u29 = 0;
-          let u59m = 0;
-          const todayDate = new Date();
-          children.forEach((c: any) => {
-            if (c.date_of_birth) {
-              const dob = new Date(c.date_of_birth);
-              if (!isNaN(dob.getTime())) {
-                const diffTime = todayDate.getTime() - dob.getTime();
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays >= 0 && diffDays < 29) {
-                  u29++;
-                } else if (diffDays >= 29) {
-                  let m =
-                    (todayDate.getFullYear() - dob.getFullYear()) * 12 +
-                    todayDate.getMonth() -
-                    dob.getMonth();
-                  if (todayDate.getDate() < dob.getDate()) {
-                    m--;
-                  }
-                  if (m < 60) {
-                    u59m++;
-                  }
-                }
-              }
-            }
-          });
-          setUnder29Days(u29);
-          setDays29To59Months(u59m);
           const isNepali = language === "np";
           setPregnancyTrend(buildDashboardTrend(pTrend, isNepali));
           setChildTrend(buildDashboardTrend(cTrend, isNepali));
@@ -359,36 +406,15 @@ export default function DashboardScreen() {
                     marginBottom: 4,
                   }}
                 >
-                  <View
-                    style={{
-                      width: 3,
-                      height: 20,
-                      backgroundColor: "#0891B2",
-                      borderRadius: 2,
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 17,
-                      fontWeight: "700",
-                      color: "#0F172A",
-                      letterSpacing: 0.5,
-                    }}
-                  >
+                  <View style={sectionBarStyle} />
+                  <Text style={sectionTitleStyle}>
                     {t(
                       "dashboard.sections.quick_forms",
                       "Quick Registration & Services",
                     )}
                   </Text>
                 </View>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: "#94A3B8",
-                    fontWeight: "400",
-                    marginLeft: 13,
-                  }}
-                >
+                <Text style={sectionSubtitleStyle}>
                   {t(
                     "dashboard.sections.quick_forms_subtitle",
                     "Fast data entry for maternal and child healthcare",
@@ -398,404 +424,96 @@ export default function DashboardScreen() {
               <View style={{ gap: 12 }}>
                 {/* Row 1 */}
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <TouchableOpacity
+                  <QuickActionCard
                     onPress={() => router.push("/dashboard/record/add-mother")}
-                    activeOpacity={0.7}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#EEF2FF",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Activity size={24} color="#4F46E5" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.pregnant_woman")}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
+                    Icon={Activity}
+                    iconColor="#4F46E5"
+                    iconBg="#EEF2FF"
+                    label={t("dashboard.quick_actions.pregnant_woman")}
+                  />
+                  <QuickActionCard
                     onPress={() =>
                       router.push("/dashboard/child/add-child" as any)
                     }
-                    activeOpacity={0.7}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#D1FAE5",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Baby size={24} color="#059669" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.newborn")}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
+                    Icon={Baby}
+                    iconColor="#059669"
+                    iconBg="#D1FAE5"
+                    label={t("dashboard.quick_actions.newborn")}
+                  />
+                  <QuickActionCard
                     onPress={() => router.push("/dashboard/visit" as any)}
-                    activeOpacity={0.7}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#FFE4E6",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Heart size={24} color="#E11D48" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.follow_up")}
-                    </Text>
-                  </TouchableOpacity>
+                    Icon={Heart}
+                    iconColor="#E11D48"
+                    iconBg="#FFE4E6"
+                    label={t("dashboard.quick_actions.follow_up")}
+                  />
                 </View>
 
                 {/* Row 2 */}
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <TouchableOpacity
+                  <QuickActionCard
                     onPress={() => router.push("/dashboard/delivery" as any)}
-                    activeOpacity={0.7}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#E0F2FE",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Smile size={24} color="#0284C7" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.delivery")}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                    Icon={Smile}
+                    iconColor="#0284C7"
+                    iconBg="#E0F2FE"
+                    label={t("dashboard.quick_actions.delivery")}
+                  />
+                  <QuickActionCard
                     onPress={() =>
                       router.push(
                         "/dashboard/mothers-group/mothers-group-meeting-form" as any,
                       )
                     }
-                    activeOpacity={0.7}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#FEF3C7",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Users size={24} color="#D97706" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.group_meeting")}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
+                    Icon={Users}
+                    iconColor="#D97706"
+                    iconBg="#FEF3C7"
+                    label={t("dashboard.quick_actions.group_meeting")}
+                  />
+                  <QuickActionCard
                     onPress={() =>
                       router.push("/dashboard/death-report" as any)
                     }
-                    activeOpacity={0.7}
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#F1F5F9",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <AlertCircle size={24} color="#475569" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.death_report")}
-                    </Text>
-                  </TouchableOpacity>
+                    Icon={AlertCircle}
+                    iconColor="#475569"
+                    iconBg="#F1F5F9"
+                    label={t("dashboard.quick_actions.death_report")}
+                  />
                 </View>
 
                 {/* Row 3 - Adolescent, FCHV Council & Nutrition */}
                 <View style={{ flexDirection: "row", gap: 12 }}>
-                  <TouchableOpacity
+                  <QuickActionCard
                     onPress={() =>
                       router.push(
                         "/dashboard/adolescent/adolescent-form" as any,
                       )
                     }
                     className="w-[31%]"
-                    activeOpacity={0.7}
-                    style={{
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#F3E8FF",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <UserPlus size={24} color="#7C3AED" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.add_adolescent")}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      router.push("/dashboard/fchv-counseling" as any);
-                    }}
-                    activeOpacity={0.7}
+                    Icon={UserPlus}
+                    iconColor="#7C3AED"
+                    iconBg="#F3E8FF"
+                    label={t("dashboard.quick_actions.add_adolescent")}
+                  />
+                  <QuickActionCard
+                    onPress={() =>
+                      router.push("/dashboard/fchv-counseling" as any)
+                    }
                     className="w-[31%]"
-                    style={{
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#F0FDF4",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Building2 size={24} color="#16A34A" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.fchv_council")}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
+                    Icon={Building2}
+                    iconColor="#16A34A"
+                    iconBg="#F0FDF4"
+                    label={t("dashboard.quick_actions.fchv_council")}
+                  />
+                  <QuickActionCard
                     onPress={() =>
                       router.push("/dashboard/child-nutrition" as any)
                     }
-                    activeOpacity={0.7}
                     className="w-[31%]"
-                    style={{
-                      backgroundColor: "#FFFFFF",
-                      borderRadius: 20,
-                      paddingVertical: 20,
-                      paddingHorizontal: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: 120,
-                      borderWidth: 1,
-                      borderColor: "#F0F2F5",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "#D1FAE5",
-                        borderRadius: 16,
-                        width: 48,
-                        height: 48,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <Apple size={24} color="#059669" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#1E293B",
-                        fontWeight: "600",
-                        fontSize: 13,
-                        textAlign: "center",
-                        lineHeight: 18,
-                      }}
-                    >
-                      {t("dashboard.quick_actions.nutrition")}
-                    </Text>
-                  </TouchableOpacity>
+                    Icon={Apple}
+                    iconColor="#059669"
+                    iconBg="#D1FAE5"
+                    label={t("dashboard.quick_actions.nutrition")}
+                  />
                 </View>
               </View>
             </View>
@@ -810,33 +528,12 @@ export default function DashboardScreen() {
                   marginBottom: 4,
                 }}
               >
-                <View
-                  style={{
-                    width: 3,
-                    height: 20,
-                    backgroundColor: "#0891B2",
-                    borderRadius: 2,
-                  }}
-                />
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: "700",
-                    color: "#0F172A",
-                    letterSpacing: 0.5,
-                  }}
-                >
+                <View style={sectionBarStyle} />
+                <Text style={sectionTitleStyle}>
                   {t("dashboard.sections.community_pulse")}
                 </Text>
               </View>
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: "#94A3B8",
-                  fontWeight: "400",
-                  marginLeft: 13,
-                }}
-              >
+              <Text style={sectionSubtitleStyle}>
                 {t(
                   "dashboard.sections.community_pulse_subtitle",
                   "Key health indicators at a glance",
@@ -1006,21 +703,9 @@ export default function DashboardScreen() {
                 }}
               >
                 <View
-                  style={{
-                    width: 3,
-                    height: 20,
-                    backgroundColor: "#E11D48",
-                    borderRadius: 2,
-                  }}
+                  style={{ ...sectionBarStyle, backgroundColor: "#E11D48" }}
                 />
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: "700",
-                    color: "#0F172A",
-                    letterSpacing: 0.5,
-                  }}
-                >
+                <Text style={sectionTitleStyle}>
                   {t("dashboard.sections.death_stats", "Death Statistics")}
                 </Text>
               </View>
@@ -1055,64 +740,6 @@ export default function DashboardScreen() {
                 delay={500}
               />
             </View>
-
-            {/* <View style={{ paddingHorizontal: 20, marginTop: 28 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 16,
-                }}
-              >
-                <View
-                  style={{
-                    width: 3,
-                    height: 20,
-                    backgroundColor: "#059669",
-                    borderRadius: 2,
-                  }}
-                />
-                <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: "700",
-                    color: "#0F172A",
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {t("dashboard.sections.health_summary")}
-                </Text>
-              </View>
-            </View>
-            <View
-              style={{
-                paddingHorizontal: 20,
-                flexDirection: "column",
-                gap: 12,
-              }}
-            >
-              <StatCard
-                layout="compact"
-                path="/dashboard/report/child-monitoring-report"
-                icon={Baby}
-                iconColor="#059669"
-                iconBg="#D1FAE5"
-                value={formatNum(under29Days)}
-                label={t("dashboard.health_summary.under_29_days")}
-                delay={100}
-              />
-              <StatCard
-                layout="compact"
-                path="/dashboard/report/child-monitoring-report"
-                icon={Baby}
-                iconColor="#0284C7"
-                iconBg="#E0F2FE"
-                value={formatNum(days29To59Months)}
-                label={t("dashboard.health_summary.29_to_59_months")}
-                delay={200}
-              />
-            </View> */}
 
             {/* Recent Activity */}
             {recentActivity.length > 0 && (
@@ -1158,8 +785,7 @@ export default function DashboardScreen() {
                   </View>
                 ) : (
                   <View style={{ gap: 12 }}>
-                    {recentActivity.length > 0 ? (
-                      recentActivity.map((activity) => {
+                    {recentActivity.map((activity) => {
                         const Icon = activity.icon;
                         const d = new Date(activity.date);
                         const isToday =
@@ -1249,19 +875,7 @@ export default function DashboardScreen() {
                             </View>
                           </View>
                         );
-                      })
-                    ) : (
-                      <Text
-                        style={{
-                          color: "#64748B",
-                          fontSize: 13,
-                          textAlign: "center",
-                          paddingVertical: 20,
-                        }}
-                      >
-                        {t("dashboard.activity.no_activity")}
-                      </Text>
-                    )}
+                    })}
                   </View>
                 )}
               </View>

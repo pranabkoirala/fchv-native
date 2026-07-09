@@ -518,7 +518,7 @@ export default function NewbornDeathForm({
   }, [isNewborn, t]);
 
   return (
-    <View className="flex-1 pt-2">
+    <View className="flex-1 pt-5">
       <View className="gap-y-5 pb-32">
         {!record && (
           <ProfilePicker
