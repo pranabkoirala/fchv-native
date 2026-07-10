@@ -120,6 +120,16 @@ export default function ChildNutritionScreen() {
   const [isLimitReached, setIsLimitReached] = useState(false);
   const router = useRouter();
 
+  // When a child is selected, only the age group matching the child's actual
+  // age is selectable; the others are disabled.
+  const eligibleAgeGroup = childInfo
+    ? getAgeGroupFromMonths(childInfo.ageMonths)
+    : "";
+  const ageGroupOptions = AGE_GROUP_OPTIONS.map((opt) => ({
+    ...opt,
+    disabled: eligibleAgeGroup ? opt.value !== eligibleAgeGroup : false,
+  }));
+
   const resetForm = () => {
     setSelectedMotherId("");
     setChildInfo(null);
@@ -481,7 +491,7 @@ export default function ChildNutritionScreen() {
                 )}
                 selectedValue={childAgeGroup}
                 onValueChange={handleAgeGroupChange}
-                options={AGE_GROUP_OPTIONS}
+                options={ageGroupOptions}
                 isSearchable={false}
                 error={errors.childAgeGroup}
               />

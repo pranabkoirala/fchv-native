@@ -8,24 +8,36 @@ import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import municipalitiesData from "../assets/json/municipalities.json";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../context/ToastContext";
-import { createMother, getMotherProfile } from "../hooks/database/models/MotherModel";
+import {
+  createMother,
+  getMotherProfile,
+} from "../hooks/database/models/MotherModel";
 import { createVisit } from "../hooks/database/models/VisitModel";
 import { Province } from "../types/profile";
 import { toNepaliNumbers } from "../utils/dateHelper";
 import { Button } from "./button";
 import { BoxInput, FieldLabel } from "./FormElements";
-import { ProfilePicker } from "./ProfilePicker";
 import MotherRegisterCounselingModal from "./forms/MotherRegisterCounselingModal";
+import { ProfilePicker } from "./ProfilePicker";
 
 const provinces: Province[] = municipalitiesData as Province[];
 
 const generateCustomId = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const getRandom = (len: number) => Array.from({ length: len }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const getRandom = (len: number) =>
+    Array.from({ length: len }, () =>
+      chars.charAt(Math.floor(Math.random() * chars.length)),
+    ).join("");
   return `${getRandom(2)}-${getRandom(4)}-${getRandom(2)}`;
 };
 
-export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?: (id: string) => void }) {
+export default function MotherForm({
+  id,
+  onSuccess,
+}: {
+  id?: string;
+  onSuccess?: (id: string) => void;
+}) {
   const router = useRouter();
   const { showToast } = useToast();
   const { t, language } = useLanguage();
@@ -52,22 +64,26 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
 
   // Cascading address data
   const districts = useMemo(() => {
-    const prov = provinces.find(p => p.id === selectedProvince);
+    const prov = provinces.find((p) => p.id === selectedProvince);
     return prov?.districts || [];
   }, [selectedProvince]);
 
   const municipalities = useMemo(() => {
-    const dist = districts.find(d => d.id === selectedDistrict);
+    const dist = districts.find((d) => d.id === selectedDistrict);
     return dist?.municipalities || [];
   }, [selectedDistrict, districts]);
 
   const wards = useMemo(() => {
-    const muni = municipalities.find(m => m.id === selectedMunicipality);
+    const muni = municipalities.find((m) => m.id === selectedMunicipality);
     return muni?.wards || [];
   }, [selectedMunicipality, municipalities]);
 
   const toNepaliDate = (adDate: string) => {
-    try { return AdToBs(adDate); } catch { return adDate; }
+    try {
+      return AdToBs(adDate);
+    } catch {
+      return adDate;
+    }
   };
 
   const getTodayNepaliDate = () => {
@@ -187,10 +203,14 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         try {
           const fchvData = await getFchvData();
           if (fchvData?.address) {
-            if (fchvData.address.province?.id) setSelectedProvince(fchvData.address.province.id);
-            if (fchvData.address.district?.id) setSelectedDistrict(fchvData.address.district.id);
-            if (fchvData.address.municipality?.id) setSelectedMunicipality(fchvData.address.municipality.id);
-            if (fchvData.address.ward?.id) setSelectedWard(fchvData.address.ward.id);
+            if (fchvData.address.province?.id)
+              setSelectedProvince(fchvData.address.province.id);
+            if (fchvData.address.district?.id)
+              setSelectedDistrict(fchvData.address.district.id);
+            if (fchvData.address.municipality?.id)
+              setSelectedMunicipality(fchvData.address.municipality.id);
+            if (fchvData.address.ward?.id)
+              setSelectedWard(fchvData.address.ward.id);
           }
         } catch (e) {
           console.error("error fetching FCHV data for pre-fill", e);
@@ -203,8 +223,10 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!firstName.trim()) e.firstName = t("mother_form.validation.first_name_req");
-    if (!lastName.trim()) e.lastName = t("mother_form.validation.last_name_req");
+    if (!firstName.trim())
+      e.firstName = t("mother_form.validation.first_name_req");
+    if (!lastName.trim())
+      e.lastName = t("mother_form.validation.last_name_req");
     if (!dobAd) {
       e.dob = t("mother_form.validation.dob_req");
       e.age = t("mother_form.validation.age_req");
@@ -217,9 +239,12 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         e.phoneNumber = t("mother_form.validation.phone_invalid");
       }
     }
-    if (!selectedProvince) e.province = t("mother_form.validation.province_req");
-    if (!selectedDistrict) e.district = t("mother_form.validation.district_req");
-    if (!selectedMunicipality) e.municipality = t("mother_form.validation.municipality_req");
+    if (!selectedProvince)
+      e.province = t("mother_form.validation.province_req");
+    if (!selectedDistrict)
+      e.district = t("mother_form.validation.district_req");
+    if (!selectedMunicipality)
+      e.municipality = t("mother_form.validation.municipality_req");
     if (!selectedWard) e.ward = t("mother_form.validation.ward_req");
     return e;
   };
@@ -231,7 +256,10 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
 
     setIsLoading(true);
     try {
-      const dbId = (id && typeof id === 'string' && id.trim().length > 0) ? id : Crypto.randomUUID();
+      const dbId =
+        id && typeof id === "string" && id.trim().length > 0
+          ? id
+          : Crypto.randomUUID();
       const mCode = codeState || generateCustomId();
 
       await createMother({
@@ -275,7 +303,10 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
           <BoxInput
             placeholder={t("mother_form.first_name")}
             value={firstName}
-            onChangeText={(t) => { setFirstName(t); setErrors({ ...errors, firstName: "" }); }}
+            onChangeText={(t) => {
+              setFirstName(t);
+              setErrors({ ...errors, firstName: "" });
+            }}
             error={errors.firstName}
           />
         </View>
@@ -284,7 +315,10 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
           <BoxInput
             placeholder={t("mother_form.last_name")}
             value={lastName}
-            onChangeText={(t) => { setLastName(t); setErrors({ ...errors, lastName: "" }); }}
+            onChangeText={(t) => {
+              setLastName(t);
+              setErrors({ ...errors, lastName: "" });
+            }}
             error={errors.lastName}
           />
         </View>
@@ -294,14 +328,24 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         <View className="flex-1">
           <FieldLabel label={t("mother_form.dob")} required />
           <Pressable onPress={() => setShowDobPicker(true)}>
-            <View className={`rounded-xl px-4 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between`}>
-              <Text className={`text-base ${dobBs ? "text-[#1E293B]" : "text-[#b8bbbeff]"}`}>
-                {dobBs ? (language === "np" ? toNepaliNumbers(dobBs) : dobBs) : t("mother_form.dob_placeholder")}
+            <View
+              className={`rounded-xl px-4 mt-2 h-14 border ${errors.dob ? "border-red-300" : "border-gray-300"} flex-row items-center justify-between`}
+            >
+              <Text
+                className={`text-base ${dobBs ? "text-[#1E293B]" : "text-[#b8bbbeff]"}`}
+              >
+                {dobBs
+                  ? language === "np"
+                    ? toNepaliNumbers(dobBs)
+                    : dobBs
+                  : t("mother_form.dob_placeholder")}
               </Text>
               <Calendar size={18} color="#475569" />
             </View>
             {errors.dob ? (
-              <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.dob}</Text>
+              <Text className="text-red-500 text-xs mt-1 ml-1 font-medium">
+                {errors.dob}
+              </Text>
             ) : null}
           </Pressable>
         </View>
@@ -338,16 +382,19 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
         theme="light"
         brandColor="#0056D2"
         date={dobBs || undefined}
-        dayTextStyle={{ fontWeight: 'normal' }}
-        weekTextStyle={{ fontWeight: 'normal' }}
-        titleTextStyle={{ fontWeight: 'normal' }}
+        dayTextStyle={{ fontWeight: "normal" }}
+        weekTextStyle={{ fontWeight: "normal" }}
+        titleTextStyle={{ fontWeight: "normal" }}
       />
 
       <FieldLabel label={t("mother_form.phone")} />
       <BoxInput
         placeholder="98*******"
         value={phoneNumber}
-        onChangeText={(t) => { setPhoneNumber(t.replace(/\D/g, "")); setErrors({ ...errors, phoneNumber: "" }); }}
+        onChangeText={(t) => {
+          setPhoneNumber(t.replace(/\D/g, ""));
+          setErrors({ ...errors, phoneNumber: "" });
+        }}
         keyboardType="phone-pad"
         maxLength={10}
         error={errors.phoneNumber}
@@ -368,9 +415,9 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
               setSelectedWard("");
               setErrors({ ...errors, province: "" });
             }}
-            options={provinces.map(p => p.id)}
+            options={provinces.map((p) => p.id)}
             getOptionLabel={(pid) => {
-              const p = provinces.find(pr => pr.id === pid);
+              const p = provinces.find((pr) => pr.id === pid);
               return p ? (language === "np" ? p.name_ne : p.name_en) : pid;
             }}
             error={errors.province}
@@ -381,7 +428,11 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
           <ProfilePicker
             label={t("mother_form.address.district")}
             required
-            placeholder={selectedProvince ? t("mother_form.address.select_district") : t("mother_form.address.select_province_first")}
+            placeholder={
+              selectedProvince
+                ? t("mother_form.address.select_district")
+                : t("mother_form.address.select_province_first")
+            }
             selectedValue={selectedDistrict}
             onValueChange={(val) => {
               setSelectedDistrict(val);
@@ -389,9 +440,9 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
               setSelectedWard("");
               setErrors({ ...errors, district: "" });
             }}
-            options={districts.map(d => d.id)}
+            options={districts.map((d) => d.id)}
             getOptionLabel={(did) => {
-              const d = districts.find(di => di.id === did);
+              const d = districts.find((di) => di.id === did);
               return d ? (language === "np" ? d.name_ne : d.name_en) : did;
             }}
             error={errors.district}
@@ -402,16 +453,20 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
           <ProfilePicker
             label={t("mother_form.address.municipality")}
             required
-            placeholder={selectedDistrict ? t("mother_form.address.select_municipality") : t("mother_form.address.select_district_first")}
+            placeholder={
+              selectedDistrict
+                ? t("mother_form.address.select_municipality")
+                : t("mother_form.address.select_district_first")
+            }
             selectedValue={selectedMunicipality}
             onValueChange={(val) => {
               setSelectedMunicipality(val);
               setSelectedWard("");
               setErrors({ ...errors, municipality: "" });
             }}
-            options={municipalities.map(m => m.id)}
+            options={municipalities.map((m) => m.id)}
             getOptionLabel={(mid) => {
-              const m = municipalities.find(mu => mu.id === mid);
+              const m = municipalities.find((mu) => mu.id === mid);
               return m ? (language === "np" ? m.name_ne : m.name_en) : mid;
             }}
             error={errors.municipality}
@@ -422,16 +477,22 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
           <ProfilePicker
             label={t("mother_form.address.ward")}
             required
-            placeholder={selectedMunicipality ? t("mother_form.address.select_ward") : t("mother_form.address.select_municipality_first")}
+            placeholder={
+              selectedMunicipality
+                ? t("mother_form.address.select_ward")
+                : t("mother_form.address.select_municipality_first")
+            }
             selectedValue={selectedWard}
             onValueChange={(val) => {
               setSelectedWard(val);
               setErrors({ ...errors, ward: "" });
             }}
-            options={wards.map(w => w.id)}
+            options={wards.map((w) => w.id)}
             getOptionLabel={(wid) => {
-              const w = wards.find(wa => wa.id === wid);
-              return w ? `${language === "np" ? "वडा" : "Ward"} ${w.number}` : wid;
+              const w = wards.find((wa) => wa.id === wid);
+              return w
+                ? `${language === "np" ? "वडा" : "Ward"} ${w.number}`
+                : wid;
             }}
             error={errors.ward}
           />
@@ -441,7 +502,9 @@ export default function MotherForm({ id, onSuccess }: { id?: string, onSuccess?:
       <Button
         onPress={save}
         isLoading={isLoading}
-        title={id ? t("mother_form.buttons.update") : t("mother_form.buttons.save")}
+        title={
+          id ? t("mother_form.buttons.update") : t("mother_form.buttons.save")
+        }
       />
 
       {savedMotherId && (

@@ -203,7 +203,8 @@ export default function PregnancyForm({
     if (!selectedMotherId)
       e.motherId = t("pregnancy_form.validation.mother_req");
     if (!gravida.trim()) e.gravida = t("pregnancy_form.validation.gravida_req");
-    else if (parseInt(gravida, 10) < 1) e.gravida = t("pregnancy_form.validation.gravida_min");
+    else if (parseInt(gravida, 10) < 1)
+      e.gravida = t("pregnancy_form.validation.gravida_min");
     if (!parity.trim()) e.parity = t("pregnancy_form.validation.parity_req");
     if (!lmp) e.lmp = t("pregnancy_form.validation.lmp_req");
     if (gravida.trim() && parity.trim()) {
@@ -358,7 +359,7 @@ export default function PregnancyForm({
       <FieldLabel label={t("pregnancy_form.lmp_date")} required />
       <Pressable onPress={() => setShowLmpPicker(true)} className="mb-6">
         <View
-          className={`rounded-xl px-4 h-14 border flex-row items-center justify-between bg-white ${errors.lmp ? "border-red-300" : "border-gray-300"}`}
+          className={`rounded-xl px-4 h-14 mt-2 border flex-row items-center justify-between bg-white ${errors.lmp ? "border-red-300" : "border-gray-300"}`}
         >
           <Text
             className={`text-base ${lmp ? "text-[#1E293B]" : "text-[#9CA3AF]"}`}
@@ -381,7 +382,7 @@ export default function PregnancyForm({
       {edd ? (
         <View className="mb-6">
           <FieldLabel label={t("pregnancy_form.edd_date")} />
-          <View className="rounded-xl px-4 h-14 border border-gray-200 bg-gray-50 justify-center">
+          <View className="rounded-xl mt-2 px-4 h-14 border border-gray-200 bg-gray-50 justify-center">
             <Text className="text-[#1E293B] text-base font-semibold">
               {language === "np"
                 ? toNepaliNumbers(toNepaliDate(edd))

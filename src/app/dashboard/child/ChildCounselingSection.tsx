@@ -8,7 +8,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -148,48 +148,62 @@ export default function ChildCounselingSection({
     return ageMs >= 0 && ageMs <= 24 * 60 * 60 * 1000;
   };
 
-  const getMuacLabel = (value?: string) => {
-    if (value === "green") return t("counseling_section.muac_normal");
-    if (value === "yellow") return t("counseling_section.muac_risk");
-    if (value === "red") return t("counseling_section.muac_severe");
-    return t("counseling_section.not_recorded");
+  const MUAC_LABELS: Record<string, string> = {
+    green: t("counseling_section.muac_normal"),
+    yellow: t("counseling_section.muac_risk"),
+    red: t("counseling_section.muac_severe"),
   };
 
-  const getMuacHistoryStyle = (value?: string) => {
-    if (value === "green") {
-      return {
-        card: "bg-emerald-50 border-emerald-100",
-        icon: "bg-emerald-100",
-        title: "text-emerald-800",
-        text: "text-emerald-700",
-        dot: "bg-emerald-500",
-      };
-    }
-    if (value === "yellow") {
-      return {
-        card: "bg-amber-50 border-amber-100",
-        icon: "bg-amber-100",
-        title: "text-amber-800",
-        text: "text-amber-700",
-        dot: "bg-amber-500",
-      };
-    }
-    if (value === "red") {
-      return {
-        card: "bg-rose-50 border-rose-100",
-        icon: "bg-rose-100",
-        title: "text-rose-800",
-        text: "text-rose-700",
-        dot: "bg-rose-500",
-      };
-    }
-    return {
+  const getMuacLabel = (value?: string) =>
+    MUAC_LABELS[value as keyof typeof MUAC_LABELS] ??
+    t("counseling_section.not_recorded");
+
+  const MUAC_STYLES: Record<string, { card: string; icon: string; title: string; text: string; dot: string }> = {
+    green: {
+      card: "bg-emerald-50 border-emerald-100",
+      icon: "bg-emerald-100",
+      title: "text-emerald-800",
+      text: "text-emerald-700",
+      dot: "bg-emerald-500",
+    },
+    yellow: {
+      card: "bg-amber-50 border-amber-100",
+      icon: "bg-amber-100",
+      title: "text-amber-800",
+      text: "text-amber-700",
+      dot: "bg-amber-500",
+    },
+    red: {
+      card: "bg-rose-50 border-rose-100",
+      icon: "bg-rose-100",
+      title: "text-rose-800",
+      text: "text-rose-700",
+      dot: "bg-rose-500",
+    },
+    _default: {
       card: "bg-slate-50 border-slate-100",
       icon: "bg-slate-100",
       title: "text-slate-800",
       text: "text-slate-600",
       dot: "bg-slate-400",
-    };
+    },
+  };
+
+  const getMuacHistoryStyle = (value?: string) =>
+    MUAC_STYLES[value as keyof typeof MUAC_STYLES] ?? MUAC_STYLES._default;
+
+  const getMuacColor = (muac?: string): string =>
+    muac === "red" ? "#F43F5E" : muac === "yellow" ? "#FAB005" : "#10B981";
+
+  const getLogs = (questionId: string): any[] => {
+    const value = answers[questionId];
+    if (Array.isArray(value)) return value;
+    if (value) {
+      return [
+        { date: record?.updated_at || new Date().toISOString(), value: true },
+      ];
+    }
+    return [];
   };
 
   const loadData = async () => {
@@ -238,49 +252,56 @@ export default function ChildCounselingSection({
     loadData();
   }, [childId]);
 
+  const saveAnswers = async (
+    newAnswers: Record<string, any>,
+    loadingKey?: string,
+    successMsg?: string,
+    failureMsg: string = "Failed to save",
+  ): Promise<ChildCounselingStoreType | null> => {
+    setAnswers(newAnswers);
+    if (loadingKey)
+      setLoadingButtons((prev) => ({ ...prev, [loadingKey]: true }));
+    try {
+      const saved = await saveChildCounseling({
+        id: record?.id,
+        child: childId,
+        answers: JSON.stringify(newAnswers),
+      });
+      if (successMsg) showToast(successMsg);
+      return saved;
+    } catch (e) {
+      console.error(e);
+      showToast(failureMsg);
+      setAnswers(answers);
+      return null;
+    } finally {
+      if (loadingKey)
+        setLoadingButtons((prev) => ({ ...prev, [loadingKey]: false }));
+    }
+  };
+
   const handleAdd = async (
     questionId: string,
     customLogValue?: any,
     isOneTime: boolean = false,
   ) => {
-    setLoadingButtons((prev) => ({ ...prev, [questionId]: true }));
     const currentTime = new Date().toISOString();
-
-    let existingLogs = [];
-    if (Array.isArray(answers[questionId])) {
-      existingLogs = answers[questionId];
-    } else if (answers[questionId]) {
-      existingLogs = [{ date: record?.updated_at || currentTime, value: true }];
-    }
+    const existingLogs = getLogs(questionId);
 
     // Prevent multiple entries for one-time questions
     if (isOneTime && existingLogs.length > 0) {
       showToast("Already recorded");
-      setLoadingButtons((prev) => ({ ...prev, [questionId]: false }));
       return;
     }
 
     const newLog = { date: currentTime, value: customLogValue || true };
     const newAnswers = { ...answers, [questionId]: [...existingLogs, newLog] };
 
-    setAnswers(newAnswers);
-
-    try {
-      await saveChildCounseling({
-        id: record?.id,
-        child: childId,
-        answers: JSON.stringify(newAnswers),
-      });
-      showToast(
-        t("counseling_section.added_successfully") || "Recorded successfully",
-      );
-    } catch (e) {
-      console.error("Failed to save answer", e);
-      showToast("Failed to save");
-      setAnswers(answers);
-    } finally {
-      setLoadingButtons((prev) => ({ ...prev, [questionId]: false }));
-    }
+    await saveAnswers(
+      newAnswers,
+      questionId,
+      t("counseling_section.added_successfully") || "Recorded successfully",
+    );
   };
 
   const isAnswered = (questionId: string): boolean => {
@@ -291,7 +312,6 @@ export default function ChildCounselingSection({
   };
 
   const handleToggleAnswer = async (questionId: string) => {
-    setLoadingButtons((prev) => ({ ...prev, [questionId]: true }));
     const currentTime = new Date().toISOString();
     let newAnswers: Record<string, any>;
 
@@ -305,20 +325,7 @@ export default function ChildCounselingSection({
       };
     }
 
-    setAnswers(newAnswers);
-    try {
-      await saveChildCounseling({
-        id: record?.id,
-        child: childId,
-        answers: JSON.stringify(newAnswers),
-      });
-    } catch (e) {
-      console.error("Failed to save answer", e);
-      showToast("Failed to save");
-      setAnswers(answers);
-    } finally {
-      setLoadingButtons((prev) => ({ ...prev, [questionId]: false }));
-    }
+    await saveAnswers(newAnswers, questionId);
   };
 
   const renderCheckButton = (questionId: string) => {
@@ -350,7 +357,6 @@ export default function ChildCounselingSection({
 
   const handleAddMalnutrition = async () => {
     const mainQuestionId = MALNUTRITION_CONTENT.main_question.id;
-    setLoadingButtons((prev) => ({ ...prev, [mainQuestionId]: true }));
     const currentTime = new Date().toISOString();
     const parsedWeight = parseMeasurement(weight);
     const parsedHeight = parseMeasurement(height);
@@ -358,7 +364,6 @@ export default function ChildCounselingSection({
 
     if (!muac) {
       showToast("Please select MUAC condition");
-      setLoadingButtons((prev) => ({ ...prev, [mainQuestionId]: false }));
       return;
     }
 
@@ -366,12 +371,7 @@ export default function ChildCounselingSection({
     if (muac === "yellow") severity = "medium";
     if (muac === "red") severity = "high";
 
-    let existingLogs = [];
-    if (Array.isArray(answers[mainQuestionId])) {
-      existingLogs = answers[mainQuestionId];
-    } else if (answers[mainQuestionId]) {
-      existingLogs = [{ date: record?.updated_at || currentTime, value: true }];
-    }
+    const existingLogs = getLogs(mainQuestionId);
 
     const newLog = {
       date: currentTime,
@@ -388,28 +388,18 @@ export default function ChildCounselingSection({
       ...answers,
       [mainQuestionId]: [...existingLogs, newLog],
     };
-    setAnswers(newAnswers);
 
-    try {
-      await saveChildCounseling({
-        id: record?.id,
-        child: childId,
-        answers: JSON.stringify(newAnswers),
-      });
-      showToast(
-        t("counseling_section.added_successfully") || "Recorded successfully",
-      );
+    const saved = await saveAnswers(
+      newAnswers,
+      mainQuestionId,
+      t("counseling_section.added_successfully") || "Recorded successfully",
+    );
 
+    if (saved) {
       // Reset inputs after success
       setMuac(null);
       setWeight("");
       setHeight("");
-    } catch (e) {
-      console.error("Failed to save malnutrition", e);
-      showToast("Failed to save");
-      setAnswers(answers);
-    } finally {
-      setLoadingButtons((prev) => ({ ...prev, [mainQuestionId]: false }));
     }
   };
 
@@ -420,22 +410,10 @@ export default function ChildCounselingSection({
   ) => {
     const mainQuestionId = MALNUTRITION_CONTENT.main_question.id;
     const loadingKey = `${mainQuestionId}_${logIndex}_${subQuestionId}`;
-    setLoadingButtons((prev) => ({ ...prev, [loadingKey]: true }));
 
-    let logs: any[] = [];
+    const logs = [...getLogs(mainQuestionId)];
 
-    if (Array.isArray(answers[mainQuestionId])) {
-      logs = [...answers[mainQuestionId]];
-    } else if (answers[mainQuestionId]) {
-      logs = [
-        { date: record?.updated_at || new Date().toISOString(), value: true },
-      ];
-    }
-
-    if (!logs[logIndex]) {
-      setLoadingButtons((prev) => ({ ...prev, [loadingKey]: false }));
-      return;
-    }
+    if (!logs[logIndex]) return;
 
     const targetLog = { ...logs[logIndex] };
     if (!targetLog.sub_answers) targetLog.sub_answers = {};
@@ -452,39 +430,17 @@ export default function ChildCounselingSection({
     logs[logIndex] = targetLog;
 
     const newAnswers = { ...answers, [mainQuestionId]: logs };
-    setAnswers(newAnswers);
 
-    try {
-      await saveChildCounseling({
-        id: record?.id,
-        child: childId,
-        answers: JSON.stringify(newAnswers),
-      });
-      showToast(
-        t("counseling_section.added_successfully") || "Recorded successfully",
-      );
-    } catch (e) {
-      console.error("Failed to save sub-question", e);
-      showToast("Failed to save");
-      setAnswers(answers);
-    } finally {
-      setLoadingButtons((prev) => ({ ...prev, [loadingKey]: false }));
-    }
+    await saveAnswers(
+      newAnswers,
+      loadingKey,
+      t("counseling_section.added_successfully") || "Recorded successfully",
+    );
   };
 
   // Open confirmation modal for deleting the latest log
   const requestDeleteLatest = (questionId: string) => {
-    const rawValue = answers[questionId];
-    const logs = Array.isArray(rawValue)
-      ? rawValue
-      : rawValue
-        ? [
-            {
-              date: record?.updated_at || new Date().toISOString(),
-              value: true,
-            },
-          ]
-        : [];
+    const logs = getLogs(questionId);
     if (logs.length === 0) return;
     setPendingDeleteQuestionId(questionId);
     setDeleteModal(true);
@@ -495,26 +451,12 @@ export default function ChildCounselingSection({
     if (!pendingDeleteQuestionId) return;
 
     const questionId = pendingDeleteQuestionId;
-    setLoadingButtons((prev) => ({ ...prev, [`delete_${questionId}`]: true }));
-    const rawValue = answers[questionId];
-    let logs = Array.isArray(rawValue)
-      ? [...rawValue]
-      : rawValue
-        ? [
-            {
-              date: record?.updated_at || new Date().toISOString(),
-              value: true,
-            },
-          ]
-        : [];
+    const loadingKey = `delete_${questionId}`;
+    const logs = [...getLogs(questionId)];
 
     if (logs.length === 0) {
       setDeleteModal(false);
       setPendingDeleteQuestionId(null);
-      setLoadingButtons((prev) => ({
-        ...prev,
-        [`delete_${questionId}`]: false,
-      }));
       return;
     }
 
@@ -522,30 +464,16 @@ export default function ChildCounselingSection({
     logs.pop();
 
     const newAnswers = { ...answers, [questionId]: logs };
-    setAnswers(newAnswers);
 
-    try {
-      const savedRecord = await saveChildCounseling({
-        id: record?.id,
-        child: childId,
-        answers: JSON.stringify(newAnswers),
-      });
-      setRecord(savedRecord);
-      showToast(
-        t("counseling_section.deleted_successfully") || "Deleted successfully",
-      );
-    } catch (e) {
-      console.error("Failed to delete answer", e);
-      showToast("Failed to delete");
-      setAnswers(answers);
-    } finally {
-      setLoadingButtons((prev) => ({
-        ...prev,
-        [`delete_${questionId}`]: false,
-      }));
-      setDeleteModal(false);
-      setPendingDeleteQuestionId(null);
-    }
+    const saved = await saveAnswers(
+      newAnswers,
+      loadingKey,
+      t("counseling_section.deleted_successfully") || "Deleted successfully",
+    );
+
+    if (saved) setRecord(saved);
+    setDeleteModal(false);
+    setPendingDeleteQuestionId(null);
   };
 
   const cancelDelete = () => {
@@ -577,38 +505,20 @@ export default function ChildCounselingSection({
     const questionId = editingQuestionId;
     const logIndex = editingLogIndex;
 
-    let logs: any[] = [];
-    if (Array.isArray(answers[questionId])) {
-      logs = JSON.parse(JSON.stringify(answers[questionId]));
-    } else if (answers[questionId]) {
-      logs = [
-        { date: record?.updated_at || new Date().toISOString(), value: true },
-      ];
-    }
+    const logs = JSON.parse(JSON.stringify(getLogs(questionId)));
 
     if (logs[logIndex]) {
       logs[logIndex].date = `${adDate}T00:00:00.000Z`;
     }
 
     const newAnswers = { ...answers, [questionId]: logs };
-    setAnswers(newAnswers);
 
-    try {
-      await saveChildCounseling({
-        id: record?.id,
-        child: childId,
-        answers: JSON.stringify(newAnswers),
-      });
-      showToast(
-        t("counseling_section.updated_successfully") || "Updated successfully",
-      );
-    } catch (e) {
-      console.error("Failed to update date", e);
-      showToast(
-        t("counseling_section.update_date_failed") || "Failed to update date",
-      );
-      setAnswers(answers);
-    }
+    await saveAnswers(
+      newAnswers,
+      undefined,
+      t("counseling_section.updated_successfully") || "Updated successfully",
+      t("counseling_section.update_date_failed") || "Failed to update date",
+    );
 
     setEditingQuestionId(null);
     setEditingLogIndex(null);
@@ -616,48 +526,15 @@ export default function ChildCounselingSection({
   };
 
   const renderLogsInline = (questionId: string) => {
-    let logs = [];
-    if (Array.isArray(answers[questionId])) {
-      logs = answers[questionId];
-    } else if (answers[questionId]) {
-      logs = [
-        { date: record?.updated_at || new Date().toISOString(), value: true },
-      ];
-    }
-
+    const logs = getLogs(questionId);
     if (logs.length === 0) return null;
-
     return renderLogBadges(logs, questionId);
   };
 
   const renderLogsInlineReadOnly = (questionId: string) => {
-    let logs = [];
-    if (Array.isArray(answers[questionId])) {
-      logs = answers[questionId];
-    } else if (answers[questionId]) {
-      logs = [
-        { date: record?.updated_at || new Date().toISOString(), value: true },
-      ];
-    }
-
+    const logs = getLogs(questionId);
     if (logs.length === 0) return null;
-
     return renderLogBadges(logs, questionId, false, true);
-  };
-
-  const renderMalnutritionLogs = (questionId: string) => {
-    let logs: any[] = [];
-    if (Array.isArray(answers[questionId])) {
-      logs = answers[questionId];
-    } else if (answers[questionId]) {
-      logs = [
-        { date: record?.updated_at || new Date().toISOString(), value: true },
-      ];
-    }
-
-    if (logs.length === 0) return null;
-
-    return renderLogBadges(logs, questionId, true);
   };
 
   const renderLogBadges = (
@@ -799,25 +676,59 @@ export default function ChildCounselingSection({
     </Modal>
   );
 
-  const renderOrsModal = () => (
+  const renderCountModal = ({
+    visible,
+    onClose,
+    onSave,
+    count,
+    setCount,
+    titleKey,
+    descKey,
+    iconBgClass,
+    iconColor,
+    headerBgClass,
+    headerBorderClass,
+    accentTextClass,
+    accentSoftBgClass,
+    loading,
+  }: {
+    visible: boolean;
+    onClose: () => void;
+    onSave: () => void;
+    count: number;
+    setCount: Dispatch<SetStateAction<number>>;
+    titleKey: string;
+    descKey: string;
+    iconBgClass: string;
+    iconColor: string;
+    headerBgClass: string;
+    headerBorderClass: string;
+    accentTextClass: string;
+    accentSoftBgClass: string;
+    loading: boolean;
+  }) => (
     <Modal
-      visible={orsModalVisible}
+      visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={() => setOrsModalVisible(false)}
+      onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/40 px-6">
         <View className="bg-white rounded-2xl pb-2 w-full max-w-[320px]">
           {/* Header */}
-          <View className="bg-[#eff6ff] rounded-t-2xl px-5 pt-5 pb-4 items-center border-b border-blue-50">
-            <View className="w-12 h-12 rounded-full bg-blue-100 items-center justify-center mb-3">
-              <Plus size={22} color="#2563EB" />
+          <View
+            className={`${headerBgClass} rounded-t-2xl px-5 pt-5 pb-4 items-center ${headerBorderClass}`}
+          >
+            <View
+              className={`w-12 h-12 rounded-full ${iconBgClass} items-center justify-center mb-3`}
+            >
+              <Plus size={22} color={iconColor} />
             </View>
             <Text className="text-slate-800 text-[18px] font-bold text-center">
-              {t("counseling_section.distribute_ors_title")}
+              {t(titleKey)}
             </Text>
             <Text className="text-slate-500 text-[13px] text-center mt-1">
-              {t("counseling_section.distribute_ors_desc")}
+              {t(descKey)}
             </Text>
           </View>
 
@@ -826,11 +737,11 @@ export default function ChildCounselingSection({
             <View className="flex-row items-center gap-x-4">
               {/* Decrement */}
               <TouchableOpacity
-                onPress={() => setOrsCount((prev) => Math.max(1, prev - 1))}
-                disabled={orsCount <= 1}
-                className={`w-11 h-11 rounded-xl items-center justify-center bg-[#475569]`}
+                onPress={() => setCount((prev) => Math.max(1, prev - 1))}
+                disabled={count <= 1}
+                className="w-11 h-11 rounded-xl items-center justify-center bg-[#475569]"
               >
-                <Text className={`font-bold text-xl`}>
+                <Text className="font-bold text-xl">
                   <Minus color="white" />
                 </Text>
               </TouchableOpacity>
@@ -838,105 +749,17 @@ export default function ChildCounselingSection({
               {/* Input field */}
               <TextInput
                 keyboardType="number-pad"
-                value={String(orsCount)}
+                value={String(count)}
                 onChangeText={(txt) => {
                   const val = parseInt(txt.replace(/[^0-9]/g, "")) || 0;
-                  setOrsCount(val);
+                  setCount(val);
                 }}
                 className="h-14 flex-1 border border-slate-200 bg-white rounded-xl text-center font-bold text-[19px] text-slate-800 p-0"
               />
 
               {/* Increment */}
               <TouchableOpacity
-                onPress={() => setOrsCount((prev) => prev + 1)}
-                className="w-11 h-11 rounded-xl items-center justify-center border bg-[#475569]"
-              >
-                <Text className="font-bold text-xl text-white">
-                  <Plus color="white" />
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Actions */}
-          <View className="flex-row border-t border-slate-100">
-            <TouchableOpacity
-              onPress={() => setOrsModalVisible(false)}
-              className="flex-1 py-3.5 items-center justify-center"
-            >
-              <Text className="text-slate-500 font-semibold text-[15px]">
-                {t("counseling_section.cancel")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSaveOrs}
-              disabled={orsCount <= 0 || loadingButtons["ors_for_child"]}
-              className="flex-1 py-3.5 items-center border-l border-slate-100 justify-center bg-blue-50"
-            >
-              {loadingButtons["ors_for_child"] ? (
-                <ActivityIndicator color="#2563EB" size="small" />
-              ) : (
-                <Text className="text-blue-600 font-semibold text-[15px]">
-                  {t("common.save")}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const renderZincModal = () => (
-    <Modal
-      visible={zincModalVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setZincModalVisible(false)}
-    >
-      <View className="flex-1 justify-center items-center bg-black/40 px-6">
-        <View className="bg-white rounded-2xl pb-2 w-full max-w-[320px]">
-          {/* Header */}
-          <View className="bg-[#fefce8] rounded-t-2xl px-5 pt-5 pb-4 items-center border-b border-amber-50">
-            <View className="w-12 h-12 rounded-full bg-amber-100 items-center justify-center mb-3">
-              <Plus size={22} color="#D97706" />
-            </View>
-            <Text className="text-slate-800 text-[18px] font-bold text-center">
-              {t("counseling_section.distribute_zinc_title")}
-            </Text>
-            <Text className="text-slate-500 text-[13px] text-center mt-1">
-              {t("counseling_section.distribute_zinc_desc")}
-            </Text>
-          </View>
-
-          {/* Counter Controls */}
-          <View className="p-6 items-center justify-center bg-white">
-            <View className="flex-row items-center gap-x-4">
-              {/* Decrement */}
-              <TouchableOpacity
-                onPress={() => setZincCount((prev) => Math.max(1, prev - 1))}
-                disabled={zincCount <= 1}
-                className={`w-11 h-11 rounded-xl items-center justify-center bg-[#475569]`}
-              >
-                <Text className={`font-bold text-xl rounded-md`}>
-                  <Minus color="white" />
-                </Text>
-              </TouchableOpacity>
-
-              {/* Input field */}
-              <TextInput
-                keyboardType="number-pad"
-                value={String(zincCount)}
-                onChangeText={(txt) => {
-                  const val = parseInt(txt.replace(/[^0-9]/g, "")) || 0;
-                  setZincCount(val);
-                }}
-                className="h-14 flex-1 border border-slate-200 bg-white rounded-xl text-center font-bold text-[19px] text-slate-800 p-0"
-              />
-
-              {/* Increment */}
-              <TouchableOpacity
-                onPress={() => setZincCount((prev) => prev + 1)}
+                onPress={() => setCount((prev) => prev + 1)}
                 className="w-11 h-11 rounded-xl items-center justify-center bg-[#475569]"
               >
                 <Text className="font-bold text-xl text-white">
@@ -949,7 +772,7 @@ export default function ChildCounselingSection({
           {/* Actions */}
           <View className="flex-row border-t border-slate-100">
             <TouchableOpacity
-              onPress={() => setZincModalVisible(false)}
+              onPress={onClose}
               className="flex-1 py-3.5 items-center justify-center"
             >
               <Text className="text-slate-500 font-semibold text-[15px]">
@@ -957,14 +780,14 @@ export default function ChildCounselingSection({
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={handleSaveZinc}
-              disabled={zincCount <= 0 || loadingButtons["zinc_for_child"]}
-              className="flex-1 py-3.5 items-center border-l border-slate-100 justify-center bg-amber-50"
+              onPress={onSave}
+              disabled={count <= 0 || loading}
+              className={`flex-1 py-3.5 items-center border-l border-slate-100 justify-center ${accentSoftBgClass}`}
             >
-              {loadingButtons["zinc_for_child"] ? (
-                <ActivityIndicator color="#D97706" size="small" />
+              {loading ? (
+                <ActivityIndicator color={iconColor} size="small" />
               ) : (
-                <Text className="text-amber-600 font-semibold text-[15px]">
+                <Text className={`${accentTextClass} font-semibold text-[15px]`}>
                   {t("common.save")}
                 </Text>
               )}
@@ -974,6 +797,42 @@ export default function ChildCounselingSection({
       </View>
     </Modal>
   );
+
+  const renderOrsModal = () =>
+    renderCountModal({
+      visible: orsModalVisible,
+      onClose: () => setOrsModalVisible(false),
+      onSave: handleSaveOrs,
+      count: orsCount,
+      setCount: setOrsCount,
+      titleKey: "counseling_section.distribute_ors_title",
+      descKey: "counseling_section.distribute_ors_desc",
+      iconBgClass: "bg-blue-100",
+      iconColor: "#2563EB",
+      headerBgClass: "bg-[#eff6ff]",
+      headerBorderClass: "border-b border-blue-50",
+      accentTextClass: "text-blue-600",
+      accentSoftBgClass: "bg-blue-50",
+      loading: loadingButtons["ors_for_child"],
+    });
+
+  const renderZincModal = () =>
+    renderCountModal({
+      visible: zincModalVisible,
+      onClose: () => setZincModalVisible(false),
+      onSave: handleSaveZinc,
+      count: zincCount,
+      setCount: setZincCount,
+      titleKey: "counseling_section.distribute_zinc_title",
+      descKey: "counseling_section.distribute_zinc_desc",
+      iconBgClass: "bg-amber-100",
+      iconColor: "#D97706",
+      headerBgClass: "bg-[#fefce8]",
+      headerBorderClass: "border-b border-amber-50",
+      accentTextClass: "text-amber-600",
+      accentSoftBgClass: "bg-amber-50",
+      loading: loadingButtons["zinc_for_child"],
+    });
 
   const renderDatePicker = () => (
     <CalendarPicker
@@ -1040,12 +899,7 @@ export default function ChildCounselingSection({
                 ? toNepaliNumbers(bmiValue)
                 : bmiValue;
 
-            const muacColor =
-              log.muac === "red"
-                ? "#F43F5E"
-                : log.muac === "yellow"
-                  ? "#FAB005"
-                  : "#10B981";
+            const muacColor = getMuacColor(log.muac);
             const subAnswers = log.sub_answers || {};
             const malnutritionQuestions =
               MALNUTRITION_CONTENT.sub_questions.filter((q) =>
@@ -1173,14 +1027,7 @@ export default function ChildCounselingSection({
     const mainQuestionId = MALNUTRITION_CONTENT.main_question.id;
     const bmi = calculateBmi(weight, height);
 
-    let malnutritionLogs: any[] = [];
-    if (Array.isArray(answers[mainQuestionId])) {
-      malnutritionLogs = answers[mainQuestionId];
-    } else if (answers[mainQuestionId]) {
-      malnutritionLogs = [
-        { date: record?.updated_at || new Date().toISOString(), value: true },
-      ];
-    }
+    let malnutritionLogs: any[] = getLogs(mainQuestionId);
 
     const latestLog =
       malnutritionLogs.length > 0
@@ -1193,12 +1040,7 @@ export default function ChildCounselingSection({
 
     const renderCollapsedSummary = () => {
       if (latestLog) {
-        const muacColor =
-          latestLog.muac === "red"
-            ? "#F43F5E"
-            : latestLog.muac === "yellow"
-              ? "#FAB005"
-              : "#10B981";
+        const muacColor = getMuacColor(latestLog.muac);
         let dateStr = "";
         try {
           dateStr =

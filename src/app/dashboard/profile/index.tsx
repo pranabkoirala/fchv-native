@@ -290,6 +290,19 @@ export default function HmisRecordProfileScreen() {
   }>();
   const { showToast } = useToast();
 
+  const handleBack = useCallback(() => {
+    if (from) {
+      router.replace({
+        pathname: from,
+        params: fromTab ? { tab: fromTab } : undefined,
+      } as any);
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/dashboard/record");
+    }
+  }, [from, fromTab, router]);
+
   const [record, setRecord] = useState<HmisRecordStoreType | null>(null);
   const [supplementsRecord, setSupplementsRecord] =
     useState<SupplementStoreType | null>(null);
@@ -442,35 +455,24 @@ export default function HmisRecordProfileScreen() {
   );
 
   useEffect(() => {
-    const onBackPress = () => {
-      if (from) {
-        router.replace({
-          pathname: from,
-          params: fromTab ? { tab: fromTab } : undefined,
-        } as any);
-      } else if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.replace("/dashboard/record");
-      }
-      return true;
-    };
-
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
-      onBackPress,
+      () => {
+        handleBack();
+        return true;
+      },
     );
     return () => backHandler.remove();
-  }, [from, fromTab, router]);
+  }, [handleBack]);
 
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <StatusBar barStyle="dark-content" />
-        <CustomHeader
-          title={t("profile.title")}
-          onBackPress={() => router.back()}
-        />
+          <CustomHeader
+            title={t("profile.title")}
+            onBackPress={handleBack}
+          />
         <ProfileSkeleton />
       </SafeAreaView>
     );
@@ -484,7 +486,7 @@ export default function HmisRecordProfileScreen() {
           {t("profile.states.not_found")}
         </Text>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={handleBack}
           className="mt-6 px-8 py-3 rounded-full bg-blue-600"
         >
           <Text className="text-white font-semibold">
@@ -547,18 +549,7 @@ export default function HmisRecordProfileScreen() {
       <StatusBar barStyle="dark-content" />
       <CustomHeader
         title={t("profile.title")}
-        onBackPress={() => {
-          if (from) {
-            router.replace({
-              pathname: from,
-              params: fromTab ? { tab: fromTab } : undefined,
-            } as any);
-          } else if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.replace("/dashboard/record");
-          }
-        }}
+        onBackPress={handleBack}
       />
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

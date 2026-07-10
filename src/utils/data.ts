@@ -380,3 +380,13 @@ export const FCHV_COUNSELING: FchvCounselingField[] = [
     ne: "गाउँघर क्लिनिक सञ्चालनमा सहयोग गरेको (पटक)",
   },
 ];
+
+export const NEWBORN_GENDER_OPTIONS = [
+  { value: "Male", label_en: "Male", label_ne: "छोरा" },
+  { value: "Female", label_en: "Female", label_ne: "छोरी" },
+];
+
+export const NEWBORN_STATUS_OPTIONS = [
+  { value: "alive", label_en: "Alive", label_ne: "जीवित" },
+  { value: "dead", label_en: "Dead", label_ne: "मृत" },
+];

@@ -30,6 +30,7 @@ import {
 import {
   getChildrenByPregnancy,
   getInfantMonitoringsByMother,
+  getInfantMonitoringById,
 } from "@/hooks/database/models/InfantMonitoringModel";
 import {
   getAllMothersList,
@@ -399,8 +400,12 @@ const CHILD_QUANTITY_DEFAULTS: Record<string, number> = {
 
 export default function VisitScreen() {
   const router = useRouter();
-  const { motherId: urlMotherId, visitType: urlVisitType } =
-    useLocalSearchParams<{ motherId?: string; visitType?: string }>();
+  const { motherId: urlMotherId, visitType: urlVisitType, childId: urlChildId } =
+    useLocalSearchParams<{
+      motherId?: string;
+      visitType?: string;
+      childId?: string;
+    }>();
   const { showToast } = useToast();
   const { t, language } = useLanguage();
 
@@ -416,6 +421,10 @@ export default function VisitScreen() {
   );
   const [selectedMotherDetails, setSelectedMotherDetails] = useState<any>(null);
   const [pregnancyId, setPregnancyId] = useState<string | null>(null);
+  // When navigated here right after registering a new child, this holds that
+  // child's id so the counseling section shows only the new child (no previous
+  // siblings' counseling leaking in).
+  const [linkedChildId, setLinkedChildId] = useState<string | null>(null);
   const [children, setChildren] = useState<InfantMonitoringStoreType[]>([]);
   const [childCounselingAnswers, setChildCounselingAnswers] = useState<
     Record<string, Record<string, boolean>>
@@ -521,7 +530,10 @@ export default function VisitScreen() {
     if (urlVisitType) {
       setVisitType(urlVisitType as "ANC" | "PNC" | "OTHER");
     }
-  }, [urlMotherId, urlVisitType]);
+    if (urlChildId) {
+      setLinkedChildId(urlChildId);
+    }
+  }, [urlMotherId, urlVisitType, urlChildId]);
 
   // Get questions filtered by visit type — memoized so it only recalculates when visitType changes
   const { counselingQuestions, referralQuestions } = useMemo(
@@ -635,16 +647,28 @@ export default function VisitScreen() {
       try {
         // When a pregnancy is linked (e.g. after a delivery), only fetch
         // children from this pregnancy so previous deliveries don't leak in.
-        const childList = pregnancyId
+        let childList = pregnancyId
           ? await getChildrenByPregnancy(pregnancyId)
           : await getInfantMonitoringsByMother(selectedMotherId);
+
+        // When arriving right after registering a new child, restrict the
+        // counseling section to that child only so previous siblings' existing
+        // counseling doesn't show up for the newborn.
+        if (linkedChildId) {
+          let target: InfantMonitoringStoreType | null =
+            childList.find((c) => c.id === linkedChildId) ?? null;
+          if (!target) {
+            target = await getInfantMonitoringById(linkedChildId);
+          }
+          childList = target ? [target] : [];
+        }
         setChildren(childList);
       } catch (e) {
         console.error("Failed to load children:", e);
       }
     };
     fetchChildren();
-  }, [selectedMotherId, visitType, pregnancyId]);
+  }, [selectedMotherId, visitType, pregnancyId, linkedChildId]);
 
   // Seed checkedQuestions with previously answered one-time questions
   useEffect(() => {

@@ -581,7 +581,19 @@
     "title": "Reports",
     "pregnancy": {
       "title": "Pregnancy register report",
-      "subtitle": "Pregnancy register report"
+      "subtitle": "Pregnancy register report",
+      "search_placeholder": "Search by name or phone...",
+      "expected_delivery": "Expected Delivery",
+      "details": "Details",
+      "risk_high": "High",
+      "risk_moderate": "Moderate",
+      "risk_normal": "Normal",
+      "no_results": "No results found",
+      "share": "Share Report",
+      "gravida": "Gravida",
+      "parity": "Parity",
+      "registered": "Total {count} mothers",
+      "risk_title": "Risk Report"
     },
     "service_recipients": {
       "title": "Total service recipients count",
@@ -1339,7 +1351,7 @@
     },
     "matching_pregnancy": {
       "title": "Matching pregnancy found!",
-      "description": "The child\u2019s birth date matches a pregnancy registered on {{date}} (LMP). Would you like to link this child to that pregnancy?",
+      "description": "The child’s birth date matches a pregnancy registered on {{date}} (LMP). Would you like to link this child to that pregnancy?",
       "yes": "Yes, link pregnancy",
       "no": "No, keep unlinked"
     }

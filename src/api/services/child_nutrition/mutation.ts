@@ -17,7 +17,6 @@ const mapChildNutritionToSyncPayload = (data: ChildNutritionStoreType) => ({
 });
 
 const postBulkChildNutrition = async (data: ChildNutritionStoreType[]) => {
-  console.log(data.map(mapChildNutritionToSyncPayload));
   const response = await httpClient.post<ChildNutritionStoreType[]>(
     API_LIST.child_nutrition.post,
     data.map(mapChildNutritionToSyncPayload),

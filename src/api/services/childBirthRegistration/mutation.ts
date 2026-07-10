@@ -11,7 +11,6 @@ const mapToSyncPayload = (data: ChildBirthRegistrationStoreType) => ({
 });
 
 const postBulk = async (data: ChildBirthRegistrationStoreType[]) => {
-  console.log(data.map(mapToSyncPayload));
   const response = await httpClient.post<ChildBirthRegistrationStoreType[]>(
     API_LIST.child_birth_registration.post,
     data.map(mapToSyncPayload),

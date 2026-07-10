@@ -17,8 +17,6 @@ export const httpClient: AxiosInstance = axios.create({
   timeout: THREE_MINUTES,
 });
 
-console.log({ baseURL });
-
 // ── Request interceptor: attach access token ──
 httpClient.interceptors.request.use(async (config) => {
   const token = await storage.get(ACCESS_TOKEN_KEY);
