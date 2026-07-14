@@ -63,6 +63,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Calendar, Check, Minus, Plus, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  BackHandler,
   Modal,
   PanResponder,
   Pressable,
@@ -443,10 +444,12 @@ export default function VisitScreen() {
     motherId: urlMotherId,
     visitType: urlVisitType,
     childId: urlChildId,
+    from: urlFrom,
   } = useLocalSearchParams<{
     motherId?: string;
     visitType?: string;
     childId?: string;
+    from?: string;
   }>();
   const { showToast } = useToast();
   const { t, language } = useLanguage();
@@ -498,6 +501,30 @@ export default function VisitScreen() {
   const [remarks, setRemarks] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleBack = useCallback(() => {
+    if (urlFrom) {
+      router.replace({
+        pathname: urlFrom,
+        params: { id: urlMotherId },
+      } as any);
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/dashboard");
+    }
+  }, [urlFrom, urlMotherId, router]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        handleBack();
+        return true;
+      },
+    );
+    return () => backHandler.remove();
+  }, [handleBack]);
 
   const [checkedQuestions, setCheckedQuestions] = useState<
     Record<string, boolean>
@@ -659,6 +686,22 @@ export default function VisitScreen() {
         const preg = await getPregnancyByMotherId(selectedMotherId);
         setPregnancyId(preg?.id || null);
 
+        // Auto-select visit type:
+        // if no visit type was passed in URL, or the user manually selected a different mother
+        if (!urlVisitType || selectedMotherId !== urlMotherId) {
+          const isPregnant = preg && preg.is_current === 1 && !preg.delivered && !preg.ended;
+          if (isPregnant) {
+            setVisitType("ANC");
+          } else {
+            const allChildren = await getInfantMonitoringsByMother(selectedMotherId);
+            if (allChildren && allChildren.length > 0) {
+              setVisitType("PNC");
+            } else {
+              setVisitType("OTHER");
+            }
+          }
+        }
+
         // Family planning is an every-visit (not one-time) question, so we must
         // NOT mark it as permanently answered. Instead we load the existing
         // record and surface it as a hint so the FCHV can add to it each visit.
@@ -718,7 +761,7 @@ export default function VisitScreen() {
       }
     };
     fetchMotherDetails();
-  }, [selectedMotherId, t, language]);
+  }, [selectedMotherId, t, language, urlVisitType, urlMotherId]);
 
   // Fetch children when mother selected and visit type is PNC
   useEffect(() => {
@@ -765,6 +808,23 @@ export default function VisitScreen() {
       });
     }
   }, [answeredOneTimeIds]);
+
+  // Seed childCounselingAnswers with already answered child one-time questions
+  useEffect(() => {
+    if (Object.keys(childOneTimeAnswered).length > 0) {
+      setChildCounselingAnswers((prev) => {
+        const next = { ...prev };
+        Object.entries(childOneTimeAnswered).forEach(([childId, answeredSet]) => {
+          const current = { ...(next[childId] || {}) };
+          answeredSet.forEach((id) => {
+            current[id] = true;
+          });
+          next[childId] = current;
+        });
+        return next;
+      });
+    }
+  }, [childOneTimeAnswered]);
 
   // Load child counseling history for one-time question detection per child
   useEffect(() => {
@@ -954,8 +1014,9 @@ export default function VisitScreen() {
       // Save counseling & referral answers.
       // Exclude "family_planning": its data is stored in the dedicated
       // family_planning table via the family planning modal.
+      // Exclude already answered one-time questions to avoid duplicating logs.
       const checkedKeys = Object.keys(checkedQuestions).filter(
-        (k) => checkedQuestions[k] && k !== "family_planning",
+        (k) => checkedQuestions[k] && k !== "family_planning" && !answeredOneTimeIds.has(k),
       );
       if (checkedKeys.length > 0) {
         let regYear = getCurrentNepaliDate().year;
@@ -1054,8 +1115,9 @@ export default function VisitScreen() {
         const childIds = Object.keys(childCounselingAnswers);
         for (const childId of childIds) {
           const answers = childCounselingAnswers[childId];
+          const oneTimeAnswered = childOneTimeAnswered[childId] || new Set();
           const checkedChildKeys = Object.keys(answers).filter(
-            (k) => answers[k],
+            (k) => answers[k] && !oneTimeAnswered.has(k),
           );
           if (checkedChildKeys.length === 0) continue;
 
@@ -1178,7 +1240,7 @@ export default function VisitScreen() {
       <StatusBar backgroundColor="#fff" />
       <CustomHeader
         title={t("visit.title", { defaultValue: "Visit Registration" })}
-        onBackPress={() => router.back()}
+        onBackPress={handleBack}
       />
       <ScrollView
         style={{ flex: 1 }}

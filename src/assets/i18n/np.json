@@ -417,6 +417,8 @@
   },
   "profile": {
     "title": "आमाको विवरण",
+    "visit": "भ्रमण",
+    "counselling": "परामर्श",
     "quick_actions": "द्रुत कार्यहरू",
     "health_issues": "स्वास्थ्य समस्याहरू",
     "no_health_issues": "अहिलेसम्म कुनै स्वास्थ्य समस्या छैनन्",

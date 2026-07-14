@@ -419,6 +419,8 @@
   },
   "profile": {
     "title": "Mothers Details",
+    "visit": "Visit",
+    "counselling": "Counselling",
     "quick_actions": "Quick Actions",
     "health_issues": "Health Issues",
     "no_health_issues": "No health problems yet",
