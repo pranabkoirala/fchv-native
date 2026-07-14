@@ -7,7 +7,6 @@ import { router, useFocusEffect } from "expo-router";
 import { Baby, Calendar, ChevronRight, Plus, Search } from "lucide-react-native";
 import { memo, useCallback, useMemo, useState } from "react";
 import { FlatList, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { AdToBs } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ChildCardSkeleton = () => (
@@ -60,7 +59,7 @@ const ChildCard = memo(function ChildCard({
         <View className="flex-row items-center">
           <Calendar size={12} color="#5f6670ff" />
           <Text className="text-slate-500 text-[13px] font-medium ml-1" numberOfLines={1}>
-            {language === "en" ? item.date_of_birth : AdToBs(item.date_of_birth || "")}
+            {language === "en" ? item.date_of_birth : item.date_of_birth || ""}
           </Text>
         </View>
       </View>

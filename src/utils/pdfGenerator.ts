@@ -399,7 +399,7 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
       addCount(counts, 5, month);
     }
     if (
-      hasCounselingAnswer(item, "institutional_delivery_referral", "pregnant")
+      hasCounselingAnswer(item, "institutional_delivery_referral", "postpartum")
     ) {
       addCount(counts, 6, month);
     }
@@ -421,7 +421,7 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
       addCount(counts, 12, month);
     }
     if (
-      hasCounselingAnswer(item, "institutional_delivery_referral", "pregnant")
+      hasCounselingAnswer(item, "institutional_delivery_referral", "postpartum")
     ) {
       addCount(counts, 13, month);
     }

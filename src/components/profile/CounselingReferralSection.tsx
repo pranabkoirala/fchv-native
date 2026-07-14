@@ -18,12 +18,17 @@ interface CounselingReferralSectionProps {
   disabled?: boolean;
 }
 
+interface DateEntry {
+  date: string;
+  quantity?: number;
+}
+
 interface DisplayRecord {
   questionId: string;
   questionEn: string;
   questionNe: string;
   type: "referral" | "counseling";
-  dates: string[];
+  dates: DateEntry[];
 }
 
 export default function CounselingReferralSection({
@@ -56,7 +61,7 @@ export default function CounselingReferralSection({
     const loadData = async () => {
       try {
         const history = await getCounselingReferralHistory(motherId);
-        const answerMap: Record<string, string[]> = {};
+        const answerMap: Record<string, DateEntry[]> = {};
 
         history.forEach((h) => {
           if (h.answers) {
@@ -69,7 +74,12 @@ export default function CounselingReferralSection({
                   ? [{ date: h.updated_at }]
                   : [];
               logs.forEach((log: any) => {
-                if (log.date) answerMap[qId].push(log.date);
+                if (log.date)
+                  answerMap[qId].push({
+                    date: log.date,
+                    quantity:
+                      typeof log.quantity === "number" ? log.quantity : undefined,
+                  });
               });
             });
           }
@@ -84,7 +94,7 @@ export default function CounselingReferralSection({
               questionEn: question.en,
               questionNe: question.ne,
               type: question.type,
-              dates: dates.sort(),
+              dates: dates.sort((a, b) => a.date.localeCompare(b.date)),
             };
           })
           .filter(Boolean) as DisplayRecord[];
@@ -234,18 +244,27 @@ export default function CounselingReferralSection({
                               {t("counseling_section.recorded_dates")}
                             </Text>
                           </View>
-                          <View className="flex-row flex-wrap gap-1.5">
-                            {item.dates.map((date, idx) => (
-                              <View
-                                key={idx}
-                                className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg"
-                              >
-                                <Text className="text-slate-600 text-[11px] font-medium">
-                                  {formatDate(date)}
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
+                           <View className="flex-row flex-wrap gap-1.5">
+                             {item.dates.map((entry, idx) => (
+                               <View
+                                 key={idx}
+                                 className="bg-white border border-slate-200 px-2.5 py-1 rounded-lg flex-row items-center"
+                               >
+                                 <Text className="text-slate-600 text-[11px] font-medium">
+                                   {formatDate(entry.date)}
+                                 </Text>
+                                 {entry.quantity !== undefined && (
+                                   <View className="ml-1.5 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-md">
+                                     <Text className="text-emerald-700 text-[10px] font-bold">
+                                       {language === "np"
+                                         ? toNepaliNumbers(String(entry.quantity))
+                                         : String(entry.quantity)}
+                                     </Text>
+                                   </View>
+                                 )}
+                               </View>
+                             ))}
+                           </View>
                         </View>
                       )}
                     </View>

@@ -27,7 +27,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { AdToBs } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const MeetingDetailsSkeleton = () => (
@@ -281,7 +280,7 @@ export default function MeetingDetails() {
               <InfoRow
                 label={t("mothers_group_meeting.meeting_date")}
                 value={
-                  meeting.meeting_date ? AdToBs(meeting.meeting_date) : "-"
+                  meeting.meeting_date ? meeting.meeting_date : "-"
                 }
                 icon={Calendar}
                 color="#0891B2"

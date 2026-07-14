@@ -20,7 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { AdToBs } from "react-native-nepali-picker";
+import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const ChildProfileSkeleton = () => (
@@ -126,7 +126,14 @@ const toNepaliNumbers = (num: number | string) => {
 
 const calculateAge = (dobString: string, currentLanguage: string, t: any) => {
   if (!dobString) return "---";
-  const dob = new Date(dobString);
+  let adDobString = dobString;
+  const [yr] = dobString.split("-").map(Number);
+  if (yr >= 2070) {
+    try {
+      adDobString = BsToAd(dobString);
+    } catch (e) {}
+  }
+  const dob = new Date(adDobString);
   const now = new Date();
 
   let years = now.getFullYear() - dob.getFullYear();
@@ -324,7 +331,7 @@ export default function ChildProfileScreen() {
                       {language === "en"
                         ? record.date_of_birth
                         : record.date_of_birth
-                          ? toNepaliNumbers(AdToBs(record.date_of_birth))
+                          ? toNepaliNumbers(record.date_of_birth)
                           : "---"}
                     </Text>
                     <TouchableOpacity

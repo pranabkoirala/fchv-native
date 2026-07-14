@@ -1032,6 +1032,7 @@
     "remove_confirm_title": "Remove Method",
     "remove_confirm_msg": "Are you sure you want to remove this family planning method?",
     "add_title": "Add Family Planning Method",
+    "subtitle": "Update the contraceptive methods provided to the mother",
     "pills": "Pills",
     "ocp_label": "OCP (Regular Pills)",
     "ecp_label": "ECP (Emergency Pills)",
@@ -1553,7 +1554,7 @@
     "quantity_title": "Enter Quantity",
     "quantity_save": "Save",
     "quantity_cancel": "Cancel",
-    "invalid_quantity": "Please enter a valid quantity between 0 and {max}",
+    "invalid_quantity": "Please enter a valid quantity between 0 and {{max}}",
     "child_counseling_title": "Child Counseling",
     "child_unnamed": "Child",
     "sections": {

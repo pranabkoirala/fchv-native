@@ -57,7 +57,14 @@ export default function VaccinationModal({
 
   const getChildAgeInDays = (): number | null => {
     if (!childDateOfBirth) return null;
-    const dob = new Date(childDateOfBirth);
+    let dobAd = childDateOfBirth;
+    const [dobYear] = childDateOfBirth.split("-").map(Number);
+    if (dobYear >= 2070) {
+      try {
+        dobAd = BsToAd(childDateOfBirth);
+      } catch (e) {}
+    }
+    const dob = new Date(dobAd);
     if (isNaN(dob.getTime())) return null;
     const now = new Date();
     const diff = now.getTime() - dob.getTime();
@@ -115,7 +122,13 @@ export default function VaccinationModal({
   const handleToggle = async (vaccineId: string) => {
     const current = vaccinations[vaccineId] || { is_given: false, date: null };
     const newStatus = !current.is_given;
-    const newDate = newStatus ? current.date || new Date().toISOString() : null;
+
+    const today = new Date();
+    const todayAd = `${today.getFullYear()}-${String(
+      today.getMonth() + 1,
+    ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const todayBs = AdToBs(todayAd);
+    const newDate = newStatus ? current.date || todayBs : null;
 
     // Optimistic update
     const updatedVaccinations = {
@@ -144,29 +157,13 @@ export default function VaccinationModal({
 
   const handleDateChange = async (vaccineId: string, bsDate: string) => {
     try {
-      const adDateStr = BsToAd(bsDate); // Likely "YYYY-MM-DD"
-
-      // Fix RangeError on Hermes/JSC: replace dashes with slashes for guaranteed parsing
-      let dateObj = new Date(adDateStr.replace(/-/g, "/"));
-
-      // Fallback for strict parsers
-      if (isNaN(dateObj.getTime())) {
-        dateObj = new Date(`${adDateStr}T00:00:00.000Z`);
-      }
-
-      if (isNaN(dateObj.getTime())) {
-        throw new Error(`Failed to parse AD date: ${adDateStr}`);
-      }
-
-      const adIso = dateObj.toISOString();
-
       const updatedVaccinations = {
         ...vaccinations,
-        [vaccineId]: { ...vaccinations[vaccineId], date: adIso },
+        [vaccineId]: { ...vaccinations[vaccineId], date: bsDate },
       };
       setVaccinations(updatedVaccinations);
 
-      await toggleVaccineStatus(childId, vaccineId, true, adIso);
+      await toggleVaccineStatus(childId, vaccineId, true, bsDate);
       if (onSuccess) onSuccess();
       setShowDatePicker(null);
       showToast(t("common.success") || "Date updated");
@@ -176,15 +173,22 @@ export default function VaccinationModal({
     }
   };
 
-  const formatDateDisplay = (isoDate: string | null) => {
-    if (!isoDate) return "---";
+  const toBsDateString = (value: string | null): string | null => {
+    if (!value) return null;
+    const datePart = value.split("T")[0];
+    const [y] = datePart.split("-").map(Number);
+    if (y >= 2070) return datePart; // already BS
     try {
-      const date = isoDate.split("T")[0];
-      const bsDate = AdToBs(date);
-      return language === "np" ? toNepaliNumbers(bsDate) : bsDate;
+      return AdToBs(datePart); // AD -> BS
     } catch (e) {
-      return isoDate.split("T")[0];
+      return datePart;
     }
+  };
+
+  const formatDateDisplay = (isoDate: string | null) => {
+    const bs = toBsDateString(isoDate);
+    if (!bs) return "---";
+    return language === "np" ? toNepaliNumbers(bs) : bs;
   };
 
   return (
@@ -341,7 +345,7 @@ export default function VaccinationModal({
                                     }
                                     date={
                                       status.date
-                                        ? AdToBs(status.date.split("T")[0])
+                                        ? toBsDateString(status.date) ?? AdToBs(todayAd)
                                         : AdToBs(todayAd)
                                     }
                                     language={language === "np" ? "np" : "en"}

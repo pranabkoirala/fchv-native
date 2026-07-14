@@ -32,9 +32,10 @@ export default function NewbornDeathModal({
 }: NewbornDeathModalProps) {
   const { t } = useTranslation();
 
-  // ── Lifted CalendarPicker state (fixes nested-Modal bug) ──────────────────
   const [showDeathDatePicker, setShowDeathDatePicker] = useState(false);
-  const [currentDeathBsDate, setCurrentDeathBsDate] = useState<string | undefined>(undefined);
+  const [currentDeathBsDate, setCurrentDeathBsDate] = useState<
+    string | undefined
+  >(undefined);
   // Ref to the form's applyDeathDate callback, registered on form mount.
   const applyDeathDateRef = useRef<((bsDate: string) => void) | null>(null);
 
@@ -77,9 +78,7 @@ export default function NewbornDeathModal({
               }}
               showToast={showToast}
               // ── Lifted CalendarPicker props (fixes nested-Modal bug) ───────
-              onRequestOpenDeathDatePicker={() =>
-                setShowDeathDatePicker(true)
-              }
+              onRequestOpenDeathDatePicker={() => setShowDeathDatePicker(true)}
               registerDeathDateSetter={(setter) => {
                 applyDeathDateRef.current = setter;
               }}

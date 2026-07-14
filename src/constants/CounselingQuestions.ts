@@ -77,7 +77,7 @@ export const ALL_QUESTIONS: CounselingQuestion[] = [
     en: "Did you refer the pregnant woman for institutional delivery?",
     ne: "सुत्केरी जाँचको लागि स्वास्थ्य संस्थामा रेफर गर्नुभयो?",
     type: "referral",
-    category: "pregnant",
+    category: "postpartum",
     frequency: "one_time",
   },
   {
@@ -89,10 +89,26 @@ export const ALL_QUESTIONS: CounselingQuestion[] = [
     frequency: "one_time",
   },
   {
+    id: "abortion_referral",
+    en: "Do you want to have an abortion?",
+    ne: "के तपाईंलाई गर्भपतन गराउनु छ?",
+    type: "referral",
+    category: "pregnant",
+    frequency: "one_time",
+  },
+  {
     id: "abortion_services_referral",
     en: "Did you refer the woman to a health facility for safe abortion services?",
-    ne: "सुरक्षित गर्भपतनका लागि स्वास्थ्य संस्थामा रेफर गगर्नुभयो?",
+    ne: "सुरक्षित गर्भपतनका लागि स्वास्थ्य संस्थामा रेफर गर्नुभयो?",
     type: "referral",
+    category: "pregnant",
+    frequency: "one_time",
+  },
+  {
+    id: "abortion",
+    en: "Have you had an abortion?",
+    ne: "तपाईंले गर्भपतन गराउनुभयो?",
+    type: "counseling",
     category: "pregnant",
     frequency: "one_time",
   },
@@ -110,6 +126,15 @@ export const ALL_QUESTIONS: CounselingQuestion[] = [
     id: "iron_tablets_followup",
     en: "Did you provide iron tablets during follow-up visits?",
     ne: "दोहोर्‍याएर जाँचका लागि आउँदा गर्भवती महिलालाई आइरन चक्की दिनुभयो?",
+    type: "counseling",
+    category: "pregnant",
+    frequency: "every_visit",
+  },
+
+  {
+    id: "family_planning",
+    en: "Would you like to use a family planning method?",
+    ne: "के तपाईं परिवार नियोजनको साधन लिन चाहनुहुन्छ?",
     type: "counseling",
     category: "pregnant",
     frequency: "every_visit",
@@ -242,6 +267,13 @@ export function getQuestionsForVisitType(visitType: "ANC" | "PNC" | "OTHER"): {
       break;
     default:
       filtered = [];
+  }
+
+  // The family planning question is relevant to every visit type, so always
+  // include it regardless of the selected visit type.
+  const fpQuestion = getQuestionById("family_planning");
+  if (fpQuestion && !filtered.some((q) => q.id === "family_planning")) {
+    filtered = [...filtered, fpQuestion];
   }
 
   return {

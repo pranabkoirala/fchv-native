@@ -4,6 +4,7 @@ import { FieldLabel } from "@/components/FormElements";
 import { ProfilePicker } from "@/components/ProfilePicker";
 import TextArea from "@/components/TextArea";
 import { Button } from "@/components/button";
+import FamilyPlanningModal from "@/components/forms/FamilyPlanningModal";
 import {
   CHILD_COUNSELING_QUESTIONS,
   CHILD_HEALTH_COUNSELLING_QUESTIONS,
@@ -18,6 +19,10 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/context/ToastContext";
 import {
+  getAbortionByMotherAndPregnancy,
+  saveAbortion,
+} from "@/hooks/database/models/AbortionModel";
+import {
   getChildCounselingByChild,
   getChildCounselingHistory,
   saveChildCounseling,
@@ -27,10 +32,11 @@ import {
   getCounselingReferralHistory,
   saveCounselingReferral,
 } from "@/hooks/database/models/CounselingReferralModel";
+import { getFamilyPlanningByMother } from "@/hooks/database/models/FamilyPlanningModel";
 import {
   getChildrenByPregnancy,
-  getInfantMonitoringsByMother,
   getInfantMonitoringById,
+  getInfantMonitoringsByMother,
 } from "@/hooks/database/models/InfantMonitoringModel";
 import {
   getAllMothersList,
@@ -45,6 +51,7 @@ import {
 import {
   getPregnancyByMotherId,
   getPregnantWomenList,
+  updatePregnancy,
 } from "@/hooks/database/models/PregnantWomenModal";
 import {
   createVisit,
@@ -52,7 +59,7 @@ import {
 } from "@/hooks/database/models/VisitModel";
 import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
 import { getCurrentNepaliDate, toNepaliNumbers } from "@/utils/dateHelper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Calendar, Check, Minus, Plus, X } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -113,18 +120,39 @@ const getFormattedAddress = (
   return [muni, wardText, localityText].filter(Boolean).join(", ");
 };
 
+// Build a short hint string describing an existing family planning record so
+// the FCHV can see what's already recorded without the question appearing as a
+// permanently-answered (one-time) item. Returns null when nothing is recorded.
+const formatFpHint = (rec: any, language: string): string | null => {
+  if (!rec || !rec.family_planning || rec.family_planning === "None") {
+    return null;
+  }
+  const parts: string[] = [];
+  rec.family_planning.split(", ").forEach((m: string) => {
+    if (m === "OCP" && rec.ocp_qty) parts.push(`OCP ×${rec.ocp_qty}`);
+    else if (m === "ECP" && rec.ecp_qty) parts.push(`ECP ×${rec.ecp_qty}`);
+    else if (m === "Condoms" && rec.condom_qty)
+      parts.push(`Condoms ×${rec.condom_qty}`);
+    else parts.push(m);
+  });
+  const detail = parts.join(", ");
+  return `${detail}`;
+};
+
 const ObservationItem = ({
   checked,
   onToggle,
   label,
   disabled,
   quantity,
+  hint,
 }: {
   checked: boolean;
   onToggle: () => void;
   label: string;
   disabled?: boolean;
   quantity?: number;
+  hint?: string | null;
 }) => (
   <TouchableOpacity
     activeOpacity={disabled ? 1 : 0.7}
@@ -150,20 +178,27 @@ const ObservationItem = ({
         <Check color="#fff" strokeWidth={3} size={15} />
       )}
     </View>
-    <Text
-      className={`text-[15px] flex-1 py-1 leading-5 ${
-        disabled
-          ? "text-slate-400 font-medium"
-          : checked
-            ? "text-slate-800 font-semibold"
-            : "text-slate-600 font-normal"
-      }`}
-    >
-      {label}
-    </Text>
+    <View className="flex-1">
+      <Text
+        className={`text-[15px] flex-1 leading-5 py-1 ${
+          disabled
+            ? "text-slate-400 font-medium"
+            : checked
+              ? "text-slate-800 font-semibold"
+              : "text-slate-600 font-normal"
+        }`}
+      >
+        {label}
+      </Text>
+      {hint ? (
+        <Text className="text-[10px] leading-4 text-slate-400 mt-0.5">
+          {hint}
+        </Text>
+      ) : null}
+    </View>
     {quantity !== undefined && (
-      <View className="bg-gray-100 rounded-lg px-2.5 py-1 ml-2">
-        <Text className="text-gray-700 font-bold text-[13px]">{quantity}</Text>
+      <View className=" rounded-lg px-2.5 py-1 ml-2">
+        <Text className="text-gray-400 font-bold text-[12px]">{quantity}</Text>
       </View>
     )}
   </TouchableOpacity>
@@ -172,6 +207,7 @@ const ObservationItem = ({
 /** Renders a section of questions with a title */
 const QUESTION_DEPENDENCIES: Record<string, string> = {
   home_delivery_misoprostol: "home_delivery",
+  abortion_services_referral: "abortion_referral",
 };
 
 const QuestionSection = ({
@@ -182,6 +218,7 @@ const QuestionSection = ({
   language,
   answeredOneTimeIds,
   questionQuantities,
+  questionHints,
 }: {
   title: string;
   questions: CounselingQuestion[];
@@ -190,6 +227,7 @@ const QuestionSection = ({
   language: string;
   answeredOneTimeIds: Set<string>;
   questionQuantities?: Record<string, number>;
+  questionHints?: Record<string, string | null>;
 }) => {
   if (questions.length === 0) return null;
   return (
@@ -214,6 +252,7 @@ const QuestionSection = ({
               label={language === "np" ? q.ne : q.en}
               disabled={isOneTimeAnswered}
               quantity={questionQuantities?.[q.id]}
+              hint={questionHints?.[q.id]}
             />
           );
         })}
@@ -400,12 +439,15 @@ const CHILD_QUANTITY_DEFAULTS: Record<string, number> = {
 
 export default function VisitScreen() {
   const router = useRouter();
-  const { motherId: urlMotherId, visitType: urlVisitType, childId: urlChildId } =
-    useLocalSearchParams<{
-      motherId?: string;
-      visitType?: string;
-      childId?: string;
-    }>();
+  const {
+    motherId: urlMotherId,
+    visitType: urlVisitType,
+    childId: urlChildId,
+  } = useLocalSearchParams<{
+    motherId?: string;
+    visitType?: string;
+    childId?: string;
+  }>();
   const { showToast } = useToast();
   const { t, language } = useLanguage();
 
@@ -484,9 +526,14 @@ export default function VisitScreen() {
     string | null
   >(null);
   const [quantityInputValue, setQuantityInputValue] = useState("");
+  const [quantityError, setQuantityError] = useState<string | null>(null);
   const [questionQuantities, setQuestionQuantities] = useState<
     Record<string, number>
   >({});
+
+  const [fpModalVisible, setFpModalVisible] = useState(false);
+  const [fpExistingRecord, setFpExistingRecord] = useState<any>(null);
+  const [fpHint, setFpHint] = useState<string | null>(null);
 
   const openOrsModal = (childId: string) => {
     setOrsModal({ visible: true, childId });
@@ -549,32 +596,34 @@ export default function VisitScreen() {
     setChildOneTimeAnswered({});
   }, [visitType, selectedMotherId]);
 
-  // Fetch initial data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [allMothers, pregnantWomen, deliveredIds] = await Promise.all([
-          getAllMothersList(),
-          getPregnantWomenList(),
-          getDeliveredMotherIds(),
-        ]);
-        setMothers(allMothers);
-        setPregnantMotherIds(new Set(pregnantWomen.map((p) => p.mother)));
-        setDeliveredMotherIds(new Set(deliveredIds));
-
-        // Set default date to today's Nepali date
-        const todayAd = new Date().toISOString().split("T")[0];
+  // Fetch initial data on focus
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
         try {
-          setVisitDateBs(AdToBs(todayAd));
-        } catch (e) {
-          console.error("Error setting initial Nepali date", e);
+          const [allMothers, pregnantWomen, deliveredIds] = await Promise.all([
+            getAllMothersList(),
+            getPregnantWomenList(),
+            getDeliveredMotherIds(),
+          ]);
+          setMothers(allMothers);
+          setPregnantMotherIds(new Set(pregnantWomen.map((p) => p.mother)));
+          setDeliveredMotherIds(new Set(deliveredIds));
+
+          // Set default date to today's Nepali date
+          const todayAd = new Date().toISOString().split("T")[0];
+          try {
+            setVisitDateBs(AdToBs(todayAd));
+          } catch (e) {
+            console.error("Error setting initial Nepali date", e);
+          }
+        } catch (err) {
+          console.error("Error loading visits data:", err);
         }
-      } catch (err) {
-        console.error("Error loading visits data:", err);
-      }
-    };
-    fetchData();
-  }, []);
+      };
+      fetchData();
+    }, [language, t]),
+  );
 
   // Handle Mother selection changes
   useEffect(() => {
@@ -584,6 +633,8 @@ export default function VisitScreen() {
       setPregnancyId(null);
       setAnsweredOneTimeIds(new Set());
       setQuestionQuantities({});
+      setFpExistingRecord(null);
+      setFpHint(null);
       return;
     }
 
@@ -608,6 +659,20 @@ export default function VisitScreen() {
         const preg = await getPregnancyByMotherId(selectedMotherId);
         setPregnancyId(preg?.id || null);
 
+        // Family planning is an every-visit (not one-time) question, so we must
+        // NOT mark it as permanently answered. Instead we load the existing
+        // record and surface it as a hint so the FCHV can add to it each visit.
+        try {
+          const fpRec = await getFamilyPlanningByMother(
+            selectedMotherId,
+            preg?.id ?? null,
+          );
+          setFpExistingRecord(fpRec);
+          setFpHint(formatFpHint(fpRec, language));
+        } catch (fpErr) {
+          console.error("Failed to load family planning record:", fpErr);
+        }
+
         // Load counseling history for this pregnancy only so previous deliveries don't leak
         const history = await getCounselingReferralHistory(
           selectedMotherId,
@@ -630,6 +695,24 @@ export default function VisitScreen() {
           }
         });
         setAnsweredOneTimeIds(answeredIds);
+
+        // Reflect an existing abortion-table record so the "Have you had an
+        // abortion?" question shows as already answered (it is one_time).
+        try {
+          const abortionRec = await getAbortionByMotherAndPregnancy(
+            selectedMotherId,
+            preg?.id ?? null,
+          );
+          if (abortionRec?.aborted === 1) {
+            setAnsweredOneTimeIds((prev) => {
+              const next = new Set(prev);
+              next.add("abortion");
+              return next;
+            });
+          }
+        } catch (abortErr) {
+          console.error("Failed to load abortion record:", abortErr);
+        }
       } catch (e) {
         console.error("Failed to load mother details:", e);
       }
@@ -746,6 +829,19 @@ export default function VisitScreen() {
     if (errors.visitDate) setErrors({ ...errors, visitDate: "" });
   };
 
+  const openFamilyPlanningModal = async () => {
+    try {
+      const rec = await getFamilyPlanningByMother(
+        selectedMotherId,
+        pregnancyId,
+      );
+      setFpExistingRecord(rec);
+    } catch (e) {
+      setFpExistingRecord(null);
+    }
+    setFpModalVisible(true);
+  };
+
   const toggleQuestion = (id: string) => {
     if (!selectedMotherId) {
       showToast(
@@ -755,10 +851,17 @@ export default function VisitScreen() {
       );
       return;
     }
+    // The family planning question opens the dedicated family planning modal
+    // which records the data into the family_planning table.
+    if (id === "family_planning") {
+      openFamilyPlanningModal();
+      return;
+    }
     if (answeredOneTimeIds.has(id)) return;
     const isCurrentlyChecked = !!checkedQuestions[id];
     if (!isCurrentlyChecked && QUESTIONS_WITH_QUANTITY[id]) {
       setQuantityInputValue(String(questionQuantities[id] ?? 0));
+      setQuantityError(null);
       setQuantityModalQuestion(id);
       return;
     }
@@ -778,8 +881,11 @@ export default function VisitScreen() {
     const config = QUESTIONS_WITH_QUANTITY[qId];
     const parsed = parseInt(quantityInputValue, 10);
     if (isNaN(parsed) || parsed < 0 || parsed > config.max) {
-      showToast(
+      const displayMax =
+        language === "np" ? toNepaliNumbers(config.max) : String(config.max);
+      setQuantityError(
         t("visit.invalid_quantity", {
+          max: displayMax,
           defaultValue: `Please enter a valid quantity between 0 and ${config.max}`,
         }),
       );
@@ -789,6 +895,7 @@ export default function VisitScreen() {
     setCheckedQuestions((prev) => ({ ...prev, [qId]: true }));
     setQuantityModalQuestion(null);
     setQuantityInputValue("");
+    setQuantityError(null);
   };
 
   const validate = () => {
@@ -844,9 +951,11 @@ export default function VisitScreen() {
         visit_number: visitNumber,
       });
 
-      // Save counseling & referral answers
+      // Save counseling & referral answers.
+      // Exclude "family_planning": its data is stored in the dedicated
+      // family_planning table via the family planning modal.
       const checkedKeys = Object.keys(checkedQuestions).filter(
-        (k) => checkedQuestions[k],
+        (k) => checkedQuestions[k] && k !== "family_planning",
       );
       if (checkedKeys.length > 0) {
         let regYear = getCurrentNepaliDate().year;
@@ -902,6 +1011,33 @@ export default function VisitScreen() {
           reg_year: regYear,
           reg_month: regMonth,
         });
+      }
+
+      // If the "Have you had an abortion?" counseling question was checked,
+      // also record it in the abortion table for this pregnant woman and
+      // end the current pregnancy (mirrors AbortionSection behavior).
+      if (checkedKeys.includes("abortion")) {
+        try {
+          await saveAbortion({
+            mother: selectedMotherId,
+            pregnancy: pregnancyId,
+            aborted: true,
+          });
+
+          if (pregnancyId) {
+            await updatePregnancy(pregnancyId, {
+              ended: true,
+              is_current: false,
+            });
+          }
+
+          showToast(
+            t("profile.abortion.save_success") ||
+              "Abortion record saved successfully",
+          );
+        } catch (abortErr) {
+          console.error("Failed to save abortion record:", abortErr);
+        }
       }
 
       // Save child counseling answers for PNC visits
@@ -1167,6 +1303,7 @@ export default function VisitScreen() {
             language={language}
             answeredOneTimeIds={answeredOneTimeIds}
             questionQuantities={questionQuantities}
+            questionHints={{ family_planning: fpHint }}
           />
 
           {/* Referral Questions */}
@@ -1180,6 +1317,7 @@ export default function VisitScreen() {
             language={language}
             answeredOneTimeIds={answeredOneTimeIds}
             questionQuantities={questionQuantities}
+            questionHints={{ family_planning: fpHint }}
           />
 
           {/* Child Counseling (PNC only) */}
@@ -1403,7 +1541,10 @@ export default function VisitScreen() {
         visible={!!quantityModalQuestion}
         transparent
         animationType="fade"
-        onRequestClose={() => setQuantityModalQuestion(null)}
+        onRequestClose={() => {
+          setQuantityModalQuestion(null);
+          setQuantityError(null);
+        }}
       >
         <View className="flex-1 bg-black/40 justify-center items-center px-6">
           <View className="bg-white rounded-2xl w-full max-w-sm px-6 py-10 gap-y-5">
@@ -1422,6 +1563,7 @@ export default function VisitScreen() {
                         onPress={() => {
                           const cur = parseInt(quantityInputValue, 10) || 0;
                           if (cur > 0) setQuantityInputValue(String(cur - 1));
+                          setQuantityError(null);
                         }}
                         className="w-11 h-11 rounded-lg bg-primary items-center justify-center active:bg-slate-200"
                       >
@@ -1435,6 +1577,7 @@ export default function VisitScreen() {
                           onChangeText={(val) => {
                             const cleaned = val.replace(/[^0-9]/g, "");
                             setQuantityInputValue(cleaned);
+                            setQuantityError(null);
                           }}
                           maxLength={3}
                           selectTextOnFocus
@@ -1445,6 +1588,7 @@ export default function VisitScreen() {
                           const cur = parseInt(quantityInputValue, 10) || 0;
                           if (cur < config.max)
                             setQuantityInputValue(String(cur + 1));
+                          setQuantityError(null);
                         }}
                         className="w-11 h-11 rounded-lg bg-primary items-center justify-center active:bg-slate-200"
                       >
@@ -1452,11 +1596,18 @@ export default function VisitScreen() {
                       </TouchableOpacity>
                     </View>
 
+                    {quantityError && (
+                      <Text className="text-rose-500 text-xs text-center font-semibold -mt-2">
+                        {quantityError}
+                      </Text>
+                    )}
+
                     <View className="flex-row gap-x-3">
                       <TouchableOpacity
                         onPress={() => {
                           setQuantityModalQuestion(null);
                           setQuantityInputValue("");
+                          setQuantityError(null);
                         }}
                         className="flex-1 h-12 rounded-xl bg-slate-100 items-center justify-center"
                       >
@@ -1515,6 +1666,31 @@ export default function VisitScreen() {
               1)
             : 1
         }
+      />
+
+      {/* Family Planning Modal */}
+      <FamilyPlanningModal
+        visible={fpModalVisible}
+        onClose={() => setFpModalVisible(false)}
+        motherId={selectedMotherId}
+        pregnancyId={pregnancyId}
+        onSuccess={async () => {
+          // Refresh the existing record + hint so the FCHV sees updated totals.
+          // We intentionally do NOT mark the question as "checked" — family
+          // planning is an every-visit question and stays actionable each visit.
+          try {
+            const rec = await getFamilyPlanningByMother(
+              selectedMotherId,
+              pregnancyId,
+            );
+            setFpExistingRecord(rec);
+            setFpHint(formatFpHint(rec, language));
+          } catch (fpErr) {
+            console.error("Failed to refresh family planning record:", fpErr);
+          }
+        }}
+        showToast={showToast}
+        existingRecord={fpExistingRecord}
       />
     </SafeAreaView>
   );

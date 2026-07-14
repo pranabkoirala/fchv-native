@@ -3,7 +3,7 @@ import CustomHeader from "@/components/CustomHeader";
 import { useLanguage } from "@/context/LanguageContext";
 import { getAllMothersGroupMeetings } from "@/hooks/database/models/MothersGroupMeetingModel";
 import { MothersGroupMeetingStoreType } from "@/hooks/database/types/mothersGroupMeetingModal";
-import { formatAdDate } from "@/utils/dateHelper";
+import { formatBsDate } from "@/utils/dateHelper";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Calendar, Plus, Users } from "lucide-react-native";
 import { memo, useCallback, useState } from "react";
@@ -46,7 +46,7 @@ const MeetingCard = memo(function MeetingCard({
                 <View className="flex-row items-center mr-6">
                     <Calendar size={16} color="#6b7280" className="mr-2" />
                     <Text className="text-gray-600">
-                        {formatAdDate(meeting.meeting_date, language)}
+                        {formatBsDate(meeting.meeting_date, language)}
                     </Text>
                 </View>
             </View>

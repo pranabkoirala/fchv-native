@@ -39,7 +39,7 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "./button";
 
@@ -252,9 +252,9 @@ export default function ChildRegistrationForm() {
             setNewbornCare(care);
 
             if (infant.date_of_birth) {
-              setBirthDateAd(infant.date_of_birth);
+              setBirthDateBs(infant.date_of_birth);
               try {
-                setBirthDateBs(AdToBs(infant.date_of_birth));
+                setBirthDateAd(BsToAd(infant.date_of_birth));
               } catch (e) {}
             }
           }
@@ -318,7 +318,7 @@ export default function ChildRegistrationForm() {
         id: childId,
         mother: selectedMotherId,
         baby_name: babyName,
-        date_of_birth: birthDateAd,
+        date_of_birth: birthDateBs,
         birth_place: birthPlace,
         fchv_present: fchvPresent,
         skilled_birth_attended: skilledBirthAttended,
@@ -335,7 +335,8 @@ export default function ChildRegistrationForm() {
           : "DIRECT_CHILD_REGISTRATION") as
           "PREGNANCY" | "DIRECT_CHILD_REGISTRATION",
       };
-      await createInfantMonitoring(payload);
+      const savedChild = await createInfantMonitoring(payload);
+      const savedChildId = savedChild.id || childId;
 
       // Create delivery record if child was born from a pregnancy
       if (linkedPregId) {
@@ -343,7 +344,7 @@ export default function ChildRegistrationForm() {
           const deliveryPayload = {
             id: Crypto.randomUUID(),
             mother: selectedMotherId,
-            delivery_date: birthDateAd,
+            delivery_date: birthDateBs,
             delivery_place: birthPlace,
             baby_weight: babyWeight,
             gender: gender || undefined,
@@ -376,7 +377,7 @@ export default function ChildRegistrationForm() {
         try {
           const motherObj = mothers.find((m) => m.id === selectedMotherId);
           const motherName = motherObj?.name || "";
-          const [birthYear, birthMonth, birthDay] = birthDateAd
+          const [birthYear, birthMonth, birthDay] = birthDateBs
             .split("-")
             .map(Number);
 
@@ -392,7 +393,7 @@ export default function ChildRegistrationForm() {
           };
 
           await createNewbornDeath({
-            child_id: childId,
+            child_id: savedChildId,
             mother: selectedMotherId,
             mother_name: motherName,
             baby_name: babyName,
@@ -418,10 +419,18 @@ export default function ChildRegistrationForm() {
         t("child_form.messages.save_success", "Record saved successfully"),
       );
       resetForm();
-      router.replace({
-        pathname: "/dashboard/visit",
-        params: { motherId: selectedMotherId, visitType: "PNC", childId },
-      } as any);
+
+      if (id) {
+        router.replace({
+          pathname: "/dashboard/child/child-profile",
+          params: { id: childId },
+        } as any);
+      } else {
+        router.replace({
+          pathname: "/dashboard/visit",
+          params: { motherId: selectedMotherId, visitType: "PNC", childId },
+        } as any);
+      }
     } catch (error) {
       console.error(error);
       Alert.alert(

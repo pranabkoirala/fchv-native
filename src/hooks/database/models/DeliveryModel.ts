@@ -1,6 +1,9 @@
 import { getCurrentNepaliDate } from "../../../utils/dateHelper";
 import { getDb } from "../db";
-import { CreateDeliveryPayload, DeliveryStoreType } from "../types/deliveryModal";
+import {
+  CreateDeliveryPayload,
+  DeliveryStoreType,
+} from "../types/deliveryModal";
 import { bulkInsertToTempTable } from "./CommonModal";
 import { setSyncTimestamp } from "./SyncModel";
 
@@ -29,8 +32,6 @@ const DELIVERY_COLUMNS = [
   "created_at",
   "updated_at",
 ] as const;
-
-// ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function createDelivery(
   payload: CreateDeliveryPayload,

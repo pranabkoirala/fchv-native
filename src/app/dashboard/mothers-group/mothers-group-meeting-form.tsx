@@ -20,7 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { CalendarPicker } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import municipalitiesData from "@/assets/json/municipalities.json";
 
@@ -41,7 +41,6 @@ export default function MothersGroupMeetingForm() {
   const isEditMode = !!params.id;
 
   const [meetingDateBS, setMeetingDateBS] = useState("");
-  const [meetingDateAD, setMeetingDateAD] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [location, setLocation] = useState("");
@@ -62,9 +61,7 @@ export default function MothersGroupMeetingForm() {
     if (!params.id) return;
 
     if (params.meeting_date) {
-      const bsDate = AdToBs(params.meeting_date);
-      setMeetingDateBS(bsDate);
-      setMeetingDateAD(params.meeting_date);
+      setMeetingDateBS(params.meeting_date);
     }
     if (params.meeting_location) setLocation(params.meeting_location);
     if (params.ward_no) setWardNo(params.ward_no);
@@ -141,14 +138,14 @@ export default function MothersGroupMeetingForm() {
   };
 
   const onSubmit = async () => {
-    if (!meetingDateAD || !location) {
+    if (!meetingDateBS || !location) {
       alert(t("mothers_group_meeting.form_error"));
       return;
     }
     try {
       setIsSubmitting(true);
       const payload = {
-        meeting_date: meetingDateAD,
+        meeting_date: meetingDateBS,
         meeting_location: location,
         ward_no: wardNo,
         attendees_count: attendees,
@@ -208,7 +205,6 @@ export default function MothersGroupMeetingForm() {
                 onDateSelect={(bsDate) => {
                   setShowDatePicker(false);
                   setMeetingDateBS(bsDate);
-                  setMeetingDateAD(BsToAd(bsDate));
                 }}
               />
             </View>

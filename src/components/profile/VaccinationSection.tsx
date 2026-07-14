@@ -58,13 +58,16 @@ export default function VaccinationSection({ childId, childName, dateOfBirth, di
 
     const formatDate = (isoDate: string | null) => {
         if (!isoDate) return "";
-        try {
-            const date = isoDate.split("T")[0];
-            const bsDate = AdToBs(date);
-            return language === "np" ? toNepaliNumbers(bsDate) : bsDate;
-        } catch (e) {
-            return isoDate.split("T")[0];
-        }
+        const datePart = isoDate.split("T")[0];
+        const [y] = datePart.split("-").map(Number);
+        const bsDate = y >= 2070 ? datePart : (() => {
+            try {
+                return AdToBs(datePart);
+            } catch (e) {
+                return datePart;
+            }
+        })();
+        return language === "np" ? toNepaliNumbers(bsDate) : bsDate;
     };
 
     return (
@@ -145,7 +148,7 @@ export default function VaccinationSection({ childId, childName, dateOfBirth, di
                                     <View className="flex-row items-center mt-2 ml-4.5">
                                         <Calendar size={10} color="#94A3B8" />
                                         <Text className="text-slate-400 text-[11px] ml-1.5 font-medium">
-                                            {t("child_profile.vaccination.date_label")} {language === 'en' ? v.given_date.split('T')[0] : formatDate(v.given_date)}
+                                            {t("child_profile.vaccination.date_label")} {formatDate(v.given_date)}
                                         </Text>
                                     </View>
                                 )}

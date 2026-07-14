@@ -524,7 +524,7 @@ export default function ChildNutritionScreen() {
                 }}
                 options={getTimesOptions(childAgeGroup, existingCount)}
                 isSearchable={false}
-                disabled={isLimitReached}
+                disabled={isLimitReached || maxTimesForAge <= 1}
                 error={errors.timesPerMonth}
               />
             </View>

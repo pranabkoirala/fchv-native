@@ -240,7 +240,7 @@ export default function FamilyPlanningSection({
               <Text
                 className={`text-[11px] font-bold ml-1 ${disabled ? "text-slate-300" : "text-white"}`}
               >
-                {t("common.update")}
+                {t("common.add")}
               </Text>
             </TouchableOpacity>
           </View>

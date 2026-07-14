@@ -2,7 +2,7 @@ import { Calendar } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
-import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { CalendarPicker } from "react-native-nepali-picker";
 import { createMaternalDeath } from "../../hooks/database/models/MaternalDeathModel";
 import {
   getAllMothersList,
@@ -47,21 +47,10 @@ export default function MaternalDeathForm({
 
   const getAdString = (y: number, m: number, d: number) =>
     `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  const adToBsStr = (y: number, m: number, d: number) => {
-    try {
-      return AdToBs(getAdString(y, m, d));
-    } catch {
-      return getAdString(y, m, d);
-    }
-  };
   const formatDate = (y: number, m: number, d: number) => {
-    try {
-      const ad = getAdString(y, m, d);
-      if (i18n.language === "np") return toNepaliNumbers(AdToBs(ad));
-      return ad;
-    } catch {
-      return getAdString(y, m, d);
-    }
+    const bs = getAdString(y, m, d);
+    if (i18n.language === "np") return toNepaliNumbers(bs);
+    return bs;
   };
 
   const [errMother, setErrMother] = useState(false);
@@ -324,8 +313,7 @@ export default function MaternalDeathForm({
           onDateSelect={(bsDate) => {
             setShowDatePicker(false);
             try {
-              const adDate = BsToAd(bsDate);
-              const parts = adDate.split("-");
+              const parts = bsDate.split("-");
               setDeathYear(parseInt(parts[0], 10));
               setDeathMonth(parseInt(parts[1], 10));
               setDeathDay(parseInt(parts[2], 10));
@@ -338,7 +326,7 @@ export default function MaternalDeathForm({
           brandColor="#E11D48"
           date={
             deathYear > 0
-              ? adToBsStr(deathYear, deathMonth, deathDay)
+              ? getAdString(deathYear, deathMonth, deathDay)
               : undefined
           }
           dayTextStyle={{ fontWeight: "normal" }}
