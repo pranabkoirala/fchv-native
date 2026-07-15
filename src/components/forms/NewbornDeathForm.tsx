@@ -115,6 +115,7 @@ export default function NewbornDeathForm({
   const [errDeathPlaceOther, setErrDeathPlaceOther] = useState(false);
   const [errGender, setErrGender] = useState(false);
   const [errChild, setErrChild] = useState("");
+  const [errDeathDate, setErrDeathDate] = useState("");
 
   const [showDeathDatePicker, setShowDeathDatePicker] = useState(false);
 
@@ -126,6 +127,7 @@ export default function NewbornDeathForm({
       setDeathYear(parseInt(parts[0], 10));
       setDeathMonth(parseInt(parts[1], 10));
       setDeathDay(parseInt(parts[2], 10));
+      setErrDeathDate("");
     } catch (e) {
       console.error("applyDeathDate error", e);
     }
@@ -376,14 +378,16 @@ export default function NewbornDeathForm({
     }
 
     if (deathYear === 0 || deathMonth === 0 || deathDay === 0) {
-      showToast(t("newborn_death_modal.date_error"));
+      setErrDeathDate(t("newborn_death_modal.date_error"));
       hasError = true;
     } else {
       const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
       const deathDate = new Date(deathYear, deathMonth - 1, deathDay);
       if (deathDate < birthDate) {
-        showToast(t("newborn_death_modal.date_error"));
+        setErrDeathDate(t("newborn_death_modal.date_before_birth_error"));
         hasError = true;
+      } else {
+        setErrDeathDate("");
       }
     }
 
@@ -449,6 +453,7 @@ export default function NewbornDeathForm({
       setErrDeathPlaceOther(false);
       setErrGender(false);
       setErrChild("");
+      setErrDeathDate("");
       setErrMother(false);
 
       onSuccess(payload as NewbornDeathStoreType);
@@ -636,6 +641,11 @@ export default function NewbornDeathForm({
               </Pressable>
             ))}
           </View>
+          {errGender && (
+            <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
+              {t("newborn_death_modal.gender_error")}
+            </Text>
+          )}
         </View>
 
         <View className="flex-row gap-4">
@@ -668,6 +678,11 @@ export default function NewbornDeathForm({
                 <Calendar size={18} color="#94A3B8" />
               </View>
             </Pressable>
+            {errDeathDate ? (
+              <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
+                {errDeathDate}
+              </Text>
+            ) : null}
           </View>
         </View>
 
@@ -743,10 +758,15 @@ export default function NewbornDeathForm({
                     },
                     errBirthCondition,
                   )}
-                </View>
-              ))}
-            </View>
-            {birthCondition === "Other" && (
+              </View>
+            ))}
+          </View>
+          {errBirthCondition && (
+            <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
+              {t("newborn_death_modal.birth_condition_error")}
+            </Text>
+          )}
+          {birthCondition === "Other" && (
               <View className="gap-y-1.5 mt-1.5">
                 <View
                   className={`h-14 flex-row items-center rounded-xl px-4 border ${
@@ -797,6 +817,11 @@ export default function NewbornDeathForm({
               </View>
             ))}
           </View>
+          {errCauseOfDeath && (
+            <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
+              {t("newborn_death_modal.cause_of_death_error")}
+            </Text>
+          )}
           {causeOfDeath === "Other" && (
             <View className="gap-y-1.5 mt-1.5">
               <View
@@ -851,6 +876,11 @@ export default function NewbornDeathForm({
               </View>
             ))}
           </View>
+          {errDeathPlace && (
+            <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
+              {t("newborn_death_modal.death_place_error")}
+            </Text>
+          )}
           {deathPlace === "Other" && (
             <View className="gap-y-1.5 mt-1.5">
               <View

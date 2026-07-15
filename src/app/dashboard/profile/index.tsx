@@ -500,7 +500,7 @@ export default function HmisRecordProfileScreen() {
     !pregnancy.ended;
   const profileEddDate = pregnancy
     ? normalizeDateString(pregnancy.expected_delivery_date) ||
-    calculateEddFromLmp(pregnancy.lmp_date)
+      calculateEddFromLmp(pregnancy.lmp_date)
     : null;
   const profileDaysRemaining =
     activePregnancy && profileEddDate
@@ -530,8 +530,8 @@ export default function HmisRecordProfileScreen() {
     profileDaysRemaining === null
       ? null
       : t("profile.countdown.days_short", {
-        days: toDisplayNumber(Math.abs(profileDaysRemaining), language),
-      });
+          days: toDisplayNumber(Math.abs(profileDaysRemaining), language),
+        });
   const remainingText =
     profileDaysRemaining === null
       ? null
@@ -552,21 +552,28 @@ export default function HmisRecordProfileScreen() {
               mother?.is_dead
                 ? undefined
                 : () => {
-                  router.push({
-                    pathname: "/dashboard/visit",
-                    params: {
-                      motherId: record.id,
-                      from: "/dashboard/profile",
-                    },
-                  } as any);
-                }
+                    router.push({
+                      pathname: "/dashboard/visit",
+                      params: {
+                        motherId: record.id,
+                        from: "/dashboard/profile",
+                      },
+                    } as any);
+                  }
             }
             disabled={mother?.is_dead}
-            className={`${mother?.is_dead ? "bg-slate-100 opacity-60" : "bg-slate-100"
-              } flex gap-x-1.5 flex-row px-3 py-1 rounded-md items-center justify-center rounded-full`}
+            className={`${
+              mother?.is_dead ? "bg-slate-100 opacity-60" : "bg-slate-100"
+            } flex gap-x-1.5 flex-row px-3 py-1 rounded-md items-center justify-center`}
           >
-            <Plus size={15} color={mother?.is_dead ? "#94A3B8" : "#059669"} strokeWidth={2} />
-            <Text className={mother?.is_dead ? "text-[#94A3B8]" : "text-[#059669]"}>
+            <Plus
+              size={15}
+              color={mother?.is_dead ? "#94A3B8" : "#059669"}
+              strokeWidth={2}
+            />
+            <Text
+              className={mother?.is_dead ? "text-[#94A3B8]" : "text-[#059669]"}
+            >
               {t("profile.visit", { defaultValue: "Visit" })}
             </Text>
           </TouchableOpacity>
@@ -581,7 +588,7 @@ export default function HmisRecordProfileScreen() {
               {/* Identity Row */}
               <View className="flex-row">
                 {mother?.image &&
-                  !mother.image.includes("no-profile-picture-icon") ? (
+                !mother.image.includes("no-profile-picture-icon") ? (
                   <View className="w-28 h-28 rounded-full bg-gradient-to-b from-slate-50 to-slate-100 border-2 border-slate-100 items-center justify-center overflow-hidden">
                     <Image
                       source={{ uri: mother.image }}
@@ -737,60 +744,60 @@ export default function HmisRecordProfileScreen() {
               {/* Children */}
               {(currentPregnancyChildren.length > 0 ||
                 otherChildren.length > 0) && (
-                  <View className="mt-4">
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 8 }}
-                    >
-                      {currentPregnancyChildren.map((child, idx) => (
-                        <TouchableOpacity
-                          key={child.id || `current-${idx}`}
-                          onPress={() =>
-                            router.push({
-                              pathname: "/dashboard/child/child-profile",
-                              params: { id: child.id, from: "profile" },
-                            } as any)
-                          }
-                          className="flex-row items-center px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-100"
-                        >
-                          <Baby size={14} color="#6366F1" />
-                          {child.baby_name ? (
-                            <Text className="text-indigo-700 font-semibold text-sm ml-1.5">
-                              {child.baby_name}
-                            </Text>
-                          ) : null}
-                          {child.status === "dead" && (
-                            <Text className="text-rose-500 text-xs ml-1">
-                              {" "}
-                              ({t("reports.status.deceased")})
-                            </Text>
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                      {otherChildren.map((child, idx) => (
-                        <TouchableOpacity
-                          key={child.id || `other-${idx}`}
-                          onPress={() =>
-                            router.push({
-                              pathname: "/dashboard/child/child-profile",
-                              params: { id: child.id, from: "profile" },
-                            } as any)
-                          }
-                          className="flex-row items-center px-3.5 py-2 rounded-xl border border-slate-200 bg-white"
-                        >
-                          <Baby size={14} color="#64748B" />
-                          <Text className="text-slate-600 text-sm ml-1.5">
+                <View className="mt-4">
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 8 }}
+                  >
+                    {currentPregnancyChildren.map((child, idx) => (
+                      <TouchableOpacity
+                        key={child.id || `current-${idx}`}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/dashboard/child/child-profile",
+                            params: { id: child.id, from: "profile" },
+                          } as any)
+                        }
+                        className="flex-row items-center px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-100"
+                      >
+                        <Baby size={14} color="#6366F1" />
+                        {child.baby_name ? (
+                          <Text className="text-indigo-700 font-semibold text-sm ml-1.5">
                             {child.baby_name}
                           </Text>
-                          {child.status === "dead" && (
-                            <Text className="text-rose-500 text-xs ml-1">✕</Text>
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  </View>
-                )}
+                        ) : null}
+                        {child.status === "dead" && (
+                          <Text className="text-rose-500 text-xs ml-1">
+                            {" "}
+                            ({t("reports.status.deceased")})
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                    {otherChildren.map((child, idx) => (
+                      <TouchableOpacity
+                        key={child.id || `other-${idx}`}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/dashboard/child/child-profile",
+                            params: { id: child.id, from: "profile" },
+                          } as any)
+                        }
+                        className="flex-row items-center px-3.5 py-2 rounded-xl border border-slate-200 bg-white"
+                      >
+                        <Baby size={14} color="#64748B" />
+                        <Text className="text-slate-600 text-sm ml-1.5">
+                          {child.baby_name}
+                        </Text>
+                        {child.status === "dead" && (
+                          <Text className="text-rose-500 text-xs ml-1">✕</Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
 
               {/* Action Buttons */}
               <View className="mt-8 flex-row gap-3">
@@ -829,9 +836,9 @@ export default function HmisRecordProfileScreen() {
                         motherId: record.id,
                         pregnancyId:
                           pregnancy &&
-                            pregnancy.is_current === 1 &&
-                            !pregnancy.delivered &&
-                            !pregnancy.ended
+                          pregnancy.is_current === 1 &&
+                          !pregnancy.delivered &&
+                          !pregnancy.ended
                             ? pregnancy.id
                             : undefined,
                         from: "profile",
@@ -1016,10 +1023,11 @@ export default function HmisRecordProfileScreen() {
                   <TouchableOpacity
                     onPress={() => setMaternalDeathModalVisible(true)}
                     disabled={!!existingDeathRecord}
-                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${!!existingDeathRecord
-                      ? "bg-rose-50 border border-rose-100"
-                      : "bg-white border-2 border-dashed border-slate-200"
-                      }`}
+                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${
+                      !!existingDeathRecord
+                        ? "bg-rose-50 border border-rose-100"
+                        : "bg-white border-2 border-dashed border-slate-200"
+                    }`}
                   >
                     <View className="flex-row items-center">
                       <Plus size={15} color="#64748B" strokeWidth={3} />
@@ -1077,10 +1085,11 @@ export default function HmisRecordProfileScreen() {
                   <TouchableOpacity
                     onPress={() => setNewbornDeathModalVisible(true)}
                     disabled={!!existingNewbornDeathRecord}
-                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${!!existingNewbornDeathRecord
-                      ? "bg-rose-50 border border-rose-100"
-                      : "bg-white border-2 border-dashed border-slate-200"
-                      }`}
+                    className={`flex-row items-center justify-center py-2.5 rounded-xl ${
+                      !!existingNewbornDeathRecord
+                        ? "bg-rose-50 border border-rose-100"
+                        : "bg-white border-2 border-dashed border-slate-200"
+                    }`}
                   >
                     <View className="flex-row items-center">
                       <Plus size={15} color="#64748B" strokeWidth={3} />

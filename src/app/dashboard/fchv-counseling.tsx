@@ -144,7 +144,7 @@ export default function FchvCounselingPage() {
 
       <KeyboardAwareScrollView
         className="flex-1 px-4 bg-gray-50"
-        contentContainerStyle={{ paddingBottom: 60, paddingTop: 16 }}
+        contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
         enableOnAndroid={true}
         extraScrollHeight={100}
         keyboardShouldPersistTaps="handled"

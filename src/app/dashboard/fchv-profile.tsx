@@ -58,6 +58,7 @@ import {
   exportInfantCareToPdf,
   exportMaternalDeathToPdf,
   exportNewbornDeathToPdf,
+  exportPncMonitoringToPdf,
   exportPregnancyToPdf,
   MonthFilter,
 } from "@/utils/pdfGenerator";
@@ -251,6 +252,11 @@ export default function UserProfileScreen() {
       key: "infant_care",
       label: t("profile_settings.report_infant_care") || "Infant Care",
       fn: exportInfantCareToPdf,
+    },
+    {
+      key: "pnc_monitoring",
+      label: t("profile_settings.report_pnc_monitoring") || "PNC Monitoring",
+      fn: exportPncMonitoringToPdf,
     },
     {
       key: "adolescent_ifa",

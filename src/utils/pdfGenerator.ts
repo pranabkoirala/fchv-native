@@ -2,7 +2,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Share from "expo-sharing";
 import { Platform } from "react-native";
-import { AdToBs } from "react-native-nepali-picker";
+import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import {
   CHILD_COUNSELING_QUESTIONS,
   CHILD_HEALTH_COUNSELLING_QUESTIONS,
@@ -530,7 +530,7 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
       const parsed = JSON.parse(item.answers || "{}");
       const logs = parsed?.has_malnutrition;
       if (Array.isArray(logs)) malnutritionAnswers = logs;
-    } catch {}
+    } catch { }
     if (malnutritionAnswers.length > 0) {
       const latest = malnutritionAnswers[malnutritionAnswers.length - 1];
       if (latest.muac === "green") addCount(counts, 48, month);
@@ -1131,25 +1131,25 @@ const generateNutritionTable = (
     activity: string;
     subCols: number;
   }> = [
-    {
-      displayNo: 80,
-      rowKey: 55,
-      activity: "६ देखि ११ महिनाका बालबालिका",
-      subCols: 1,
-    },
-    {
-      displayNo: 81,
-      rowKey: 56,
-      activity: "१२ देखि १७ महिनाका बालबालिका",
-      subCols: 2,
-    },
-    {
-      displayNo: 82,
-      rowKey: 57,
-      activity: "१८ देखि २३ महिनाका बालबालिका",
-      subCols: 3,
-    },
-  ];
+      {
+        displayNo: 80,
+        rowKey: 55,
+        activity: "६ देखि ११ महिनाका बालबालिका",
+        subCols: 1,
+      },
+      {
+        displayNo: 81,
+        rowKey: 56,
+        activity: "१२ देखि १७ महिनाका बालबालिका",
+        subCols: 2,
+      },
+      {
+        displayNo: 82,
+        rowKey: 57,
+        activity: "१८ देखि २३ महिनाका बालबालिका",
+        subCols: 3,
+      },
+    ];
 
   let html = `
     <div class="collected-title" style="margin-top:24px;">
@@ -1161,24 +1161,24 @@ const generateNutritionTable = (
           <th class="sn-col" rowspan="2">क्र.सं.</th>
           <th class="activity-col" rowspan="2">गतिविधिहरू</th>
           ${periods
-            .map(
-              (p) =>
-                `<th colspan="3" style="text-align:center;">${p.label}</th>`,
-            )
-            .join("")}
+      .map(
+        (p) =>
+          `<th colspan="3" style="text-align:center;">${p.label}</th>`,
+      )
+      .join("")}
           <th rowspan="2">जम्मा</th>
         </tr>
         <tr>
           ${periods
-            .map(() =>
-              subColLabels
-                .map(
-                  (l) =>
-                    `<th style="font-size:8px;background:#e8e8e8;padding:3px;">${l}</th>`,
-                )
-                .join(""),
-            )
-            .join("")}
+      .map(() =>
+        subColLabels
+          .map(
+            (l) =>
+              `<th style="font-size:8px;background:#e8e8e8;padding:3px;">${l}</th>`,
+          )
+          .join(""),
+      )
+      .join("")}
         </tr>
       </thead>
       <tbody>
@@ -1359,11 +1359,11 @@ const generateCollectedDataTable = async (filter: MonthFilter) => {
         <td>${convertToNepaliNumber(row.no)}</td>
         <td class="activity-cell" colspan="3" ${tdStyle}>${activityCellContent}</td>
         ${periods
-          .map(
-            (period) =>
-              `<td>${convertToNepaliNumber(counts[row.no]?.[period.key] || 0)}</td>`,
-          )
-          .join("")}
+        .map(
+          (period) =>
+            `<td>${convertToNepaliNumber(counts[row.no]?.[period.key] || 0)}</td>`,
+        )
+        .join("")}
         <td class="total-cell">${convertToNepaliNumber(total)}</td>
       </tr>
     `;
@@ -1378,6 +1378,67 @@ const generateCollectedDataTable = async (filter: MonthFilter) => {
 };
 
 const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
+  const db = await getDb();
+  const motherIds = data.map((item) => item.mother);
+
+  // If motherIds is empty, we don't query
+  let allVisits: any[] = [];
+  if (motherIds.length > 0) {
+    const placeholders = motherIds.map(() => "?").join(",");
+    allVisits = await db.getAllAsync<any>(
+      `SELECT mother, visit_date FROM visit WHERE mother IN (${placeholders}) AND visit_type = 'ANC' AND is_deleted = 0 ORDER BY visit_date ASC`,
+      motherIds
+    );
+  }
+
+  // Create a map of mother ID to her visits
+  const visitsByMother: Record<string, string[]> = {};
+  allVisits.forEach((v) => {
+    if (!visitsByMother[v.mother]) {
+      visitsByMother[v.mother] = [];
+    }
+    visitsByMother[v.mother].push(v.visit_date);
+  });
+
+  const formatDateShort = (bsDateStr: string): string => {
+    try {
+      const parts = bsDateStr.split("-");
+      if (parts.length >= 3) {
+        const month = convertToNepaliNumber(parts[1]);
+        const day = convertToNepaliNumber(parts[2]);
+        return `${day}/${month}`;
+      }
+      return convertToNepaliNumber(bsDateStr);
+    } catch (e) {
+      return "";
+    }
+  };
+
+  const calculateGestationalWeeks = (
+    lmpBs: string | null | undefined,
+    visitBs: string | null | undefined
+  ): number | null => {
+    if (!lmpBs || !visitBs) return null;
+    try {
+      const lmpYear = parseInt(lmpBs.split("-")[0], 10);
+      const visitYear = parseInt(visitBs.split("-")[0], 10);
+      if (isNaN(lmpYear) || isNaN(visitYear)) return null;
+
+      const lmpAdStr = lmpYear >= 2000 ? BsToAd(lmpBs) : lmpBs;
+      const visitAdStr = visitYear >= 2000 ? BsToAd(visitBs) : visitBs;
+
+      const lmpDate = new Date(lmpAdStr);
+      const visitDate = new Date(visitAdStr);
+      const diffTime = visitDate.getTime() - lmpDate.getTime();
+      if (diffTime < 0) return null;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return Math.floor(diffDays / 7);
+    } catch (e) {
+      console.error("Error calculating gestational weeks:", e);
+      return null;
+    }
+  };
+
   let html = `
     <div class="title" style="text-align: center;">मातृ तथा नवजात शिशु सम्बन्धि विवरण</div>
     <table>
@@ -1412,6 +1473,59 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
     const lmp = parseDateToNepali(item.lmp_date);
     const edd = parseDateToNepali(item.edd);
 
+    const motherVisits = visitsByMother[item.mother] || [];
+
+    // Convert LMP to AD for range limit
+    let minTime = 0;
+    let maxTime = 0;
+    try {
+      const lmpAdStr = BsToAd(item.lmp_date);
+      const lmpDateObj = new Date(lmpAdStr);
+      minTime = lmpDateObj.getTime();
+      maxTime = minTime + 305 * 24 * 60 * 60 * 1000; // 305 days max duration
+    } catch (e) {
+      console.error("Error parsing LMP date for range check:", e);
+    }
+
+    const col12: string[] = [];
+    const col16: string[] = [];
+    const col20_24: string[] = [];
+    const col28: string[] = [];
+    const col32: string[] = [];
+    const col34: string[] = [];
+    const col36: string[] = [];
+    const col38_40: string[] = [];
+    const col_other: string[] = [];
+
+    motherVisits.forEach((visitDate) => {
+      try {
+        const visitAdStr = BsToAd(visitDate);
+        const visitTime = new Date(visitAdStr).getTime();
+
+        // Ensure visit is within this pregnancy's timeframe
+        if (minTime > 0 && (visitTime < minTime || visitTime > maxTime)) {
+          return;
+        }
+
+        const diffTime = visitTime - minTime;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const weeks = Math.floor(diffDays / 7);
+
+        const dateDisplay = formatDateShort(visitDate);
+        if (weeks <= 12) col12.push(dateDisplay);
+        else if (weeks <= 16) col16.push(dateDisplay);
+        else if (weeks <= 24) col20_24.push(dateDisplay);
+        else if (weeks <= 29) col28.push(dateDisplay);
+        else if (weeks <= 32) col32.push(dateDisplay);
+        else if (weeks <= 34) col34.push(dateDisplay);
+        else if (weeks <= 36) col36.push(dateDisplay);
+        else if (weeks <= 40) col38_40.push(dateDisplay);
+        else col_other.push(dateDisplay);
+      } catch (e) {
+        console.error("Error processing visit date:", e);
+      }
+    });
+
     html += `
       <tr>
         <td>${convertToNepaliNumber(index + 1)}</td>
@@ -1420,7 +1534,15 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
         <td>${lmp.day}</td><td>${lmp.month}</td><td>${lmp.year}</td>
         <td>${edd.day}</td><td>${edd.month}</td><td>${edd.year}</td>
         <td>${item.has_counseling ? CHECK : ""}</td><td>${!item.has_counseling ? CHECK : ""}</td>
-        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        <td>${col12.join("<br/>")}</td>
+        <td>${col16.join("<br/>")}</td>
+        <td>${col20_24.join("<br/>")}</td>
+        <td>${col28.join("<br/>")}</td>
+        <td>${col32.join("<br/>")}</td>
+        <td>${col34.join("<br/>")}</td>
+        <td>${col36.join("<br/>")}</td>
+        <td>${col38_40.join("<br/>")}</td>
+        <td>${col_other.join("<br/>")}</td>
       </tr>
     `;
   }
@@ -1550,7 +1672,7 @@ const generateNewbornDeathTable = (data: any[]) => {
           <th colspan="3">नवजात शिशु<br>जन्मेको मिति</th>
           <th colspan="4">बच्चा जन्मदाको अवस्था*</th>
           <th rowspan="2">मृत्यु हुँदा<br>शिशुको उमेर<br>(दिनमा)</th>
-          <th rowspan="2">मृत्युको सम्भाव्य कारण*</th>
+          <th colspan="4">मृत्युको सम्भाव्य कारण*</th>
           <th colspan="3">मृत्यु भएको स्थान*</th>
           <th rowspan="2">कैफियत</th>
         </tr>
@@ -1558,11 +1680,12 @@ const generateNewbornDeathTable = (data: any[]) => {
           <th>नाम, थर</th><th>पुरा<br>गरेको<br>उमेर</th>
           <th>गते</th><th>महिना</th><th>साल</th>
           <th>समय नपुगेको<br>(३७ हप्ता<br>भन्दा कम)</th><th>कम तौल<br>(२५०० ग्राम<br>भन्दा कम)</th><th>सामान्य</th><th>अन्य</th>
+          <th>निसासिएको</th><th>शिताङ्ग</th><th>संक्रमण</th><th>अन्य</th>
           <th>घर</th><th>संस्था</th><th>अन्य</th>
         </tr>
         <tr>
   `;
-  for (let i = 1; i <= 17; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
+  for (let i = 1; i <= 20; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
   html += `</tr></thead><tbody>`;
 
   const newbornData = data.filter((item) => item.death_age_unit === "days");
@@ -1587,7 +1710,10 @@ const generateNewbornDeathTable = (data: any[]) => {
         <td>${item.birth_condition === "Normal" ? CHECK : CROSS}</td>
         <td>${item.birth_condition === "Other" ? CHECK : CROSS}</td>
         <td>${convertToNepaliNumber(item.death_age_days)}</td>
-        <td>${escapeHtml(item.cause_of_death)}</td>
+        <td>${item.cause_of_death === "Asphyxia" ? CHECK : CROSS}</td>
+        <td>${item.cause_of_death === "Hypothermia" ? CHECK : CROSS}</td>
+        <td>${item.cause_of_death === "Infection" ? CHECK : CROSS}</td>
+        <td>${item.cause_of_death === "Other" ? CHECK : CROSS}</td>
         <td>${item.death_place === "Home" ? CHECK : CROSS}</td>
         <td>${item.death_place === "Institution" ? CHECK : CROSS}</td>
         <td>${item.death_place === "Other" ? CHECK : CROSS}</td>
@@ -1597,7 +1723,7 @@ const generateNewbornDeathTable = (data: any[]) => {
   });
 
   if (newbornData.length === 0) {
-    html += getEmptyRows(17, 3);
+    html += getEmptyRows(20, 3);
   }
 
   html += `</tbody></table>`;
@@ -1691,7 +1817,7 @@ const generateInfantCareTable = (data: any[]) => {
         <td></td>
         <td>${item.birth_place === "home" ? CHECK : CROSS}</td>
         <td>${item.birth_place === "institution" ? CHECK : CROSS}</td>
-        <td>${item.birth_place === "other" ? CHECK : CROSS}</td>
+        <td>${item.skilled_birth_attended ? CHECK : CROSS}</td>
         <td>${item.fchv_present ? CHECK : CROSS}</td>
         <td>${item.asphyxiated_newborn ? CHECK : CROSS}</td>
       </tr>
@@ -1700,6 +1826,153 @@ const generateInfantCareTable = (data: any[]) => {
 
   if (data.length === 0) {
     html += getEmptyRows(9, 10);
+  }
+
+  html += `</tbody></table>`;
+  return html;
+};
+
+/**
+ * PNC Follow-up Monitoring Table — शिशुको अनुगमन भेट
+ *
+ * Columns:
+ *   (from child_monitoring) baby info + birth-care flags
+ *   (from visit PNC) tick if an FCHV visit happened within:
+ *     - 24 hrs  : child record itself (child was registered/added)
+ *     - 3 days  : visit_date within 3 days of date_of_birth
+ *     - 7-14 days: visit_date within 7–14 days of date_of_birth
+ *     - 42 days : visit_date within 40–42 days of date_of_birth
+ *     - Other   : any PNC visit outside those windows
+ */
+const generatePncMonitoringTable = async (data: any[]) => {
+  const db = await getDb();
+
+  // Fetch all PNC visits for the mothers of children in data
+  const motherIds = [...new Set(data.map((c: any) => c.mother).filter(Boolean))];
+  const visitsByMother: Record<string, any[]> = {};
+
+  if (motherIds.length > 0) {
+    const placeholders = motherIds.map(() => "?").join(",");
+    const visits = await db.getAllAsync<any>(
+      `SELECT mother, visit_date FROM visit
+       WHERE mother IN (${placeholders})
+         AND visit_type = 'PNC'
+         AND is_deleted = 0
+       ORDER BY visit_date ASC`,
+      motherIds,
+    );
+    visits.forEach((v) => {
+      if (!visitsByMother[v.mother]) visitsByMother[v.mother] = [];
+      visitsByMother[v.mother].push(v.visit_date);
+    });
+  }
+
+  /**
+   * Calculate the difference in days between a visit date string (AD YYYY-MM-DD)
+   * and a birth date string (AD or BS YYYY-MM-DD).
+   * Birth date stored in child_monitoring.date_of_birth may be AD.
+   */
+  const daysDiff = (birthDateStr: string, visitDateStr: string): number | null => {
+    try {
+      const birth = new Date(birthDateStr);
+      const visit = new Date(visitDateStr);
+      if (isNaN(birth.getTime()) || isNaN(visit.getTime())) return null;
+      return Math.round((visit.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+    } catch {
+      return null;
+    }
+  };
+
+  let html = `
+    <div class="page-break"></div>
+    <div class="title" style="text-align: center;">शिशुको अनुगमन भेट</div>
+    <div class="subtitle" style="text-align: center;">(नवजात शिशु र आमाको स्याहार अनुगमन)</div>
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">क्र.सं.</th>
+          <th rowspan="2">शिशु जन्म<br>मिति<br>(ग.म.सा.)</th>
+          <th rowspan="2">आमाको<br>नाम र थर</th>
+          <th rowspan="2">शिशुको नाम</th>
+          <th rowspan="2">नाभी मलम<br>लगाएको</th>
+          <th rowspan="2">जन्मने बित्तिकै<br>आमाको छातीमा<br>टाँसेर राखेको</th>
+          <th rowspan="2">१ घण्टा भित्र<br>स्तनपान<br>गराएको</th>
+          <th colspan="3">तौल</th>
+          <th colspan="5">शिशुको अनुगमन भेट</th>
+        </tr>
+        <tr>
+          <th>सामान्य<br>तौल</th>
+          <th>कम तौल</th>
+          <th>धेरै कम<br>तौल</th>
+          <th>सुत्केरी भएको<br>२४ घण्टा भित्र</th>
+          <th>सुत्केरी भएको<br>३ दिनमा</th>
+          <th>सुत्केरी भएको<br>७-१४ दिनमा</th>
+          <th>सुत्केरी भएको<br>४२ दिनमा</th>
+          <th>अन्य</th>
+        </tr>
+        <tr>
+  `;
+  for (let i = 1; i <= 15; i++) html += `<th>${convertToNepaliNumber(i)}</th>`;
+  html += `</tr></thead><tbody>`;
+
+  data.forEach((item, index) => {
+    const dob = parseDateToNepali(item.date_of_birth);
+    const dobStr: string = item.date_of_birth || "";
+
+    // Birth-care flags from child_monitoring
+    const umbilical = item.umbilical_ointment ? CHECK : CROSS;
+    const skinToSkin = item.skin_to_skin ? CHECK : CROSS;
+    const breastfeed = item.early_breastfeeding ? CHECK : CROSS;
+
+    // Weight category
+    const weightNormal = item.baby_weight === "normal" ? CHECK : CROSS;
+    const weightLow = item.baby_weight === "low" ? CHECK : CROSS;
+    const weightVeryLow = item.baby_weight === "very_low" ? CHECK : CROSS;
+
+    // 24-hr: mark CHECK if the child was added to the system (child record exists)
+    const visit24hr = CHECK;
+
+    // PNC visit windows (based on visit_date vs date_of_birth, in days)
+    let visit3d = CROSS;
+    let visit7_14 = CROSS;
+    let visit42 = CROSS;
+    let visitOther = CROSS;
+
+    if (dobStr) {
+      const pncVisits = visitsByMother[item.mother] || [];
+      pncVisits.forEach((vDate: string) => {
+        const diff = daysDiff(dobStr, vDate);
+        if (diff === null) return;
+        if (diff >= 1 && diff <= 3) { visit3d = CHECK; }
+        else if (diff >= 7 && diff <= 14) { visit7_14 = CHECK; }
+        else if (diff >= 40 && diff <= 45) { visit42 = CHECK; }
+        else if (diff > 0) { visitOther = CHECK; }
+      });
+    }
+
+    html += `
+      <tr>
+        <td>${convertToNepaliNumber(index + 1)}</td>
+        <td>${dob.day}/${dob.month}/${dob.year}</td>
+        <td>${escapeHtml(item.mother_name)}</td>
+        <td>${escapeHtml(item.baby_name)}</td>
+        <td>${umbilical}</td>
+        <td>${skinToSkin}</td>
+        <td>${breastfeed}</td>
+        <td>${weightNormal}</td>
+        <td>${weightLow}</td>
+        <td>${weightVeryLow}</td>
+        <td>${visit24hr}</td>
+        <td>${visit3d}</td>
+        <td>${visit7_14}</td>
+        <td>${visit42}</td>
+        <td>${visitOther}</td>
+      </tr>
+    `;
+  });
+
+  if (data.length === 0) {
+    html += getEmptyRows(15, 5);
   }
 
   html += `</tbody></table>`;
@@ -1843,6 +2116,7 @@ export const exportAllDataToPdf = async (filter: MonthFilter = null) => {
       ${generateNewbornDeathTable(newbornDeaths)}
       ${generateChildDeathTable(newbornDeaths)}
       ${generateInfantCareTable(infants)}
+      ${await generatePncMonitoringTable(infants)}
       <div class="page-break"></div>
       ${generateAdolescentIfaTable(adolescents)}
     `);
@@ -1926,13 +2200,31 @@ export const exportInfantCareToPdf = async (filter: MonthFilter = null) => {
     const data = (await getAllInfantMonitorings()).filter((r) =>
       matchesMonthFilter(filter, r),
     );
-    const htmlContent = wrapHtml(generateInfantCareTable(data));
+    const pncHtml = await generatePncMonitoringTable(data);
+    const htmlContent = wrapHtml(generateInfantCareTable(data) + pncHtml);
     await savePdfToDevice(
       htmlContent,
       `FCHV_Infant_Care${getMonthSuffix(filter)}.pdf`,
     );
   } catch (error) {
     console.error("Error generating Infant Care PDF:", error);
+    throw error;
+  }
+};
+
+
+export const exportPncMonitoringToPdf = async (filter: MonthFilter = null) => {
+  try {
+    const data = (await getAllInfantMonitorings()).filter((r) =>
+      matchesMonthFilter(filter, r),
+    );
+    const htmlContent = wrapHtml(await generatePncMonitoringTable(data));
+    await savePdfToDevice(
+      htmlContent,
+      `FCHV_PNC_Monitoring${getMonthSuffix(filter)}.pdf`,
+    );
+  } catch (error) {
+    console.error('Error generating PNC Monitoring PDF:', error);
     throw error;
   }
 };
@@ -1978,17 +2270,17 @@ const generateAdolescentIfaTable = (data: any[]) => {
           <th style="font-size: 8px; font-weight: normal; padding: 2px;">१०-१४</th>
           <th style="font-size: 8px; font-weight: normal; padding: 2px;">१५-१९</th>
           ${Array.from({ length: 13 })
-            .map(
-              (_, i) =>
-                `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
-            )
-            .join("")}
+      .map(
+        (_, i) =>
+          `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
+      )
+      .join("")}
           ${Array.from({ length: 13 })
-            .map(
-              (_, i) =>
-                `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
-            )
-            .join("")}
+      .map(
+        (_, i) =>
+          `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
+      )
+      .join("")}
         </tr>
       </thead>
       <tbody>
@@ -2024,18 +2316,18 @@ const generateAdolescentIfaTable = (data: any[]) => {
         <td>${is10_14 ? CHECK : ""}</td>
         <td>${is15_19 ? CHECK : ""}</td>
         ${Array.from({ length: 13 })
-          .map(
-            (_, i) =>
-              `<td>${item[`phase1_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
-          )
-          .join("")}
+        .map(
+          (_, i) =>
+            `<td>${item[`phase1_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
+        )
+        .join("")}
         <td>${item.phase1_completed === 1 ? CHECK : ""}</td>
         ${Array.from({ length: 13 })
-          .map(
-            (_, i) =>
-              `<td>${item[`phase2_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
-          )
-          .join("")}
+        .map(
+          (_, i) =>
+            `<td>${item[`phase2_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
+        )
+        .join("")}
         <td>${item.phase2_completed === 1 ? CHECK : ""}</td>
         <td style="text-align: left; padding-left: 5px; font-size: 8px;">${escapeHtml(item.remarks)}</td>
       </tr>

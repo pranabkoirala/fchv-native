@@ -59,6 +59,7 @@ export default function MaternalDeathForm({
   const [errDeathPlace, setErrDeathPlace] = useState(false);
   const [errDeathPlaceOther, setErrDeathPlaceOther] = useState(false);
   const [errChildCondition, setErrChildCondition] = useState(false);
+  const [errDeathDate, setErrDeathDate] = useState(false);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -101,11 +102,10 @@ export default function MaternalDeathForm({
     }
 
     if (deathYear === 0 || deathMonth === 0 || deathDay === 0) {
-      Alert.alert(
-        t("maternal_death_modal.error_title"),
-        t("newborn_death_modal.date_error"),
-      );
+      setErrDeathDate(true);
       hasError = true;
+    } else {
+      setErrDeathDate(false);
     }
 
     if (!deathCondition) {
@@ -202,6 +202,7 @@ export default function MaternalDeathForm({
       setRemarks("");
 
       setErrMother(false);
+      setErrDeathDate(false);
       setErrDeathCondition(false);
       setErrDeathConditionOther(false);
       setErrDeathPlace(false);
@@ -305,6 +306,11 @@ export default function MaternalDeathForm({
               <Calendar size={18} color="#475569" />
             </View>
           </Pressable>
+          {errDeathDate && (
+            <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
+              {t("maternal_death_modal.date_error")}
+            </Text>
+          )}
         </View>
 
         <CalendarPicker
@@ -317,6 +323,7 @@ export default function MaternalDeathForm({
               setDeathYear(parseInt(parts[0], 10));
               setDeathMonth(parseInt(parts[1], 10));
               setDeathDay(parseInt(parts[2], 10));
+              setErrDeathDate(false);
             } catch (e) {
               console.error(e);
             }
@@ -429,6 +436,11 @@ export default function MaternalDeathForm({
               </View>
             ))}
           </View>
+          {errDeathPlace && (
+            <Text className="text-rose-500 text-xs mt-1 ml-1 font-semibold">
+              {t("maternal_death_modal.place_error")}
+            </Text>
+          )}
           {deathPlace === "Other" && (
             <View className="gap-y-1.5 mt-1.5">
               <View
