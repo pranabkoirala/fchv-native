@@ -23,6 +23,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -30,6 +31,7 @@ import {
   View,
 } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { doSync } from "../../api/services/sync/sync";
 import { getAdolescentIfaCount } from "../../hooks/database/models/AdolescentIfaModel";
 import { getAllDeliveries } from "../../hooks/database/models/DeliveryModel";
@@ -265,115 +267,117 @@ export default function DashboardScreen() {
     if (isConnected) doSync();
   }, [isConnected]);
 
+  const loadDashboardData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [
+        mCount,
+        pregnancies,
+        children,
+        mDeaths,
+        cDeaths,
+        pTrend,
+        cTrend,
+        mTrend,
+        mothers,
+        adolCount,
+        deliveries,
+        mothersMeetings,
+      ] = await Promise.all([
+        getMotherCount(),
+        getPregnantWomenList(),
+        getAllInfantMonitorings(),
+        getTotalMaternalDeaths(),
+        getTotalNewbornDeaths(),
+        getPregnancyTrend(),
+        getChildTrend(),
+        getMotherTrend(),
+        getAllMothersList(),
+        getAdolescentIfaCount(),
+        getAllDeliveries(),
+        getAllMothersGroupMeetings(),
+      ]);
+
+      const nowIso = new Date().toISOString();
+      const motherById = new Map<any, any>(
+        mothers.map((m: any) => [m.id, m]),
+      );
+
+      const activities: any[] = [];
+      mothers.forEach((m: any) => {
+        activities.push({
+          id: `m-${m.id}`,
+          title: `${t("dashboard.activity.new_mother")}: ${m.name || "Unknown"}`,
+          subtitle: buildLocation(m.municipality, m.ward),
+          date: m.createdAt || m.created_at || nowIso,
+          icon: Users,
+          color: "#059669",
+          bg: "#D1FAE5",
+        });
+      });
+      pregnancies.forEach((p: any) => {
+        const mother = motherById.get(p.mother);
+        activities.push({
+          id: `p-${p.id}`,
+          title: `${t("dashboard.activity.new_pregnancy")}: ${p.name || "Unknown"}`,
+          subtitle: buildLocation(mother?.municipality, mother?.ward),
+          date: p.created_at || nowIso,
+          icon: Activity,
+          color: "#0284C7",
+          bg: "#E0F2FE",
+        });
+      });
+      children.forEach((c: any) => {
+        const mother = motherById.get(c.mother);
+        activities.push({
+          id: `c-${c.id}`,
+          title: `${t("dashboard.activity.child_added")}: ${c.baby_name || c.mother_name || "Baby"}`,
+          subtitle: buildLocation(mother?.municipality, mother?.ward),
+          date: c.created_at || nowIso,
+          icon: Smile,
+          color: "#D97706",
+          bg: "#FEF3C7",
+        });
+      });
+
+      await fetchTodos();
+      activities.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      );
+      setRecentActivity(activities.slice(0, 2));
+
+      setMotherCount(mCount);
+      setPregnancyCount(pregnancies.length);
+      setChildCount(children.length);
+      setAdolescentCount(adolCount);
+      setMaternalDeathCount(mDeaths);
+      setChildDeathCount(cDeaths);
+      setDeliveryCount(deliveries.length);
+      setMothersMeetingCount(mothersMeetings.length);
+
+      const highRisk = pregnancies.filter(
+        (p: any) => p.risk_level === "high",
+      ).length;
+      setHighRiskPregnancyCount(highRisk);
+
+      const isNepali = language === "np";
+      setPregnancyTrend(buildDashboardTrend(pTrend, isNepali));
+      setChildTrend(buildDashboardTrend(cTrend, isNepali));
+      setMotherTrend(buildDashboardTrend(mTrend, isNepali));
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchTodos, language, t]);
+
   useFocusEffect(
     useCallback(() => {
-      const load = async () => {
-        setLoading(true);
-        try {
-          const [
-            mCount,
-            pregnancies,
-            children,
-            mDeaths,
-            cDeaths,
-            pTrend,
-            cTrend,
-            mTrend,
-            mothers,
-            adolCount,
-            deliveries,
-            mothersMeetings,
-          ] = await Promise.all([
-            getMotherCount(),
-            getPregnantWomenList(),
-            getAllInfantMonitorings(),
-            getTotalMaternalDeaths(),
-            getTotalNewbornDeaths(),
-            getPregnancyTrend(),
-            getChildTrend(),
-            getMotherTrend(),
-            getAllMothersList(),
-            getAdolescentIfaCount(),
-            getAllDeliveries(),
-            getAllMothersGroupMeetings(),
-          ]);
-
-          const nowIso = new Date().toISOString();
-          const motherById = new Map<any, any>(
-            mothers.map((m: any) => [m.id, m]),
-          );
-
-          const activities: any[] = [];
-          mothers.forEach((m: any) => {
-            activities.push({
-              id: `m-${m.id}`,
-              title: `${t("dashboard.activity.new_mother")}: ${m.name || "Unknown"}`,
-              subtitle: buildLocation(m.municipality, m.ward),
-              date: m.createdAt || m.created_at || nowIso,
-              icon: Users,
-              color: "#059669",
-              bg: "#D1FAE5",
-            });
-          });
-          pregnancies.forEach((p: any) => {
-            const mother = motherById.get(p.mother);
-            activities.push({
-              id: `p-${p.id}`,
-              title: `${t("dashboard.activity.new_pregnancy")}: ${p.name || "Unknown"}`,
-              subtitle: buildLocation(mother?.municipality, mother?.ward),
-              date: p.created_at || nowIso,
-              icon: Activity,
-              color: "#0284C7",
-              bg: "#E0F2FE",
-            });
-          });
-          children.forEach((c: any) => {
-            const mother = motherById.get(c.mother);
-            activities.push({
-              id: `c-${c.id}`,
-              title: `${t("dashboard.activity.child_added")}: ${c.baby_name || c.mother_name || "Baby"}`,
-              subtitle: buildLocation(mother?.municipality, mother?.ward),
-              date: c.created_at || nowIso,
-              icon: Smile,
-              color: "#D97706",
-              bg: "#FEF3C7",
-            });
-          });
-
-          await fetchTodos();
-          activities.sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          );
-          setRecentActivity(activities.slice(0, 2));
-
-          setMotherCount(mCount);
-          setPregnancyCount(pregnancies.length);
-          setChildCount(children.length);
-          setAdolescentCount(adolCount);
-          setMaternalDeathCount(mDeaths);
-          setChildDeathCount(cDeaths);
-          setDeliveryCount(deliveries.length);
-          setMothersMeetingCount(mothersMeetings.length);
-
-          const highRisk = pregnancies.filter(
-            (p: any) => p.risk_level === "high",
-          ).length;
-          setHighRiskPregnancyCount(highRisk);
-
-          const isNepali = language === "np";
-          setPregnancyTrend(buildDashboardTrend(pTrend, isNepali));
-          setChildTrend(buildDashboardTrend(cTrend, isNepali));
-          setMotherTrend(buildDashboardTrend(mTrend, isNepali));
-        } catch (err) {
-          console.error("Dashboard fetch error:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      load();
-    }, [fetchTodos, language, t]),
+      loadDashboardData();
+    }, [loadDashboardData]),
   );
+
+  const { refreshing, onRefresh } = usePullToRefresh(loadDashboardData);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFC" }}>
@@ -390,6 +394,9 @@ export default function DashboardScreen() {
           contentContainerStyle={{ paddingBottom: 140 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           <View>
             {/* Quick Access — 6 flat cards */}

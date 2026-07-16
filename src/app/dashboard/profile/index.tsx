@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/common/Skeleton";
 import { useLanguage } from "@/context/LanguageContext";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
   AlertTriangle,
@@ -16,6 +17,7 @@ import {
   Alert,
   BackHandler,
   Image,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -343,115 +345,111 @@ export default function HmisRecordProfileScreen() {
 
   const totalChildCount = children.length;
 
-  const loadSupplements = async (motherId: string) => {
+  const loadSupplements = useCallback(async (motherId: string) => {
     try {
       const suppData = await getSupplementByMother(motherId);
       setSupplementsRecord(suppData);
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
+
+  const loadProfile = useCallback(async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const [motherData, pregnancyData, pncVisitsLocal, allChildrenList] =
+        await Promise.all([
+          getMotherProfile(id),
+          getPregnancyByMotherId(id),
+          getPncVisitsByMotherId(id),
+          getInfantMonitoringsByMother(id),
+        ]);
+      // The first (most recent) child, for HMIS data display
+      const childMonitoring = allChildrenList[0] ?? null;
+
+      if (motherData) {
+        const lmpDate = pregnancyData?.lmp_date || motherData.lmp;
+        const eddDate =
+          normalizeDateString(pregnancyData?.expected_delivery_date) ||
+          normalizeDateString(motherData.edd) ||
+          calculateEddFromLmp(lmpDate);
+        const lmpParts = parseDateParts(lmpDate, "BS");
+        const eddParts = parseDateParts(eddDate, "AD");
+        const regParts = parseDateParts(motherData.regDate, "AD");
+
+        const data: HmisRecordStoreType = {
+          id: motherData.id,
+          serial_no: null,
+          date_year: regParts.length >= 3 ? regParts[0] : null,
+          date_month: regParts.length >= 3 ? regParts[1] : null,
+          date_day: regParts.length >= 3 ? regParts[2] : null,
+          mother_name: motherData.name,
+          mother_age: motherData.age,
+          lmp_year: lmpParts.length >= 3 ? lmpParts[0] : null,
+          lmp_month: lmpParts.length >= 3 ? lmpParts[1] : null,
+          lmp_day: lmpParts.length >= 3 ? lmpParts[2] : null,
+          edd_year: eddParts.length >= 3 ? eddParts[0] : null,
+          edd_month: eddParts.length >= 3 ? eddParts[1] : null,
+          edd_day: eddParts.length >= 3 ? eddParts[2] : null,
+          counseling_given: null,
+          checkup_12: null,
+          checkup_20: null,
+          checkup_26: null,
+          checkup_30: null,
+          checkup_34: null,
+          checkup_36: null,
+          checkup_38: null,
+          checkup_40: null,
+          checkup_other: null,
+          iron_preg_received: null,
+          iron_pnc_received: null,
+          vit_a_received: null,
+          delivery_place: childMonitoring?.birth_place || null,
+          newborn_condition: childMonitoring?.baby_weight || null,
+          pnc_check_24hr: pncVisitsLocal.length >= 1 ? 1 : null,
+          pnc_check_3day: pncVisitsLocal.length >= 2 ? 1 : null,
+          pnc_check_7_14day: pncVisitsLocal.length >= 3 ? 1 : null,
+          pnc_check_42day: pncVisitsLocal.length >= 4 ? 1 : null,
+          pnc_check_other: null,
+          family_planning_used: null,
+          remarks: childMonitoring?.remarks || null,
+          created_at: motherData.regDate || "",
+          updated_at: motherData.regDate || "",
+        };
+
+        setRecord(data);
+        setMother(motherData);
+        setPregnancy(pregnancyData);
+        setChildren(allChildrenList);
+        setPncVisits(pncVisitsLocal);
+        const deathData = await getMaternalDeathByMother(motherData.id);
+        setExistingDeathRecord(deathData);
+        const newbornDeathData = await getNewbornDeathByMother(motherData.id);
+        setExistingNewbornDeathRecord(newbornDeathData);
+        const abortionData = pregnancyData?.id
+          ? await getAbortionByMotherAndPregnancy(motherData.id, pregnancyData.id)
+          : await getAbortionByMother(motherData.id);
+        setAbortionRecord(abortionData);
+        await loadSupplements(motherData.id);
+      }
+    } catch (error) {
+      console.error("Failed to fetch record:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, loadSupplements]);
 
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
-      const fetchRecord = async () => {
-        if (!id) {
-          setLoading(false);
-          return;
-        }
-        try {
-          const [mother, pregnancy, pncVisitsLocal, allChildrenList] =
-            await Promise.all([
-              getMotherProfile(id),
-              getPregnancyByMotherId(id),
-              getPncVisitsByMotherId(id),
-              getInfantMonitoringsByMother(id),
-            ]);
-          // The first (most recent) child, for HMIS data display
-          const childMonitoring = allChildrenList[0] ?? null;
-
-          if (mother) {
-            const lmpDate = pregnancy?.lmp_date || mother.lmp;
-            const eddDate =
-              normalizeDateString(pregnancy?.expected_delivery_date) ||
-              normalizeDateString(mother.edd) ||
-              calculateEddFromLmp(lmpDate);
-            const lmpParts = parseDateParts(lmpDate, "BS");
-            const eddParts = parseDateParts(eddDate, "AD");
-            const regParts = parseDateParts(mother.regDate, "AD");
-
-            const data: HmisRecordStoreType = {
-              id: mother.id,
-              serial_no: null,
-              date_year: regParts.length >= 3 ? regParts[0] : null,
-              date_month: regParts.length >= 3 ? regParts[1] : null,
-              date_day: regParts.length >= 3 ? regParts[2] : null,
-              mother_name: mother.name,
-              mother_age: mother.age,
-              lmp_year: lmpParts.length >= 3 ? lmpParts[0] : null,
-              lmp_month: lmpParts.length >= 3 ? lmpParts[1] : null,
-              lmp_day: lmpParts.length >= 3 ? lmpParts[2] : null,
-              edd_year: eddParts.length >= 3 ? eddParts[0] : null,
-              edd_month: eddParts.length >= 3 ? eddParts[1] : null,
-              edd_day: eddParts.length >= 3 ? eddParts[2] : null,
-              counseling_given: null,
-              checkup_12: null,
-              checkup_20: null,
-              checkup_26: null,
-              checkup_30: null,
-              checkup_34: null,
-              checkup_36: null,
-              checkup_38: null,
-              checkup_40: null,
-              checkup_other: null,
-              iron_preg_received: null,
-              iron_pnc_received: null,
-              vit_a_received: null,
-              delivery_place: childMonitoring?.birth_place || null,
-              newborn_condition: childMonitoring?.baby_weight || null,
-              pnc_check_24hr: pncVisitsLocal.length >= 1 ? 1 : null,
-              pnc_check_3day: pncVisitsLocal.length >= 2 ? 1 : null,
-              pnc_check_7_14day: pncVisitsLocal.length >= 3 ? 1 : null,
-              pnc_check_42day: pncVisitsLocal.length >= 4 ? 1 : null,
-              pnc_check_other: null,
-              family_planning_used: null,
-              remarks: childMonitoring?.remarks || null,
-              created_at: mother.regDate || "",
-              updated_at: mother.regDate || "",
-            };
-
-            if (isActive) {
-              setRecord(data);
-              setMother(mother);
-              setPregnancy(pregnancy);
-              setChildren(allChildrenList);
-              setPncVisits(pncVisitsLocal);
-              const deathData = await getMaternalDeathByMother(mother.id);
-              setExistingDeathRecord(deathData);
-              const newbornDeathData = await getNewbornDeathByMother(mother.id);
-              setExistingNewbornDeathRecord(newbornDeathData);
-              const abortionData = pregnancy?.id
-                ? await getAbortionByMotherAndPregnancy(mother.id, pregnancy.id)
-                : await getAbortionByMother(mother.id);
-              setAbortionRecord(abortionData);
-              await loadSupplements(mother.id);
-            }
-          }
-        } catch (error) {
-          console.error("Failed to fetch record:", error);
-        } finally {
-          if (isActive) setLoading(false);
-        }
-      };
-
       setLoading(true);
-      fetchRecord();
-      return () => {
-        isActive = false;
-      };
-    }, [id]),
+      loadProfile();
+    }, [loadProfile]),
   );
+
+  const { refreshing, onRefresh } = usePullToRefresh(loadProfile);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -580,7 +578,13 @@ export default function HmisRecordProfileScreen() {
         }
       />
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View className="px-4 pt-5 pb-32 gap-y-4 bg-gray-50">
           {/* Profile Header */}
           <View className="bg-white rounded-2xl border border-slate-100 overflow-hidden">

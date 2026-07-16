@@ -137,6 +137,17 @@ export default function MothersGroupMeetingForm() {
     setDecisions(decisions.filter((_, i) => i !== index));
   };
 
+  const resetForm = () => {
+    setMeetingDateBS("");
+    setLocation("");
+    setWardNo("1");
+    setAttendees(0);
+    setTopicInput("");
+    setTopics([]);
+    setDecisionInput("");
+    setDecisions([]);
+  };
+
   const onSubmit = async () => {
     if (!meetingDateBS || !location) {
       alert(t("mothers_group_meeting.form_error"));
@@ -161,6 +172,7 @@ export default function MothersGroupMeetingForm() {
           ...payload,
           is_synced: false,
         });
+        resetForm();
         router.push("/dashboard");
       }
     } catch (e) {

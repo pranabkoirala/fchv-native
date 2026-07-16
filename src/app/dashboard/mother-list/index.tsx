@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  RefreshControl,
   StatusBar,
   Text,
   TextInput,
@@ -22,6 +23,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import {
   getAllMothersList,
   MotherListDbItem,
@@ -264,6 +266,8 @@ export default function MotherListScreen() {
     }, []),
   );
 
+  const { refreshing, onRefresh } = usePullToRefresh(loadMothers);
+
   const filtered = useMemo(() => mothers.filter((m) => {
     const q = search.toLowerCase();
     const matchSearch =
@@ -398,6 +402,9 @@ export default function MotherListScreen() {
         renderItem={renderMother}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={listHeader}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={loading ? (
           <View className="items-center py-24">
             <View className="w-16 h-16 rounded-full bg-blue-50 items-center justify-center mb-4">

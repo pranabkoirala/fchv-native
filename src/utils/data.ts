@@ -218,6 +218,7 @@ export const FCHV_COUNSELING: FchvCounselingField[] = [
     en: "Names of referred patients (cough)",
     ne: "प्रेषण गरिएका खोकीका बिरामीहरूको नाम",
   },
+
   {
     key: "first_aid_count",
     number: true,
@@ -250,15 +251,15 @@ export const FCHV_COUNSELING: FchvCounselingField[] = [
     key: "child_health_education_count",
     number: true,
     name: false,
-    en: "Number of children who received child health education",
-    ne: "बाल स्वास्थ्य शिक्षामा सहभागी बालबालिकाको संख्या",
+    en: "How many people received health education on child health using health education materials",
+    ne: "बाल स्वास्थ्य सम्बन्धि स्वास्थ्य शिक्षा सामग्री प्रयोग गरी स्वास्थ्य शिक्षा पाएका संख्या",
   },
   {
     key: "child_health_education_names",
     number: false,
     name: true,
     en: "Names of children who received child health education",
-    ne: "बाल स्वास्थ्य शिक्षामा सहभागी बालबालिकाहरूको नाम",
+    ne: "बाल स्वास्थ्य शिक्षा पाएका व्यक्तिको नाम",
   },
   {
     key: "ncd_health_education_count",
@@ -378,6 +379,13 @@ export const FCHV_COUNSELING: FchvCounselingField[] = [
     name: false,
     en: "Assisted at village clinic (times)",
     ne: "गाउँघर क्लिनिक सञ्चालनमा सहयोग गरेको (पटक)",
+  },
+  {
+    key: "ors_for_above_5_years",
+    number: true,
+    name: false,
+    en: "Number of ORS packets distributed to people aged above 5 years",
+    ne: "५ वर्ष भन्दा माथिका मानिसहरूलाई वितरण गरेको पुनर्जलीय झोलको पुरिया (संख्या)",
   },
 ];
 

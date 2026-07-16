@@ -15,6 +15,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -23,6 +24,7 @@ import {
   View,
 } from "react-native";
 import { AdToBs } from "react-native-nepali-picker";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -390,9 +392,9 @@ export default function ReportScreen() {
     };
   }, [mothers]);
 
-  const fetchAllData = useCallback(async () => {
+  const fetchAllData = useCallback(async (showSkeleton = true) => {
     try {
-      setLoading(true);
+      if (showSkeleton) setLoading(true);
       const [
         motherList,
         childList,
@@ -424,14 +426,18 @@ export default function ReportScreen() {
     } catch (error) {
       console.error("Error fetching report data:", error);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchAllData();
+      fetchAllData(true);
     }, [fetchAllData]),
+  );
+
+  const { refreshing, onRefresh } = usePullToRefresh(
+    useCallback(() => fetchAllData(false), [fetchAllData]),
   );
 
   const allRecords = useMemo((): UnifiedRecord[] => {
@@ -858,6 +864,9 @@ export default function ReportScreen() {
         data={loading ? [] : records}
         renderItem={renderRecord}
         keyExtractor={(item) => `${item.type}-${item.id}`}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={
           loading ? (
             <View>

@@ -36,7 +36,10 @@
     "loading": "Loading...",
     "mother": "Mother",
     "child": "Child",
-    "hospital": "Hospital"
+    "hospital": "Hospital",
+    "sync_success": "Sync completed successfully",
+    "offline_reload": "Offline: Reloaded data from local database",
+    "sync_error": "Sync failed. Loaded local data."
   },
   "dashboard": {
     "title": "FCHV Dashboard",
@@ -1635,35 +1638,6 @@
     "save": "Save",
     "update": "Update",
     "save_success": "FCHV Counseling saved successfully",
-    "save_failed": "Failed to save FCHV counseling",
-    "field_labels": {
-      "adolescent_referred_count": "Number of adolescents referred to a health facility",
-      "adolescent_referred_names": "Names of referred adolescents",
-      "cough_referred_count": "Number of patients referred for cough lasting 2 weeks or more",
-      "cough_referred_names": "Names of referred patients (cough)",
-      "first_aid_count": "Number of people who received first aid",
-      "first_aid_names": "Names of people who received first aid",
-      "first_aid_referred_count": "Number of patients referred after first aid",
-      "first_aid_referred_names": "Names of patients referred after first aid",
-      "child_health_education_count": "Number of children who received child health education",
-      "child_health_education_names": "Names of children who received child health education",
-      "ncd_health_education_count": "Number of people who received health education on NCD risk factors and prevention",
-      "ncd_health_education_names": "Names of people who received health education",
-      "ncd_beneficiaries_count": "Number of beneficiaries of NCD health education",
-      "ncd_beneficiaries_names": "Names of beneficiaries",
-      "tb_referred_count": "Number of suspected TB patients referred",
-      "tb_referred_names": "Names of referred TB patients",
-      "leprosy_referred_count": "Number of suspected leprosy patients referred",
-      "leprosy_referred_names": "Names of referred leprosy patients",
-      "ncd_referred_count": "Number of NCD patients referred",
-      "ncd_referred_names": "Names of referred NCD patients",
-      "mental_health_referred_count": "Number of patients with mental health problems referred",
-      "mental_health_referred_names": "Names of referred patients",
-      "elderly_referred_count": "Number of elderly people with health problems referred",
-      "elderly_referred_names": "Names of referred elderly people",
-      "fchv_fund_amount": "Amount deposited in FCHV fund (NPR)",
-      "immunization_cleanliness_sessions": "Participation in immunization/cleanliness sessions (times)",
-      "village_clinic_support": "Assisted at village clinic (times)"
-    }
+    "save_failed": "Failed to save FCHV counseling"
   }
 }

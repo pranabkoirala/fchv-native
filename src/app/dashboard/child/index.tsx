@@ -6,8 +6,9 @@ import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitori
 import { router, useFocusEffect } from "expo-router";
 import { Baby, Calendar, ChevronRight, Plus, Search } from "lucide-react-native";
 import { memo, useCallback, useMemo, useState } from "react";
-import { FlatList, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, RefreshControl, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
 const ChildCardSkeleton = () => (
   <View className="bg-white p-4 rounded-2xl flex-row items-center border border-gray-100">
@@ -94,6 +95,8 @@ export default function ChildManagementScreen() {
     }, [loadInfants])
   );
 
+  const { refreshing, onRefresh } = usePullToRefresh(loadInfants);
+
   const filteredInfants = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return infants;
@@ -154,6 +157,9 @@ export default function ChildManagementScreen() {
         renderItem={renderChild}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={listHeader}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={loading ? (
           <View className="px-3 pt-3 gap-y-4">
             {[1, 2, 3, 4, 5].map((i) => <ChildCardSkeleton key={i} />)}

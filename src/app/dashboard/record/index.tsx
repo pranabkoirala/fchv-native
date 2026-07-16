@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/common/Skeleton";
 import CustomHeader from "@/components/CustomHeader";
 import { useLanguage } from "@/context/LanguageContext";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
   CalendarDays,
@@ -10,7 +11,7 @@ import {
   User
 } from "lucide-react-native";
 import { memo, useCallback, useMemo, useState } from "react";
-import { FlatList, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, RefreshControl, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getAllMothersList,
@@ -147,21 +148,24 @@ export default function RecordScreen() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const loadRecords = useCallback(async () => {
+    try {
+      const data = await getAllMothersList();
+      setRecords(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-      const fetchRecords = async () => {
-        try {
-          const data = await getAllMothersList();
-          setRecords(data);
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchRecords();
-    }, []),
+      loadRecords();
+    }, [loadRecords]),
   );
+
+  const { refreshing, onRefresh } = usePullToRefresh(loadRecords);
 
   const filteredRecords = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -219,6 +223,9 @@ export default function RecordScreen() {
         renderItem={renderRecord}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={listHeader}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={loading ? (
           <View>
             {[1, 2, 3, 4, 5].map((i) => <RecordSkeleton key={i} />)}

@@ -25,8 +25,11 @@ type FormData = Record<string, string | string[]>;
 
 export default function FchvCounselingPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { showToast } = useToast();
+
+  const fieldLabel = (field: FchvCounselingField) =>
+    language === "en" ? field.en : field.ne;
   const [loading, setLoading] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
   const [fchvName, setFchvName] = useState("");
@@ -125,18 +128,29 @@ export default function FchvCounselingPage() {
   const numberFields = FCHV_COUNSELING.filter((f) => f.number && !f.name);
   const nameFields = FCHV_COUNSELING.filter((f) => f.name);
 
+  const findNamesFor = (
+    countField: FchvCounselingField,
+  ): FchvCounselingField | undefined => {
+    const base = countField.key.replace(/_count$/, "");
+    return nameFields.find(
+      (n) => n.key === `${base}_names` || n.key === `${base}_name`,
+    );
+  };
+
   const pairedFields: {
     count: FchvCounselingField;
     names: FchvCounselingField;
   }[] = [];
-  for (let i = 0; i < numberFields.length - 3; i++) {
-    pairedFields.push({
-      count: numberFields[i],
-      names: nameFields[i],
-    });
-  }
+  const standaloneFields: FchvCounselingField[] = [];
 
-  const standaloneFields = numberFields.slice(-3);
+  numberFields.forEach((count) => {
+    const names = findNamesFor(count);
+    if (names) {
+      pairedFields.push({ count, names });
+    } else {
+      standaloneFields.push(count);
+    }
+  });
 
   return (
     <View className="flex-1 bg-white pt-9">
@@ -196,7 +210,7 @@ export default function FchvCounselingPage() {
               <View className="flex-row items-center mb-3">
                 <View className="w-1 h-5 bg-primary rounded-full mr-2" />
                 <Text className="text-slate-800 font-semibold text-[15px] flex-1">
-                  {t("fchv_counseling.field_labels." + count.key)}
+                  {fieldLabel(count)}
                 </Text>
               </View>
 
@@ -230,7 +244,7 @@ export default function FchvCounselingPage() {
                 <>
                   <View className=" bg-slate-50 my-3" />
                   <Text className="text-slate-500 font-medium text-[13px] mb-2">
-                    {t("fchv_counseling.field_labels." + names.key)}
+                    {fieldLabel(names)}
                   </Text>
 
                   {/* Previously saved name chips */}
@@ -254,9 +268,7 @@ export default function FchvCounselingPage() {
                           onPress={() =>
                             setViewAllModal({
                               visible: true,
-                              title: t(
-                                "fchv_counseling.field_labels." + names.key,
-                              ),
+                              title: fieldLabel(names),
                               names: oldNames,
                             })
                           }
@@ -331,7 +343,7 @@ export default function FchvCounselingPage() {
             return (
               <View key={field.key} className="mb-4">
                 <Text className="text-slate-700 font-medium text-[14px] mb-2">
-                  {t("fchv_counseling.field_labels." + field.key)}
+                  {fieldLabel(field)}
                 </Text>
                 <View className="flex-row items-center justify-center h-14 rounded-xl border border-slate-200 bg-white px-4">
                   <TouchableOpacity

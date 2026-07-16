@@ -39,7 +39,7 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "./button";
 
@@ -252,10 +252,21 @@ export default function ChildRegistrationForm() {
             setNewbornCare(care);
 
             if (infant.date_of_birth) {
-              setBirthDateBs(infant.date_of_birth);
+              const storedDate = infant.date_of_birth;
+              const storedYear = parseInt(storedDate.split("-")[0], 10);
+              const isBs = !isNaN(storedYear) && storedYear >= 2070;
               try {
-                setBirthDateAd(BsToAd(infant.date_of_birth));
-              } catch (e) {}
+                if (isBs) {
+                  setBirthDateBs(storedDate);
+                  setBirthDateAd(BsToAd(storedDate));
+                } else {
+                  const bsDate = AdToBs(storedDate);
+                  setBirthDateBs(bsDate);
+                  setBirthDateAd(storedDate);
+                }
+              } catch (e) {
+                setBirthDateBs(storedDate);
+              }
             }
           }
         } else if (motherId) {

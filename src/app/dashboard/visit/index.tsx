@@ -1173,8 +1173,15 @@ export default function VisitScreen() {
           });
         }
       }
-      router.navigate("/dashboard");
       showToast(t("visit.messages.save_success"));
+      if (urlFrom) {
+        router.replace({
+          pathname: urlFrom,
+          params: { id: selectedMotherId },
+        } as any);
+      } else {
+        router.navigate("/dashboard");
+      }
       setSelectedMotherId("");
       setSelectedMotherDetails(null);
       setPregnancyId(null);

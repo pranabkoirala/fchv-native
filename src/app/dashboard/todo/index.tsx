@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FlatList,
+  RefreshControl,
   StatusBar,
   Text,
   TouchableOpacity,
@@ -25,6 +26,7 @@ import {
 } from "react-native";
 import Animated, { FadeInDown, Layout } from "react-native-reanimated";
 import { useLanguage } from "../../../context/LanguageContext";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import {
   createTodo,
   deleteTodo,
@@ -106,28 +108,32 @@ export default function TasksScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadTodos();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadTodos();
-    }, []),
-  );
-
-  const loadTodos = async () => {
+  const loadTodos = useCallback(async (showSkeleton = true) => {
     try {
-      setLoading(true);
+      if (showSkeleton) setLoading(true);
       const data = await getAllTodos();
       setTodos(data);
       await scheduleMissingTaskNotifications(data);
     } catch (error) {
       console.error("Failed to load todos:", error);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadTodos(true);
+  }, [loadTodos]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadTodos(true);
+    }, [loadTodos]),
+  );
+
+  const { refreshing, onRefresh } = usePullToRefresh(
+    useCallback(() => loadTodos(false), [loadTodos])
+  );
 
   const scheduleMissingTaskNotifications = async (items: TodoItem[]) => {
     const nextTodos = [...items];
@@ -603,6 +609,9 @@ export default function TasksScreen() {
         renderItem={({ item, index }) => (
           <View className="px-6">{renderTaskCard(item, index)}</View>
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListHeaderComponent={
           <>
             {renderTitleSection()}

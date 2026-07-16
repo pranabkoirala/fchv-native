@@ -37,6 +37,11 @@ export const CHILD_HEALTH_COUNSELLING_QUESTIONS = [
     ne: "के बच्चाको झाडापखालाको उपचार पुनर्जलीय झोल र जिंक चक्कीबाट गर्नुभएको छ?",
   },
   {
+    id: "referred_to_health_facility_due_to_diarrhea",
+    en: "Did you refer the child to a health facility due to diarrhea?",
+    ne: "के तपाईंले झाडापखालाको कारणले बच्चालाई स्वास्थ्य संस्थामा रेफर गर्नुभयो?",
+  },
+  {
     id: "ors_for_child",
     en: "Would you like to get ORS for the child?",
     ne: "बच्चाका लागि जीवनजल लिनुहुन्छ?",

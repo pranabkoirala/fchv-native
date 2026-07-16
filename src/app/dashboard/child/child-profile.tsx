@@ -9,11 +9,13 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useToast } from "@/context/ToastContext";
 import { getInfantMonitoringById } from "@/hooks/database/models/InfantMonitoringModel";
 import { InfantMonitoringStoreType } from "@/hooks/database/types/infantMonitoringModal";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Activity, Baby, Edit2, MapPin, Smile } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
   BackHandler,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -184,6 +186,21 @@ export default function ChildProfileScreen() {
   const [deathModalVisible, setDeathModalVisible] = useState(false);
   const { showToast } = useToast();
 
+  const loadRecord = useCallback(async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const childData = await getInfantMonitoringById(id);
+      setRecord(childData);
+    } catch (error) {
+      console.error("Failed to fetch child record:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     const onBackPress = () => {
       if (from === "/dashboard/report") {
@@ -213,31 +230,12 @@ export default function ChildProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
-      const fetchRecord = async () => {
-        if (!id) {
-          setLoading(false);
-          return;
-        }
-        try {
-          const childData = await getInfantMonitoringById(id);
-          if (isActive) {
-            setRecord(childData);
-          }
-        } catch (error) {
-          console.error("Failed to fetch child record:", error);
-        } finally {
-          if (isActive) setLoading(false);
-        }
-      };
-
       setLoading(true);
-      fetchRecord();
-      return () => {
-        isActive = false;
-      };
-    }, [id]),
+      loadRecord();
+    }, [loadRecord]),
   );
+
+  const { refreshing, onRefresh } = usePullToRefresh(loadRecord);
 
 
 
@@ -301,6 +299,9 @@ export default function ChildProfileScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100, paddingTop: 12 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <View className="px-4 gap-y-3">
           <View className="bg-white p-5 rounded-2xl border border-slate-100">

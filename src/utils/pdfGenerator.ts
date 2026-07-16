@@ -1,6 +1,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Share from "expo-sharing";
+import { PDFDocument } from "pdf-lib";
 import { Platform } from "react-native";
 import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import {
@@ -448,12 +449,12 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
       addCount(counts, 47, month);
     }
     if (hasCounselingAnswer(item, "uterine_prolapse_referral", "mother")) {
-      addCount(counts, 76, month);
+      addCount(counts, 73, month);
     }
     if (
       hasCounselingAnswer(item, "cervical_cancer_screening_referral", "mother")
     ) {
-      addCount(counts, 77, month);
+      addCount(counts, 74, month);
     }
   });
 
@@ -504,7 +505,7 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
     if (
       hasChildCounselingAnswer(
         item,
-        "referred_to_health_facility_due_to_phuknas",
+        "referred_to_health_facility_due_to_diarrhea",
       )
     ) {
       addCount(counts, 33, month);
@@ -530,7 +531,7 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
       const parsed = JSON.parse(item.answers || "{}");
       const logs = parsed?.has_malnutrition;
       if (Array.isArray(logs)) malnutritionAnswers = logs;
-    } catch { }
+    } catch {}
     if (malnutritionAnswers.length > 0) {
       const latest = malnutritionAnswers[malnutritionAnswers.length - 1];
       if (latest.muac === "green") addCount(counts, 48, month);
@@ -550,12 +551,12 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
       addCount(counts, 51, month);
     }
 
-    // ── Registration counseling (80, 82) ─────────────────────
+    // ── Registration counseling (77, 79) ─────────────────────
     if (hasChildCounselingAnswer(item, "birth_registration_counseling")) {
-      addCount(counts, 80, month);
+      addCount(counts, 77, month);
     }
     if (hasChildCounselingAnswer(item, "death_registration_counseling")) {
-      addCount(counts, 82, month);
+      addCount(counts, 79, month);
     }
 
     // ── Sick infant by age (20-22) ────────────────────────────
@@ -581,14 +582,14 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
   childBirthRegistrations.forEach((item) => {
     const month = getRecordMonth(item, filter);
     if (item.birth_status === 1) {
-      addCount(counts, 81, month);
+      addCount(counts, 78, month);
     }
   });
 
   childDeathRegistrations.forEach((item) => {
     const month = getRecordMonth(item, filter);
     if (item.death_status === 1) {
-      addCount(counts, 83, month);
+      addCount(counts, 80, month);
     }
   });
 
@@ -643,6 +644,24 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
     ) {
       addCount(counts, 25, month);
     }
+    if (item.death_age_unit === "months") {
+      if (age >= 2 && age <= 11) {
+        addCount(counts, 26, month);
+      } else if (age >= 12 && age <= 59) {
+        addCount(counts, 27, month);
+      }
+    }
+    if (item.death_place !== "Institution") {
+      if (
+        (item.death_age_unit === "days" && age >= 29 && age <= 59) ||
+        (item.death_age_unit === "months" && age < 2)
+      ) {
+        addCount(counts, 64, month);
+      }
+      if (item.death_age_unit === "months" && age >= 2 && age <= 59) {
+        addCount(counts, 65, month);
+      }
+    }
   });
 
   familyPlanningRecords.forEach((item) => {
@@ -659,17 +678,17 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
 
   mothersGroupMeetings.forEach((item) => {
     const month = getRecordMonth(item, filter);
-    addCount(counts, 61, month);
-    addCount(counts, 62, month, item.attendees_count || 0);
-    addCount(counts, 63, month);
+    addCount(counts, 58, month);
+    addCount(counts, 59, month, item.attendees_count || 0);
+    addCount(counts, 60, month);
   });
 
   maternalDeaths.forEach((item) => {
     if (item.death_place === "Institution") return;
     const month = getRecordMonth(item, filter);
-    if (item.death_condition === "Pregnant") addCount(counts, 64, month);
-    if (item.death_condition === "Labor") addCount(counts, 65, month);
-    if (item.death_condition === "Post-delivery") addCount(counts, 66, month);
+    if (item.death_condition === "Pregnant") addCount(counts, 61, month);
+    if (item.death_condition === "Labor") addCount(counts, 62, month);
+    if (item.death_condition === "Post-delivery") addCount(counts, 63, month);
   });
 
   adolescentIfaRecords.forEach((item) => {
@@ -702,26 +721,27 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
       item.phase2_week_11 > 0 ||
       item.phase2_week_12 > 0 ||
       item.phase2_week_13 > 0;
-    if (hasPhase1) addCount(counts, 84, month);
-    if (hasPhase2) addCount(counts, 85, month);
+    if (hasPhase1) addCount(counts, 81, month);
+    if (hasPhase2) addCount(counts, 82, month);
   });
 
   const FCHV_COUNSELING_ROW_MAP: Record<number, string> = {
     16: "immunization_cleanliness_sessions",
     19: "village_clinic_support",
+    31: "ors_for_above_5_years",
     38: "adolescent_referred_count",
     39: "cough_referred_count",
     40: "first_aid_count",
     41: "first_aid_referred_count",
-    69: "child_health_education_count",
-    70: "ncd_health_education_count",
-    71: "ncd_beneficiaries_count",
-    72: "tb_referred_count",
-    73: "leprosy_referred_count",
-    74: "ncd_referred_count",
-    75: "mental_health_referred_count",
-    78: "elderly_referred_count",
-    79: "fchv_fund_amount",
+    66: "child_health_education_count",
+    67: "ncd_health_education_count",
+    68: "ncd_beneficiaries_count",
+    69: "tb_referred_count",
+    70: "leprosy_referred_count",
+    71: "ncd_referred_count",
+    72: "mental_health_referred_count",
+    75: "elderly_referred_count",
+    76: "fchv_fund_amount",
   };
 
   fchvCounselingRecords.forEach((record: any) => {
@@ -1117,7 +1137,7 @@ const COLLECTED_DATA_ROWS = [
   },
 ];
 
-/** Separate table for nutrition rows 55/56/57 shown as rows 80, 81, 82 */
+/** Separate table for nutrition rows 55/56/57 */
 const generateNutritionTable = (
   periods: SummaryPeriod[],
   nutritionCounts: NutritionSubCounts,
@@ -1131,29 +1151,30 @@ const generateNutritionTable = (
     activity: string;
     subCols: number;
   }> = [
-      {
-        displayNo: 80,
-        rowKey: 55,
-        activity: "६ देखि ११ महिनाका बालबालिका",
-        subCols: 1,
-      },
-      {
-        displayNo: 81,
-        rowKey: 56,
-        activity: "१२ देखि १७ महिनाका बालबालिका",
-        subCols: 2,
-      },
-      {
-        displayNo: 82,
-        rowKey: 57,
-        activity: "१८ देखि २३ महिनाका बालबालिका",
-        subCols: 3,
-      },
-    ];
+    {
+      displayNo: 55,
+      rowKey: 55,
+      activity: "६ देखि ११ महिनाका बालबालिका",
+      subCols: 1,
+    },
+    {
+      displayNo: 56,
+      rowKey: 56,
+      activity: "१२ देखि १७ महिनाका बालबालिका",
+      subCols: 2,
+    },
+    {
+      displayNo: 57,
+      rowKey: 57,
+      activity: "१८ देखि २३ महिनाका बालबालिका",
+      subCols: 3,
+    },
+  ];
 
   let html = `
-    <div class="collected-title" style="margin-top:24px;">
-      एकीकृत शिशु तथा बाल्यकालीन पोषण र बालभिटा समुदाय प्रवर्धन कार्यक्रम (ड)
+    <div style="display: flex; background: #f7e4dc; font-weight: 700; font-size: 9px; border: 1.4px solid #111; border-bottom: none; margin-top: 24px;">
+      <div style="width: 38px; text-align: center; padding: 6px 3px; border-right: 1px solid #000; box-sizing: border-box;">(ड)</div>
+      <div style="flex: 1; text-align: left; padding: 6px 10px;">एकीकृत शिशु तथा बाल्यकालीन पोषण र बालभिटा समुदाय प्रवर्धन कार्यक्रम</div>
     </div>
     <table class="collected-table">
       <thead>
@@ -1161,24 +1182,24 @@ const generateNutritionTable = (
           <th class="sn-col" rowspan="2">क्र.सं.</th>
           <th class="activity-col" rowspan="2">गतिविधिहरू</th>
           ${periods
-      .map(
-        (p) =>
-          `<th colspan="3" style="text-align:center;">${p.label}</th>`,
-      )
-      .join("")}
+            .map(
+              (p) =>
+                `<th colspan="3" style="text-align:center;">${p.label}</th>`,
+            )
+            .join("")}
           <th rowspan="2">जम्मा</th>
         </tr>
         <tr>
           ${periods
-      .map(() =>
-        subColLabels
-          .map(
-            (l) =>
-              `<th style="font-size:8px;background:#e8e8e8;padding:3px;">${l}</th>`,
-          )
-          .join(""),
-      )
-      .join("")}
+            .map(() =>
+              subColLabels
+                .map(
+                  (l) =>
+                    `<th style="font-size:8px;background:#e8e8e8;padding:3px;">${l}</th>`,
+                )
+                .join(""),
+            )
+            .join("")}
         </tr>
       </thead>
       <tbody>
@@ -1247,6 +1268,22 @@ const generateCollectedDataTable = async (filter: MonthFilter) => {
   COLLECTED_DATA_ROWS.forEach((row) => {
     // ── Section header ────────────────────────────────────────────
     if (row.no === 0) {
+      if (row.section === "(ढ)") {
+        html += `</tbody></table>`;
+        html += generateNutritionTable(periods, nutritionCounts);
+        html += `
+          <table class="collected-table" style="margin-top:24px;">
+            <thead>
+              <tr>
+                <th class="sn-col">क्र.सं.</th>
+                <th class="activity-col" colspan="3">गतिविधिहरू</th>
+                ${periods.map((p) => `<th>${p.label}</th>`).join("")}
+                <th>जम्मा</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+      }
       html += `
         <tr class="section-row">
           <td>${row.section || ""}</td>
@@ -1359,20 +1396,17 @@ const generateCollectedDataTable = async (filter: MonthFilter) => {
         <td>${convertToNepaliNumber(row.no)}</td>
         <td class="activity-cell" colspan="3" ${tdStyle}>${activityCellContent}</td>
         ${periods
-        .map(
-          (period) =>
-            `<td>${convertToNepaliNumber(counts[row.no]?.[period.key] || 0)}</td>`,
-        )
-        .join("")}
+          .map(
+            (period) =>
+              `<td>${convertToNepaliNumber(counts[row.no]?.[period.key] || 0)}</td>`,
+          )
+          .join("")}
         <td class="total-cell">${convertToNepaliNumber(total)}</td>
       </tr>
     `;
   });
 
   html += `</tbody></table>`;
-
-  // ── Separate nutrition table (rows 80, 81, 82) ──────────────────
-  html += generateNutritionTable(periods, nutritionCounts);
 
   return html;
 };
@@ -1387,7 +1421,7 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
     const placeholders = motherIds.map(() => "?").join(",");
     allVisits = await db.getAllAsync<any>(
       `SELECT mother, visit_date FROM visit WHERE mother IN (${placeholders}) AND visit_type = 'ANC' AND is_deleted = 0 ORDER BY visit_date ASC`,
-      motherIds
+      motherIds,
     );
   }
 
@@ -1416,7 +1450,7 @@ const generatePregnancyTable = async (data: PregnantWomenListItem[]) => {
 
   const calculateGestationalWeeks = (
     lmpBs: string | null | undefined,
-    visitBs: string | null | undefined
+    visitBs: string | null | undefined,
   ): number | null => {
     if (!lmpBs || !visitBs) return null;
     try {
@@ -1848,7 +1882,9 @@ const generatePncMonitoringTable = async (data: any[]) => {
   const db = await getDb();
 
   // Fetch all PNC visits for the mothers of children in data
-  const motherIds = [...new Set(data.map((c: any) => c.mother).filter(Boolean))];
+  const motherIds = [
+    ...new Set(data.map((c: any) => c.mother).filter(Boolean)),
+  ];
   const visitsByMother: Record<string, any[]> = {};
 
   if (motherIds.length > 0) {
@@ -1872,12 +1908,17 @@ const generatePncMonitoringTable = async (data: any[]) => {
    * and a birth date string (AD or BS YYYY-MM-DD).
    * Birth date stored in child_monitoring.date_of_birth may be AD.
    */
-  const daysDiff = (birthDateStr: string, visitDateStr: string): number | null => {
+  const daysDiff = (
+    birthDateStr: string,
+    visitDateStr: string,
+  ): number | null => {
     try {
       const birth = new Date(birthDateStr);
       const visit = new Date(visitDateStr);
       if (isNaN(birth.getTime()) || isNaN(visit.getTime())) return null;
-      return Math.round((visit.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24));
+      return Math.round(
+        (visit.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24),
+      );
     } catch {
       return null;
     }
@@ -1943,10 +1984,15 @@ const generatePncMonitoringTable = async (data: any[]) => {
       pncVisits.forEach((vDate: string) => {
         const diff = daysDiff(dobStr, vDate);
         if (diff === null) return;
-        if (diff >= 1 && diff <= 3) { visit3d = CHECK; }
-        else if (diff >= 7 && diff <= 14) { visit7_14 = CHECK; }
-        else if (diff >= 40 && diff <= 45) { visit42 = CHECK; }
-        else if (diff > 0) { visitOther = CHECK; }
+        if (diff >= 1 && diff <= 3) {
+          visit3d = CHECK;
+        } else if (diff >= 7 && diff <= 14) {
+          visit7_14 = CHECK;
+        } else if (diff >= 40 && diff <= 45) {
+          visit42 = CHECK;
+        } else if (diff > 0) {
+          visitOther = CHECK;
+        }
       });
     }
 
@@ -2070,6 +2116,145 @@ const wrapHtml = (bodyHtml: string) => `
   </html>
 `;
 
+/**
+ * Render a single HTML section into its own PDF file and return the file uri.
+ * Rendering each section separately avoids the native Android PDF writer
+ * running out of memory when a very large combined document is produced in
+ * one pass (which caused: "An error occured while writing the PDF data").
+ */
+const renderHtmlToPdf = async (bodyHtml: string): Promise<string> => {
+  const sanitizedHtml = stripEmojis(wrapHtml(bodyHtml));
+  const { uri } = await Print.printToFileAsync({
+    html: sanitizedHtml,
+    base64: false,
+  });
+  return uri;
+};
+
+/**
+ * Merge multiple PDF files (by uri) into a single PDF file and return the
+ * merged file uri. Uses pdf-lib (pure JS) so it works inside Expo/RN.
+ */
+const mergePdfFiles = async (uris: string[]): Promise<string> => {
+  const mergedPdf = await PDFDocument.create();
+
+  for (const uri of uris) {
+    const base64 = await readAsStringAsync(uri, {
+      encoding: EncodingType.Base64,
+    });
+    const bytes = base64ToUint8Array(base64);
+    const srcPdf = await PDFDocument.load(bytes);
+    const copiedPages = await mergedPdf.copyPages(
+      srcPdf,
+      srcPdf.getPageIndices(),
+    );
+    copiedPages.forEach((page) => mergedPdf.addPage(page));
+  }
+
+  const mergedBase64 = await mergedPdf.saveAsBase64();
+  const cacheDir = FileSystem.cacheDirectory ?? "";
+  const outUri = `${cacheDir}FCHV_Merged_${Date.now()}.pdf`;
+  await writeAsStringAsync(outUri, mergedBase64, {
+    encoding: EncodingType.Base64,
+  });
+  return outUri;
+};
+
+const base64ToUint8Array = (base64: string): Uint8Array => {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const lookup = new Uint8Array(256);
+  for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
+
+  const cleaned = base64.replace(/[^A-Za-z0-9+/]/g, "");
+  const len = cleaned.length;
+  const padding = cleaned.endsWith("==") ? 2 : cleaned.endsWith("=") ? 1 : 0;
+  const byteLength = (len * 3) / 4 - padding;
+  const bytes = new Uint8Array(byteLength);
+
+  let p = 0;
+  for (let i = 0; i < len; i += 4) {
+    const e1 = lookup[cleaned.charCodeAt(i)];
+    const e2 = lookup[cleaned.charCodeAt(i + 1)];
+    const e3 = lookup[cleaned.charCodeAt(i + 2)];
+    const e4 = lookup[cleaned.charCodeAt(i + 3)];
+
+    const chunk = (e1 << 18) | (e2 << 12) | (e3 << 6) | e4;
+    if (p < byteLength) bytes[p++] = (chunk >> 16) & 0xff;
+    if (p < byteLength) bytes[p++] = (chunk >> 8) & 0xff;
+    if (p < byteLength) bytes[p++] = chunk & 0xff;
+  }
+
+  return bytes;
+};
+
+/**
+ * Save an already-generated PDF file (by uri) to the device / share sheet.
+ * Mirrors the behaviour of savePdfToDevice but skips the printToFileAsync
+ * step since the PDF already exists on disk.
+ */
+const savePdfUriToDevice = async (uri: string, fileName: string) => {
+  if (Platform.OS === "android") {
+    try {
+      let directoryUri = await storage.get<string>("export_directory_uri");
+
+      if (!directoryUri && StorageAccessFramework) {
+        try {
+          const permissions =
+            await StorageAccessFramework.requestDirectoryPermissionsAsync();
+          if (!permissions.granted) return;
+
+          directoryUri = permissions.directoryUri;
+          await storage.set("export_directory_uri", directoryUri);
+        } catch (permError) {
+          console.error("StorageAccessFramework error:", permError);
+          await storage.remove("export_directory_uri");
+          alert(
+            "Storage Access Framework not available. Download to device not supported on Android.",
+          );
+          return;
+        }
+      }
+
+      if (!directoryUri || !StorageAccessFramework) {
+        await Share.shareAsync(uri, {
+          mimeType: "application/pdf",
+          dialogTitle: `Export ${fileName}`,
+        });
+        return;
+      }
+
+      const base64 = await readAsStringAsync(uri, {
+        encoding: EncodingType.Base64,
+      });
+
+      try {
+        const newUri = await StorageAccessFramework.createFileAsync(
+          directoryUri,
+          fileName,
+          "application/pdf",
+        );
+        await writeAsStringAsync(newUri, base64, {
+          encoding: EncodingType.Base64,
+        });
+      } catch (e) {
+        await storage.remove("export_directory_uri");
+        alert(
+          "Download folder not found or permission revoked. Please try again.",
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during download.");
+    }
+  } else {
+    await Share.shareAsync(uri, {
+      mimeType: "application/pdf",
+      dialogTitle: `Export ${fileName}`,
+    });
+  }
+};
+
 const getMonthSuffix = (filter: MonthFilter): string => {
   if (!filter) return "";
   if (!filter.month) return `_${filter.year}`;
@@ -2108,21 +2293,29 @@ export const exportAllDataToPdf = async (filter: MonthFilter = null) => {
     );
     const collectedDataTable = await generateCollectedDataTable(filter);
 
-    const htmlContent = wrapHtml(`
-      ${collectedDataTable}
-      <div class="page-break"></div>
-      ${await generatePregnancyTable(pregnancies)}
-      ${await generateMaternalDeathTable(maternalDeaths)}
-      ${generateNewbornDeathTable(newbornDeaths)}
-      ${generateChildDeathTable(newbornDeaths)}
-      ${generateInfantCareTable(infants)}
-      ${await generatePncMonitoringTable(infants)}
-      <div class="page-break"></div>
-      ${generateAdolescentIfaTable(adolescents)}
-    `);
+    // Render each section into its own PDF to avoid the native Android PDF
+    // writer running out of memory on a single huge document, then merge
+    // the sections into one final PDF with pdf-lib.
+    const sections: string[] = [
+      collectedDataTable,
+      await generatePregnancyTable(pregnancies),
+      await generateMaternalDeathTable(maternalDeaths),
+      generateNewbornDeathTable(newbornDeaths),
+      generateChildDeathTable(newbornDeaths),
+      generateInfantCareTable(infants) +
+        (await generatePncMonitoringTable(infants)),
+      generateAdolescentIfaTable(adolescents),
+    ];
 
-    await savePdfToDevice(
-      htmlContent,
+    const pdfUris: string[] = [];
+    for (const section of sections) {
+      pdfUris.push(await renderHtmlToPdf(section));
+    }
+
+    const mergedUri = await mergePdfFiles(pdfUris);
+
+    await savePdfUriToDevice(
+      mergedUri,
       `FCHV_Export_All${getMonthSuffix(filter)}.pdf`,
     );
   } catch (error) {
@@ -2212,7 +2405,6 @@ export const exportInfantCareToPdf = async (filter: MonthFilter = null) => {
   }
 };
 
-
 export const exportPncMonitoringToPdf = async (filter: MonthFilter = null) => {
   try {
     const data = (await getAllInfantMonitorings()).filter((r) =>
@@ -2224,7 +2416,7 @@ export const exportPncMonitoringToPdf = async (filter: MonthFilter = null) => {
       `FCHV_PNC_Monitoring${getMonthSuffix(filter)}.pdf`,
     );
   } catch (error) {
-    console.error('Error generating PNC Monitoring PDF:', error);
+    console.error("Error generating PNC Monitoring PDF:", error);
     throw error;
   }
 };
@@ -2270,17 +2462,17 @@ const generateAdolescentIfaTable = (data: any[]) => {
           <th style="font-size: 8px; font-weight: normal; padding: 2px;">१०-१४</th>
           <th style="font-size: 8px; font-weight: normal; padding: 2px;">१५-१९</th>
           ${Array.from({ length: 13 })
-      .map(
-        (_, i) =>
-          `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
-      )
-      .join("")}
+            .map(
+              (_, i) =>
+                `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
+            )
+            .join("")}
           ${Array.from({ length: 13 })
-      .map(
-        (_, i) =>
-          `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
-      )
-      .join("")}
+            .map(
+              (_, i) =>
+                `<th style="padding: 2px; font-size: 8px;">${convertToNepaliNumber(i + 1)}</th>`,
+            )
+            .join("")}
         </tr>
       </thead>
       <tbody>
@@ -2316,18 +2508,18 @@ const generateAdolescentIfaTable = (data: any[]) => {
         <td>${is10_14 ? CHECK : ""}</td>
         <td>${is15_19 ? CHECK : ""}</td>
         ${Array.from({ length: 13 })
-        .map(
-          (_, i) =>
-            `<td>${item[`phase1_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
-        )
-        .join("")}
+          .map(
+            (_, i) =>
+              `<td>${item[`phase1_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
+          )
+          .join("")}
         <td>${item.phase1_completed === 1 ? CHECK : ""}</td>
         ${Array.from({ length: 13 })
-        .map(
-          (_, i) =>
-            `<td>${item[`phase2_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
-        )
-        .join("")}
+          .map(
+            (_, i) =>
+              `<td>${item[`phase2_week_${i + 1}`] === 1 ? CHECK : ""}</td>`,
+          )
+          .join("")}
         <td>${item.phase2_completed === 1 ? CHECK : ""}</td>
         <td style="text-align: left; padding-left: 5px; font-size: 8px;">${escapeHtml(item.remarks)}</td>
       </tr>

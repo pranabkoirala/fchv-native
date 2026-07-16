@@ -142,18 +142,30 @@ export default function FchvCounseling({
 
   const numberFields = FCHV_COUNSELING.filter((f) => f.number && !f.name);
   const nameFields = FCHV_COUNSELING.filter((f) => f.name);
-  const standaloneFields = numberFields.slice(-3);
+
+  const findNamesFor = (
+    countField: FchvCounselingField,
+  ): FchvCounselingField | undefined => {
+    const base = countField.key.replace(/_count$/, "");
+    return nameFields.find(
+      (n) => n.key === `${base}_names` || n.key === `${base}_name`,
+    );
+  };
 
   const pairedFields: {
     count: FchvCounselingField;
     names: FchvCounselingField;
   }[] = [];
-  for (let i = 0; i < numberFields.length - 3; i++) {
-    pairedFields.push({
-      count: numberFields[i],
-      names: nameFields[i],
-    });
-  }
+  const standaloneFields: FchvCounselingField[] = [];
+
+  numberFields.forEach((count) => {
+    const names = findNamesFor(count);
+    if (names) {
+      pairedFields.push({ count, names });
+    } else {
+      standaloneFields.push(count);
+    }
+  });
 
   return (
     <KeyboardAvoidingView

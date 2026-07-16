@@ -7,8 +7,9 @@ import { formatBsDate } from "@/utils/dateHelper";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Calendar, Plus, Users } from "lucide-react-native";
 import { memo, useCallback, useState } from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, RefreshControl, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
 type MeetingListType = Omit<MothersGroupMeetingStoreType, "discussed_topics" | "decisions"> & { discussed_topics: string[]; decisions: string[]; };
 
@@ -66,23 +67,27 @@ export default function MothersGroupMeetings() {
     const [meetings, setMeetings] = useState<MeetingListType[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchMeetings();
-        }, [])
-    );
-
-    const fetchMeetings = async () => {
+    const fetchMeetings = useCallback(async (showSkeleton = true) => {
         try {
-            setLoading(true);
+            if (showSkeleton) setLoading(true);
             const data = await getAllMothersGroupMeetings();
             setMeetings(data);
         } catch (error) {
             console.error("Error fetching meetings:", error);
         } finally {
-            setLoading(false);
+            if (showSkeleton) setLoading(false);
         }
-    };
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchMeetings(true);
+        }, [fetchMeetings])
+    );
+
+    const { refreshing, onRefresh } = usePullToRefresh(
+        useCallback(() => fetchMeetings(false), [fetchMeetings])
+    );
 
     const handleMeetingPress = useCallback((meeting: MeetingListType) => {
         router.push({
@@ -129,6 +134,9 @@ export default function MothersGroupMeetings() {
                 renderItem={renderMeeting}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
                 ListEmptyComponent={loading ? (
                         <View className="px-5 mt-4">
                             <MeetingSkeleton />
