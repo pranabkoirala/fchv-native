@@ -22,6 +22,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { formatAdDate } from "@/utils/dateHelper";
 import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -329,11 +330,7 @@ export default function ChildProfileScreen() {
                   <View>
                     <Text className="text-[#64748B] text-[15px] mt-1 font-medium">
                       {t("child_profile.dob_label")}:{" "}
-                      {language === "en"
-                        ? record.date_of_birth
-                        : record.date_of_birth
-                          ? toNepaliNumbers(record.date_of_birth)
-                          : "---"}
+                      {formatAdDate(record.date_of_birth, language)}
                     </Text>
                     <TouchableOpacity
                       onPress={() =>
