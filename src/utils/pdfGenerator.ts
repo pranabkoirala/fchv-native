@@ -561,10 +561,13 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
 
     // ── Sick infant by age (20-22) ────────────────────────────
     const hasSickInfantAnswer = [
+      "not_good_health_condition",
       "has_diarrhea",
+      "referred_to_health_facility_due_to_diarrhea",
       "has_breathing_problems",
       "has_pneumonia",
       "has_malnutrition",
+      "referred_to_health_facility_due_to_phuknas",
     ].some((id) => hasChildCounselingAnswer(item, id));
     if (!hasSickInfantAnswer) return;
 

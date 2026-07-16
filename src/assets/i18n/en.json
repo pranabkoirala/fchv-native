@@ -1544,6 +1544,8 @@
     },
     "recipient": "Service Recipient",
     "recipient_placeholder": "Choose Service Recipient",
+    "choose_child": "Choose Child",
+    "choose_child_placeholder": "Choose Child",
     "section_visit_info": "Visit Information",
     "section_recipient": "Recipient Details",
     "no_address": "No address available",

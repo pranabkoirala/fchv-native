@@ -140,38 +140,56 @@ export async function insertToTempChildMonitoringTable(apiRes: any[]) {
   if (!apiRes.length) return;
   const db = await getDb();
 
+  // Capture existing local statuses so a locally-marked "dead" child is never
+  // reverted back to "alive" by an incoming sync payload that omits status.
+  const existingRows = await db.getAllAsync<{ id: string; status: string }>(
+    `SELECT id, status FROM child_monitoring WHERE is_deleted = 0`,
+  );
+  const existingStatusById = new Map<string, string>(
+    existingRows.map((r) => [r.id, r.status]),
+  );
+
   await bulkInsertToTempTable<any>(
     {
       db,
       table: "child_monitoring_staging",
       columns: CHILD_MONITORING_COLUMNS,
       onConflict: "replace",
-      rows: (item: any) => [
-        item.id,
-        item.mother ?? null,
-        item.baby_name ?? null,
-        item.date_of_birth ?? null,
-        item.birth_place ?? null,
-        item.status ?? "alive",
-        item.fchv_present ?? 0,
-        item.skilled_birth_attended ?? 0,
-        item.baby_weight ?? null,
-        item.umbilical_ointment ?? 0,
-        item.skin_to_skin ?? 0,
-        item.early_breastfeeding ?? 0,
-        item.asphyxiated_newborn ?? 0,
-        item.is_all_given ?? 0,
-        item.gender ?? null,
-        item.remarks ?? null,
-        item.pregnancy ?? item.pregnancy_id ?? null,
-        item.registration_source ?? "DIRECT_CHILD_REGISTRATION",
-        item.reg_year ?? null,
-        item.reg_month ?? null,
-        1,
-        item.deleted || item.is_deleted ? 1 : 0,
-        item.created_at ?? new Date().toISOString(),
-        item.updated_at ?? new Date().toISOString(),
-      ],
+      rows: (item: any) => {
+        const existing = existingStatusById.get(item.id);
+        const incoming = item.status;
+        const status =
+          existing?.toLowerCase() === "dead" ||
+          incoming?.toLowerCase() === "dead"
+            ? "dead"
+            : incoming ?? "alive";
+        return [
+          item.id,
+          item.mother ?? null,
+          item.baby_name ?? null,
+          item.date_of_birth ?? null,
+          item.birth_place ?? null,
+          status,
+          item.fchv_present ?? 0,
+          item.skilled_birth_attended ?? 0,
+          item.baby_weight ?? null,
+          item.umbilical_ointment ?? 0,
+          item.skin_to_skin ?? 0,
+          item.early_breastfeeding ?? 0,
+          item.asphyxiated_newborn ?? 0,
+          item.is_all_given ?? 0,
+          item.gender ?? null,
+          item.remarks ?? null,
+          item.pregnancy ?? item.pregnancy_id ?? null,
+          item.registration_source ?? "DIRECT_CHILD_REGISTRATION",
+          item.reg_year ?? null,
+          item.reg_month ?? null,
+          1,
+          item.deleted || item.is_deleted ? 1 : 0,
+          item.created_at ?? new Date().toISOString(),
+          item.updated_at ?? new Date().toISOString(),
+        ];
+      },
     },
     apiRes,
   );

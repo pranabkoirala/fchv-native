@@ -22,7 +22,7 @@ export const CHILD_COUNSELING_QUESTIONS: ChildCounselingQuestion[] = [
 
 export const CHILD_HEALTH_COUNSELLING_QUESTIONS = [
   {
-    id: "good_health_condition",
+    id: "not_good_health_condition",
     en: "Is the baby's health condition bad?",
     ne: "शिशुको स्वास्थ्य अवस्था राम्रो छैन?",
   },

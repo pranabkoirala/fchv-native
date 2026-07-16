@@ -1,4 +1,4 @@
-import { Calendar, ChevronDown } from "lucide-react-native";
+import { Calendar } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, TextInput, View } from "react-native";
@@ -151,7 +151,10 @@ export default function NewbornDeathForm({
           setMothersList(mList);
           const aliveMotherIds = new Set<string>(
             allChildren
-              .filter((c) => c.status !== "dead" && c.mother)
+              .filter(
+                (c) =>
+                  c.status?.toLowerCase() === "alive" && c.mother,
+              )
               .map((c) => c.mother as string),
           );
           setMotherIdsWithAliveChildren(aliveMotherIds);
@@ -211,7 +214,7 @@ export default function NewbornDeathForm({
   const childOptions = useMemo(
     () =>
       motherChildren
-        .filter((child) => child.status !== "dead")
+        .filter((child) => child.status?.toLowerCase() === "alive")
         .map((child, index) => {
           const unnamedChild = t("newborn_death_modal.unnamed_child");
           return {
@@ -306,20 +309,6 @@ export default function NewbornDeathForm({
       }
     }
   }, [birthYear, birthMonth, birthDay, deathYear, deathMonth, deathDay]);
-
-  const handleAgeUnitChange = (unit: "days" | "months") => {
-    setDeathAgeUnit(unit);
-    setCauseOfDeath("");
-    setCauseOfDeathOther("");
-    setErrCauseOfDeath(false);
-    setErrCauseOfDeathOther(false);
-    if (unit === "months") {
-      setBirthCondition("");
-      setBirthConditionOther("");
-      setErrBirthCondition(false);
-      setErrBirthConditionOther(false);
-    }
-  };
 
   const handleSave = async () => {
     let hasError = false;
@@ -727,20 +716,6 @@ export default function NewbornDeathForm({
                 ? t("newborn_death_modal.age_unit_days")
                 : t("newborn_death_modal.age_unit_months")}
             </Text>
-            <Pressable
-              onPress={() => {
-                const newUnit = deathAgeUnit === "days" ? "months" : "days";
-                handleAgeUnitChange(newUnit);
-              }}
-              className="bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-200 flex-row items-center"
-            >
-              <Text className="text-[11px] font-bold text-slate-700 mr-1 uppercase tracking-wider">
-                {deathAgeUnit === "days"
-                  ? t("newborn_death_modal.age_unit_days")
-                  : t("newborn_death_modal.age_unit_months")}
-              </Text>
-              <ChevronDown size={12} color="#475569" />
-            </Pressable>
           </View>
         </View>
 

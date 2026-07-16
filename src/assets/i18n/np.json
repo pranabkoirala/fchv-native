@@ -1542,6 +1542,8 @@
     },
     "recipient": "सेवाग्राही",
     "recipient_placeholder": "सेवाग्राही छान्नुहोस्",
+    "choose_child": "बच्चा छान्नुहोस्",
+    "choose_child_placeholder": "बच्चा छान्नुहोस्",
     "section_visit_info": "भ्रमण जानकारी",
     "section_recipient": "सेवाग्राही विवरण",
     "no_address": "ठेगाना उपलब्ध छैन",

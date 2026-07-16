@@ -470,6 +470,7 @@ export default function VisitScreen() {
   // child's id so the counseling section shows only the new child (no previous
   // siblings' counseling leaking in).
   const [linkedChildId, setLinkedChildId] = useState<string | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<string>("");
   const [children, setChildren] = useState<InfantMonitoringStoreType[]>([]);
   const [childCounselingAnswers, setChildCounselingAnswers] = useState<
     Record<string, Record<string, boolean>>
@@ -606,6 +607,7 @@ export default function VisitScreen() {
     }
     if (urlChildId) {
       setLinkedChildId(urlChildId);
+      setSelectedChildId(urlChildId);
     }
   }, [urlMotherId, urlVisitType, urlChildId]);
 
@@ -615,12 +617,28 @@ export default function VisitScreen() {
     [visitType],
   );
 
+  const aliveChildren = useMemo(
+    () => children.filter((c) => c.status !== "dead"),
+    [children],
+  );
+  const childOptions = useMemo(
+    () =>
+      aliveChildren.map((c) => ({
+        label:
+          c.baby_name ||
+          t("visit.child_unnamed", { defaultValue: "Child" }),
+        value: c.id,
+      })),
+    [aliveChildren, t],
+  );
+
   // Clear checked questions and quantities when type or mother changes
   useEffect(() => {
     setCheckedQuestions({});
     setQuestionQuantities({});
     setChildCounselingAnswers({});
     setChildOneTimeAnswered({});
+    setSelectedChildId("");
   }, [visitType, selectedMotherId]);
 
   // Fetch initial data on focus
@@ -796,6 +814,21 @@ export default function VisitScreen() {
     fetchChildren();
   }, [selectedMotherId, visitType, pregnancyId, linkedChildId]);
 
+  // Clear child counseling state when selected child changes
+  useEffect(() => {
+    setChildCounselingAnswers({});
+    setChildCounselingQuantities({});
+    setChildOneTimeAnswered({});
+  }, [selectedChildId]);
+
+  // Auto-select child when only one alive child is available
+  useEffect(() => {
+    const alive = children.filter((c) => c.status !== "dead");
+    if (alive.length === 1 && !selectedChildId) {
+      setSelectedChildId(alive[0].id);
+    }
+  }, [children, selectedChildId]);
+
   // Seed checkedQuestions with previously answered one-time questions
   useEffect(() => {
     if (answeredOneTimeIds.size > 0) {
@@ -970,6 +1003,12 @@ export default function VisitScreen() {
         defaultValue: "Service recipient is required",
       });
     }
+    // For PNC visits, a child must be selected if the mother has alive children
+    if (visitType === "PNC" && aliveChildren.length > 0 && !selectedChildId) {
+      errs.childId = t("visit.validation.child_required", {
+        defaultValue: "Please choose a child for this PNC visit",
+      });
+    }
     return errs;
   };
 
@@ -1101,8 +1140,8 @@ export default function VisitScreen() {
         }
       }
 
-      // Save child counseling answers for PNC visits
-      if (visitType === "PNC") {
+      // Save child counseling answers for PNC visits using the chosen child ID
+      if (visitType === "PNC" && selectedChildId) {
         let regYear = getCurrentNepaliDate().year;
         let regMonth = getCurrentNepaliDate().month;
         if (visitDateBs) {
@@ -1112,15 +1151,16 @@ export default function VisitScreen() {
             regMonth = parseInt(parts[1], 10);
           }
         }
-        const childIds = Object.keys(childCounselingAnswers);
-        for (const childId of childIds) {
-          const answers = childCounselingAnswers[childId];
-          const oneTimeAnswered = childOneTimeAnswered[childId] || new Set();
-          const checkedChildKeys = Object.keys(answers).filter(
-            (k) => answers[k] && !oneTimeAnswered.has(k),
-          );
-          if (checkedChildKeys.length === 0) continue;
 
+        // Only save for the explicitly chosen child
+        const childId = selectedChildId;
+        const answers = childCounselingAnswers[childId] || {};
+        const oneTimeAnswered = childOneTimeAnswered[childId] || new Set();
+        const checkedChildKeys = Object.keys(answers).filter(
+          (k) => answers[k] && !oneTimeAnswered.has(k),
+        );
+
+        if (checkedChildKeys.length > 0) {
           let existingChildRecord = null;
           try {
             existingChildRecord = await getChildCounselingByChild(
@@ -1190,6 +1230,7 @@ export default function VisitScreen() {
       setVisitNumber(1);
       setCheckedQuestions({});
       setQuestionQuantities({});
+      setSelectedChildId("");
       setChildCounselingAnswers({});
       setChildCounselingQuantities({});
       setChildOneTimeAnswered({});
@@ -1337,6 +1378,31 @@ export default function VisitScreen() {
             />
           </View>
 
+          {/* Choose Child (PNC only) */}
+          {visitType === "PNC" && selectedMotherId && aliveChildren.length > 0 && (
+            <View className="gap-y-1.5 -mt-5">
+              <FieldLabel
+                label={t("visit.choose_child", {
+                  defaultValue: "Choose Child",
+                })}
+                required
+              />
+              <ProfilePicker
+                placeholder={t("visit.choose_child_placeholder", {
+                  defaultValue: "Choose Child",
+                })}
+                options={childOptions}
+                selectedValue={selectedChildId}
+                onValueChange={(val: string) => {
+                  setSelectedChildId(val);
+                  if (errors.childId) setErrors({ ...errors, childId: "" });
+                }}
+                error={errors.childId}
+                isSearchable={aliveChildren.length > 3}
+              />
+            </View>
+          )}
+
           {/* Address */}
           <View className="gap-y-1.5 -mt-5">
             <FieldLabel
@@ -1390,12 +1456,12 @@ export default function VisitScreen() {
           />
 
           {/* Child Counseling (PNC only) */}
-          {visitType === "PNC" && children.length > 0 && (
+          {visitType === "PNC" && selectedChildId && children.some((c) => c.id === selectedChildId) && (
             <View className="border-t border-slate-200 pt-4">
               <Text className="text-slate-800 font-bold text-[18px]">
                 {t("visit.child_counseling_title")}
               </Text>
-              {children.map((child) => {
+              {children.filter((c) => c.id === selectedChildId).map((child) => {
                 const childAnswers = childCounselingAnswers[child.id] || {};
                 const oneTimeAnswered =
                   childOneTimeAnswered[child.id] || new Set();
