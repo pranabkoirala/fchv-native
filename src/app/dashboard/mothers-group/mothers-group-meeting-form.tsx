@@ -7,7 +7,7 @@ import {
   updateMothersGroupMeeting,
 } from "@/hooks/database/models/MothersGroupMeetingModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Calendar, MapPin, Minus, Plus, X } from "lucide-react-native";
+import { Calendar, Check, MapPin, Minus, Plus, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   BackHandler,
@@ -35,6 +35,8 @@ export default function MothersGroupMeetingForm() {
     attendees_count?: string;
     discussed_topics?: string;
     decisions?: string;
+    health_worker_available?: string;
+    health_worker_name?: string;
     from?: string;
   }>();
 
@@ -54,6 +56,9 @@ export default function MothersGroupMeetingForm() {
 
   const [decisionInput, setDecisionInput] = useState("");
   const [decisions, setDecisions] = useState<string[]>([]);
+
+  const [healthWorkerAvailable, setHealthWorkerAvailable] = useState(false);
+  const [healthWorkerName, setHealthWorkerName] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,6 +81,12 @@ export default function MothersGroupMeetingForm() {
       try {
         setDecisions(JSON.parse(params.decisions));
       } catch {}
+    }
+    if (params.health_worker_available) {
+      setHealthWorkerAvailable(params.health_worker_available === "true");
+    }
+    if (params.health_worker_name) {
+      setHealthWorkerName(params.health_worker_name);
     }
   }, [params.id]);
 
@@ -146,6 +157,8 @@ export default function MothersGroupMeetingForm() {
     setTopics([]);
     setDecisionInput("");
     setDecisions([]);
+    setHealthWorkerAvailable(false);
+    setHealthWorkerName("");
   };
 
   const onSubmit = async () => {
@@ -162,6 +175,8 @@ export default function MothersGroupMeetingForm() {
         attendees_count: attendees,
         discussed_topics: topics,
         decisions: decisions,
+        health_worker_available: healthWorkerAvailable,
+        health_worker_name: healthWorkerName,
       };
 
       if (isEditMode && params.id) {
@@ -219,6 +234,37 @@ export default function MothersGroupMeetingForm() {
                   setMeetingDateBS(bsDate);
                 }}
               />
+            </View>
+
+            {/* Health Worker Availability */}
+            <View className="mb-6">
+              <TouchableOpacity
+                onPress={() => setHealthWorkerAvailable(!healthWorkerAvailable)}
+                className="flex-row items-center"
+              >
+                <View
+                  className={`h-6 w-6 rounded-md border-2 items-center justify-center mr-3 ${healthWorkerAvailable ? "bg-primary border-primary" : "border-gray-300"}`}
+                >
+                  {healthWorkerAvailable && <Check size={16} color="white" strokeWidth={3} />}
+                </View>
+                <Text className="text-gray-700 text-[16px] font-semibold">
+                  {t("mothers_group_meeting.health_worker_available")}
+                </Text>
+              </TouchableOpacity>
+
+              {healthWorkerAvailable && (
+                <View className="mt-4">
+                  <Text className="text-gray-700 text-[16px] font-semibold mb-2">
+                    {t("mothers_group_meeting.health_worker_name")}
+                  </Text>
+                  <TextInput
+                    value={healthWorkerName}
+                    onChangeText={setHealthWorkerName}
+                    placeholder={t("mothers_group_meeting.health_worker_name_placeholder")}
+                    className="border border-gray-200 h-14 rounded-xl px-4 text-gray-600 text-[16px]"
+                  />
+                </View>
+              )}
             </View>
 
             <View className="mb-6">

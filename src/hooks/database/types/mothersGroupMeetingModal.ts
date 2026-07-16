@@ -6,6 +6,8 @@ export interface MothersGroupMeetingStoreType {
     attendees_count: number;
     discussed_topics: string | null;
     decisions: string | null;
+    health_worker_available: number;
+    health_worker_name: string | null;
     reg_year: number;
     reg_month: number;
     is_synced: number;
@@ -22,5 +24,7 @@ export interface CreateMothersGroupMeetingPayload {
     attendees_count: number;
     discussed_topics: string[];
     decisions: string[];
+    health_worker_available?: boolean;
+    health_worker_name?: string;
     is_synced?: boolean;
 }

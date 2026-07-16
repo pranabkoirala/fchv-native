@@ -373,16 +373,17 @@ export default function ChildNutritionScreen() {
       );
     }
 
-    if (isLimitReached) {
-      newErrors.timesPerMonth = t("dashboard.nutrition_page.already_given");
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSave = async () => {
     if (!validate()) return;
+
+    if (isLimitReached) {
+      showToast(t("dashboard.nutrition_page.already_given"));
+      return;
+    }
 
     setSaving(true);
     try {
@@ -498,14 +499,9 @@ export default function ChildNutritionScreen() {
             </View>
 
             {isLimitReached && (
-              <View className="bg-amber-50 rounded-xl p-4 border border-amber-200 -mt-6">
+              <View className="mb-2 -mt-6">
                 <Text className="text-amber-700 text-sm font-medium">
-                  {t("dashboard.nutrition_page.already_given")} ({existingCount}
-                  /{maxTimesForAge})
-                </Text>
-                <Text className="text-amber-600 text-xs mt-1">
-                  {t("dashboard.nutrition_page.times_per_month")}:{" "}
-                  {existingCount}
+                  {t("dashboard.nutrition_page.already_given")}
                 </Text>
               </View>
             )}

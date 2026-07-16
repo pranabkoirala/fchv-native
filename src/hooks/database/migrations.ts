@@ -2796,4 +2796,26 @@ export const MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    version: 87,
+    up: async (db) => {
+      const tables = ["mothers_group_meetings", "mothers_group_meetings_staging"];
+      for (const table of tables) {
+        try {
+          if (!(await tableHasColumn(db, table, "health_worker_available"))) {
+            await db.execAsync(`ALTER TABLE ${table} ADD COLUMN health_worker_available INTEGER DEFAULT 0;`);
+          }
+        } catch (e) {
+          console.log(`Migration 87: adding health_worker_available to ${table} failed:`, e);
+        }
+        try {
+          if (!(await tableHasColumn(db, table, "health_worker_name"))) {
+            await db.execAsync(`ALTER TABLE ${table} ADD COLUMN health_worker_name TEXT;`);
+          }
+        } catch (e) {
+          console.log(`Migration 87: adding health_worker_name to ${table} failed:`, e);
+        }
+      }
+    },
+  },
 ];

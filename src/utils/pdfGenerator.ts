@@ -684,6 +684,7 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
     addCount(counts, 58, month);
     addCount(counts, 59, month, item.attendees_count || 0);
     addCount(counts, 60, month);
+    if (item.health_worker_available) addCount(counts, 63, month);
   });
 
   maternalDeaths.forEach((item) => {
@@ -691,7 +692,6 @@ const buildCollectedDataCounts = async (filter: MonthFilter) => {
     const month = getRecordMonth(item, filter);
     if (item.death_condition === "Pregnant") addCount(counts, 61, month);
     if (item.death_condition === "Labor") addCount(counts, 62, month);
-    if (item.death_condition === "Post-delivery") addCount(counts, 63, month);
   });
 
   adolescentIfaRecords.forEach((item) => {

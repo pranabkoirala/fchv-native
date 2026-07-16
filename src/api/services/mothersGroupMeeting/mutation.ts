@@ -12,6 +12,8 @@ const mapMothersGroupMeetingToSyncPayload = (
   attendees_count: data.attendees_count ?? 0,
   discussed_topics: data.discussed_topics ?? null,
   decisions: data.decisions ?? null,
+  health_worker_available: data.health_worker_available ?? 0,
+  health_worker_name: data.health_worker_name ?? null,
   reg_year: data.reg_year ?? null,
   reg_month: data.reg_month ?? null,
   updated_at: data.updated_at || new Date().toISOString(),

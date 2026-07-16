@@ -31,8 +31,8 @@ export async function createMothersGroupMeeting(
 
     await db.runAsync(
         `INSERT INTO mothers_group_meetings 
-      (id, meeting_date, meeting_location, ward_no, attendees_count, discussed_topics, decisions, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      (id, meeting_date, meeting_location, ward_no, attendees_count, discussed_topics, decisions, health_worker_available, health_worker_name, is_synced, is_deleted, reg_year, reg_month, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
             id,
             payload.meeting_date,
@@ -41,6 +41,8 @@ export async function createMothersGroupMeeting(
             payload.attendees_count,
             JSON.stringify(payload.discussed_topics),
             JSON.stringify(payload.decisions),
+            payload.health_worker_available ? 1 : 0,
+            payload.health_worker_name ?? null,
             payload.is_synced ? 1 : 0,
             0,
             currentYear,
@@ -58,6 +60,8 @@ export async function createMothersGroupMeeting(
         attendees_count: payload.attendees_count,
         discussed_topics: JSON.stringify(payload.discussed_topics),
         decisions: JSON.stringify(payload.decisions),
+        health_worker_available: payload.health_worker_available ? 1 : 0,
+        health_worker_name: payload.health_worker_name ?? null,
         is_synced: payload.is_synced ? 1 : 0,
         is_deleted: 0,
         reg_year: currentYear,
@@ -76,7 +80,7 @@ export async function updateMothersGroupMeeting(
 
     await db.runAsync(
         `UPDATE mothers_group_meetings 
-         SET meeting_date = ?, meeting_location = ?, ward_no = ?, attendees_count = ?, discussed_topics = ?, decisions = ?, updated_at = ?
+         SET meeting_date = ?, meeting_location = ?, ward_no = ?, attendees_count = ?, discussed_topics = ?, decisions = ?, health_worker_available = ?, health_worker_name = ?, updated_at = ?
          WHERE id = ?;`,
         [
             payload.meeting_date,
@@ -85,6 +89,8 @@ export async function updateMothersGroupMeeting(
             payload.attendees_count,
             JSON.stringify(payload.discussed_topics),
             JSON.stringify(payload.decisions),
+            payload.health_worker_available ? 1 : 0,
+            payload.health_worker_name ?? null,
             now,
             id,
         ],
@@ -131,6 +137,8 @@ export async function insertToTempMothersGroupMeetingTable(apiRes: any[]) {
         "attendees_count",
         "discussed_topics",
         "decisions",
+        "health_worker_available",
+        "health_worker_name",
         "reg_year",
         "reg_month",
         "is_synced",
@@ -158,6 +166,8 @@ export async function insertToTempMothersGroupMeetingTable(apiRes: any[]) {
                     item.attendees_count ?? 0,
                     normalizeList(item.discussed_topics),
                     normalizeList(item.decisions),
+                    item.health_worker_available ?? 0,
+                    item.health_worker_name ?? null,
                     item.reg_year ?? null,
                     item.reg_month ?? null,
                     1,
@@ -184,9 +194,9 @@ export async function moveTempToRealMothersGroupMeetingTable() {
         await db.runAsync(
             `
             INSERT INTO mothers_group_meetings
-              (id, meeting_date, meeting_location, ward_no, attendees_count, discussed_topics, decisions, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
+              (id, meeting_date, meeting_location, ward_no, attendees_count, discussed_topics, decisions, health_worker_available, health_worker_name, reg_year, reg_month, is_synced, is_deleted, created_at, updated_at)
             VALUES
-              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
               meeting_date = excluded.meeting_date,
               meeting_location = excluded.meeting_location,
@@ -194,6 +204,8 @@ export async function moveTempToRealMothersGroupMeetingTable() {
               attendees_count = excluded.attendees_count,
               discussed_topics = excluded.discussed_topics,
               decisions = excluded.decisions,
+              health_worker_available = excluded.health_worker_available,
+              health_worker_name = excluded.health_worker_name,
               reg_year = excluded.reg_year,
               reg_month = excluded.reg_month,
               is_synced = excluded.is_synced,
@@ -211,6 +223,8 @@ export async function moveTempToRealMothersGroupMeetingTable() {
                 item.attendees_count,
                 item.discussed_topics,
                 item.decisions,
+                item.health_worker_available ?? 0,
+                item.health_worker_name ?? null,
                 item.reg_year,
                 item.reg_month,
                 1,

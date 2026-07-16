@@ -15,6 +15,7 @@ import {
   ListChecks,
   MapPin,
   Pencil,
+  Stethoscope,
   User,
   Users,
 } from "lucide-react-native";
@@ -211,6 +212,8 @@ export default function MeetingDetails() {
                     attendees_count: String(meeting.attendees_count),
                     discussed_topics: JSON.stringify(topics),
                     decisions: JSON.stringify(decisions),
+                    health_worker_available: String(meeting.health_worker_available === 1),
+                    health_worker_name: meeting.health_worker_name || "",
                     from: "details",
                   },
                 } as any)
@@ -297,6 +300,14 @@ export default function MeetingDetails() {
                 icon={MapPin}
                 color="#8B5CF6"
               />
+              {meeting.health_worker_available === 1 && (
+                <InfoRow
+                  label={t("mothers_group_meeting.health_worker_name")}
+                  value={meeting.health_worker_name || "-"}
+                  icon={Stethoscope}
+                  color="#0891B2"
+                />
+              )}
             </View>
           </View>
 
