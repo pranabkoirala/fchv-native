@@ -5,6 +5,7 @@ import { getMotherProfile, MotherProfileDbItem } from "@/hooks/database/models/M
 import { getPregnancyById } from "@/hooks/database/models/PregnantWomenModal";
 import { getChildrenByPregnancy } from "@/hooks/database/models/InfantMonitoringModel";
 import { calculateAge } from "@/utils/parse";
+import { formatBsDate } from "@/utils/dateHelper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     Activity,
@@ -316,7 +317,7 @@ export default function PregnancyDetailsScreen() {
                                                 {child.baby_name || (language === "np" ? "वजात शिशु" : "Unnamed")}
                                             </Text>
                                             <Text className="text-[12px] text-slate-400 mt-0.5">
-                                                {child.gender || "-"} | DOB: {child.date_of_birth || "-"}
+                                                {child.gender || "-"} | DOB: {formatBsDate(child.date_of_birth, language)}
                                             </Text>
                                         </View>
                                     </View>

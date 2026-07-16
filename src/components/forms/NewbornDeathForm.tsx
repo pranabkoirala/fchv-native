@@ -246,14 +246,24 @@ export default function NewbornDeathForm({
       if (selectedChild.date_of_birth) {
         const parts = selectedChild.date_of_birth.split(/[-/T ]/);
         if (parts.length >= 3) {
-          const year = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10);
-          const day = parseInt(parts[2], 10);
+          const bsYear = parseInt(parts[0], 10);
+          const bsMonth = parseInt(parts[1], 10);
+          const bsDay = parseInt(parts[2], 10);
 
-          if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-            setBirthYear(year);
-            setBirthMonth(month);
-            setBirthDay(day);
+          if (!isNaN(bsYear) && !isNaN(bsMonth) && !isNaN(bsDay)) {
+            try {
+              const adDate = BsToAd(
+                `${bsYear}-${String(bsMonth).padStart(2, "0")}-${String(bsDay).padStart(2, "0")}`,
+              );
+              const [adY, adM, adD] = adDate.split("-").map(Number);
+              setBirthYear(adY);
+              setBirthMonth(adM);
+              setBirthDay(adD);
+            } catch (e) {
+              setBirthYear(bsYear);
+              setBirthMonth(bsMonth);
+              setBirthDay(bsDay);
+            }
           }
         }
       }

@@ -39,7 +39,8 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { AdToBs, BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { BsToAd, CalendarPicker } from "react-native-nepali-picker";
+import { toNepaliNumbers } from "@/utils/dateHelper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "./button";
 
@@ -253,17 +254,9 @@ export default function ChildRegistrationForm() {
 
             if (infant.date_of_birth) {
               const storedDate = infant.date_of_birth;
-              const storedYear = parseInt(storedDate.split("-")[0], 10);
-              const isBs = !isNaN(storedYear) && storedYear >= 2070;
               try {
-                if (isBs) {
-                  setBirthDateBs(storedDate);
-                  setBirthDateAd(BsToAd(storedDate));
-                } else {
-                  const bsDate = AdToBs(storedDate);
-                  setBirthDateBs(bsDate);
-                  setBirthDateAd(storedDate);
-                }
+                setBirthDateBs(storedDate);
+                setBirthDateAd(BsToAd(storedDate));
               } catch (e) {
                 setBirthDateBs(storedDate);
               }
@@ -609,7 +602,9 @@ export default function ChildRegistrationForm() {
                   <Text
                     className={`text-[16px] ml-3 ${birthDateBs ? "text-slate-800" : "text-slate-400"}`}
                   >
-                    {birthDateBs || t("child_form.select_date")}
+                    {birthDateBs
+                      ? toNepaliNumbers(birthDateBs)
+                      : t("child_form.select_date")}
                   </Text>
                 </View>
               </Pressable>

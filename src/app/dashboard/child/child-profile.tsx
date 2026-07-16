@@ -22,7 +22,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { formatAdDate } from "@/utils/dateHelper";
+import { formatBsDate } from "@/utils/dateHelper";
 import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -134,9 +134,12 @@ const calculateAge = (dobString: string, currentLanguage: string, t: any) => {
   if (yr >= 2070) {
     try {
       adDobString = BsToAd(dobString);
-    } catch (e) {}
+    } catch (e) {
+      adDobString = dobString;
+    }
   }
-  const dob = new Date(adDobString);
+  const dob = new Date(adDobString + "T00:00:00");
+  if (isNaN(dob.getTime())) return "---";
   const now = new Date();
 
   let years = now.getFullYear() - dob.getFullYear();
@@ -330,7 +333,7 @@ export default function ChildProfileScreen() {
                   <View>
                     <Text className="text-[#64748B] text-[15px] mt-1 font-medium">
                       {t("child_profile.dob_label")}:{" "}
-                      {formatAdDate(record.date_of_birth, language)}
+                      {formatBsDate(record.date_of_birth, language)}
                     </Text>
                     <TouchableOpacity
                       onPress={() =>

@@ -9,6 +9,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import { FlatList, RefreshControl, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { formatBsDate } from "@/utils/dateHelper";
 
 const ChildCardSkeleton = () => (
   <View className="bg-white p-4 rounded-2xl flex-row items-center border border-gray-100">
@@ -60,7 +61,7 @@ const ChildCard = memo(function ChildCard({
         <View className="flex-row items-center">
           <Calendar size={12} color="#5f6670ff" />
           <Text className="text-slate-500 text-[13px] font-medium ml-1" numberOfLines={1}>
-            {language === "en" ? item.date_of_birth : item.date_of_birth || ""}
+            {formatBsDate(item.date_of_birth, language)}
           </Text>
         </View>
       </View>
