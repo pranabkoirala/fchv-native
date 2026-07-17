@@ -8,6 +8,7 @@ import {
 } from "@/hooks/database/models/MothersGroupMeetingModel";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Calendar, Check, MapPin, Minus, Plus, X } from "lucide-react-native";
+import { toNepaliNumbers } from "@/utils/dateHelper";
 import { useEffect, useState } from "react";
 import {
   BackHandler,
@@ -221,8 +222,12 @@ export default function MothersGroupMeetingForm() {
                 onPress={() => setShowDatePicker(true)}
                 className="flex-row items-center border border-gray-200 h-14 rounded-xl px-4 bg-white"
               >
-                <Text className="flex-1 text-gray-500 text-[16px]">
-                  {meetingDateBS || t("mothers_group_meeting.select_date")}
+                 <Text className="flex-1 text-gray-500 text-[16px]">
+                  {meetingDateBS
+                    ? language === "np"
+                      ? toNepaliNumbers(meetingDateBS)
+                      : meetingDateBS
+                    : t("mothers_group_meeting.select_date")}
                 </Text>
                 <Calendar color="#6b7280" size={20} />
               </TouchableOpacity>

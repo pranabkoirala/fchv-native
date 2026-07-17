@@ -1,7 +1,6 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Share from "expo-sharing";
-import { PDFDocument } from "pdf-lib";
 import { Platform } from "react-native";
 import { AdToBs, BsToAd } from "react-native-nepali-picker";
 import {
@@ -27,7 +26,7 @@ import {
   getPregnantWomenList,
   PregnantWomenListItem,
 } from "../hooks/database/models/PregnantWomenModal";
-import { resolveNepaliYearMonth } from "./dateHelper";
+import { adToBs, getCurrentFiscalYear, resolveNepaliYearMonth } from "./dateHelper";
 import storage from "./storage";
 
 const {
@@ -37,8 +36,20 @@ const {
   StorageAccessFramework,
 } = FileSystem;
 
-/** Optional filter for year/month-wise PDF export */
+/** Optional filter for year/month-wise PDF export.
+ *  `year` is the FISCAL YEAR start (Nepali calendar year whose Shrawan begins
+ *  the fiscal year). A fiscal year spans Shrawan (month 4) of `year` through
+ *  Ashadh (month 3) of `year + 1`. */
 export type MonthFilter = { year: number; month?: number | null } | null;
+
+/**
+ * Convert a calendar (year, month) into the fiscal year it belongs to.
+ * Fiscal year starts from Shrawan (month 4): months 4–12 belong to `year`,
+ * months 1–3 belong to `year - 1`.
+ */
+const getFiscalYear = (year: number, month: number): number => {
+  return month >= 4 ? year : year - 1;
+};
 
 const matchesMonthFilter = (
   filter: MonthFilter,
@@ -55,8 +66,9 @@ const matchesMonthFilter = (
     record.created_at,
   );
   if (!resolved) return false;
+  const recordFiscalYear = getFiscalYear(resolved.year, resolved.month);
   return (
-    resolved.year === filter.year &&
+    recordFiscalYear === filter.year &&
     (!filter.month || resolved.month === filter.month)
   );
 };
@@ -176,6 +188,10 @@ const getEmptyRows = (cols: number, count = 3) => {
 const CHECK = "&#10003;"; // ✓
 const CROSS = "-"; // simple dash instead of ❌
 
+// Calendar-order Nepali month names, indexed by calendar month (1 = Baiśākh,
+// 12 = Āṣāḍh). Data is recorded against calendar reg_month, so this array MUST
+// stay in calendar order for correct month→name mapping. The fiscal-year
+// column ordering (starting from Śrāvaṇa) is handled separately below.
 const NEPALI_MONTHS = [
   "बैशाख",
   "जेठ",
@@ -202,11 +218,20 @@ type NutritionSubCounts = Record<
 
 const NUTRITION_ROWS = [55, 56, 57]; // rows that use 3-sub-column layout
 
+// Fiscal year starts from Śrāvaṇa (calendar month 4). Order the 12 columns
+// Shrawan → Bhadra → ... → Ashadh so the annual table follows the fiscal year,
+// while each column still carries its true calendar month number as the key
+// (so data is looked up against the correct recorded month).
+export const FISCAL_MONTH_ORDER = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
+
 const selectedPeriods = (filter: MonthFilter): SummaryPeriod[] => {
   if (filter?.month) {
     return [{ key: filter.month, label: NEPALI_MONTHS[filter.month - 1] }];
   }
-  return NEPALI_MONTHS.map((label, index) => ({ key: index + 1, label }));
+  return FISCAL_MONTH_ORDER.map((month) => ({
+    key: month,
+    label: NEPALI_MONTHS[month - 1],
+  }));
 };
 
 const getRecordMonth = (
@@ -224,7 +249,8 @@ const getRecordMonth = (
   );
 
   if (!resolved) return null;
-  if (filter && resolved.year !== filter.year) return null;
+  const recordFiscalYear = getFiscalYear(resolved.year, resolved.month);
+  if (filter && recordFiscalYear !== filter.year) return null;
   if (filter?.month && resolved.month !== filter.month) return null;
   return resolved.month;
 };
@@ -1243,13 +1269,28 @@ const generateNutritionTable = (
 };
 
 const generateCollectedDataTable = async (filter: MonthFilter) => {
-  const periods = selectedPeriods(filter);
-  const counts = await buildCollectedDataCounts(filter);
-  const nutritionCounts = await buildNutritionCounts(filter);
+  // ── Normalise filter ────────────────────────────────────────────────────────
+  // If no fiscal year is given (null filter), default to the CURRENT fiscal
+  // year. This prevents the Total column from summing data across all years
+  // because buildCollectedDataCounts stores counts in shared calendar-month
+  // buckets (1–12); without a year scope every fiscal year's data piles into
+  // the same slots and the Total becomes an all-time figure.
+  const effectiveFilter: MonthFilter = filter ?? { year: getCurrentFiscalYear() };
 
-  const title = filter?.month
-    ? `मासिक संकलित तथ्याङ्क (${NEPALI_MONTHS[filter.month - 1]} ${convertToNepaliNumber(filter.year)})`
-    : `वार्षिक संकलित तथ्याङ्क${filter?.year ? ` (${convertToNepaliNumber(filter.year)})` : ""}`;
+  const periods = selectedPeriods(effectiveFilter);
+  const counts = await buildCollectedDataCounts(effectiveFilter);
+  const nutritionCounts = await buildNutritionCounts(effectiveFilter);
+
+  // For monthly title: months 1–3 belong to fiscal_year + 1 in the Nepali
+  // calendar, so we show the actual calendar year, not the fiscal year start.
+  const calendarYearForMonth =
+    effectiveFilter?.month && effectiveFilter.month >= 1 && effectiveFilter.month <= 3
+      ? (effectiveFilter.year ?? 0) + 1
+      : (effectiveFilter?.year ?? 0);
+
+  const title = effectiveFilter?.month
+    ? `मासिक संकलित तथ्याङ्क (${NEPALI_MONTHS[effectiveFilter.month - 1]} ${convertToNepaliNumber(calendarYearForMonth)})`
+    : `वार्षिक संकलित तथ्याङ्क${effectiveFilter?.year ? ` (${getFiscalYearLabel(effectiveFilter.year)})` : ""}  (श्रावण–असार)`;
 
   // Main table columns: SN + Activity (colspan=3) + 1 per period + Total
   const mainTotalCols = 3 + periods.length + 1;
@@ -2119,157 +2160,25 @@ const wrapHtml = (bodyHtml: string) => `
   </html>
 `;
 
-/**
- * Render a single HTML section into its own PDF file and return the file uri.
- * Rendering each section separately avoids the native Android PDF writer
- * running out of memory when a very large combined document is produced in
- * one pass (which caused: "An error occured while writing the PDF data").
- */
-const renderHtmlToPdf = async (bodyHtml: string): Promise<string> => {
-  const sanitizedHtml = stripEmojis(wrapHtml(bodyHtml));
-  const { uri } = await Print.printToFileAsync({
-    html: sanitizedHtml,
-    base64: false,
-  });
-  return uri;
-};
-
-/**
- * Merge multiple PDF files (by uri) into a single PDF file and return the
- * merged file uri. Uses pdf-lib (pure JS) so it works inside Expo/RN.
- */
-const mergePdfFiles = async (uris: string[]): Promise<string> => {
-  const mergedPdf = await PDFDocument.create();
-
-  for (const uri of uris) {
-    const base64 = await readAsStringAsync(uri, {
-      encoding: EncodingType.Base64,
-    });
-    const bytes = base64ToUint8Array(base64);
-    const srcPdf = await PDFDocument.load(bytes);
-    const copiedPages = await mergedPdf.copyPages(
-      srcPdf,
-      srcPdf.getPageIndices(),
-    );
-    copiedPages.forEach((page) => mergedPdf.addPage(page));
-  }
-
-  const mergedBase64 = await mergedPdf.saveAsBase64();
-  const cacheDir = FileSystem.cacheDirectory ?? "";
-  const outUri = `${cacheDir}FCHV_Merged_${Date.now()}.pdf`;
-  await writeAsStringAsync(outUri, mergedBase64, {
-    encoding: EncodingType.Base64,
-  });
-  return outUri;
-};
-
-const base64ToUint8Array = (base64: string): Uint8Array => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  const lookup = new Uint8Array(256);
-  for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
-
-  const cleaned = base64.replace(/[^A-Za-z0-9+/]/g, "");
-  const len = cleaned.length;
-  const padding = cleaned.endsWith("==") ? 2 : cleaned.endsWith("=") ? 1 : 0;
-  const byteLength = (len * 3) / 4 - padding;
-  const bytes = new Uint8Array(byteLength);
-
-  let p = 0;
-  for (let i = 0; i < len; i += 4) {
-    const e1 = lookup[cleaned.charCodeAt(i)];
-    const e2 = lookup[cleaned.charCodeAt(i + 1)];
-    const e3 = lookup[cleaned.charCodeAt(i + 2)];
-    const e4 = lookup[cleaned.charCodeAt(i + 3)];
-
-    const chunk = (e1 << 18) | (e2 << 12) | (e3 << 6) | e4;
-    if (p < byteLength) bytes[p++] = (chunk >> 16) & 0xff;
-    if (p < byteLength) bytes[p++] = (chunk >> 8) & 0xff;
-    if (p < byteLength) bytes[p++] = chunk & 0xff;
-  }
-
-  return bytes;
-};
-
-/**
- * Save an already-generated PDF file (by uri) to the device / share sheet.
- * Mirrors the behaviour of savePdfToDevice but skips the printToFileAsync
- * step since the PDF already exists on disk.
- */
-const savePdfUriToDevice = async (uri: string, fileName: string) => {
-  if (Platform.OS === "android") {
-    try {
-      let directoryUri = await storage.get<string>("export_directory_uri");
-
-      if (!directoryUri && StorageAccessFramework) {
-        try {
-          const permissions =
-            await StorageAccessFramework.requestDirectoryPermissionsAsync();
-          if (!permissions.granted) return;
-
-          directoryUri = permissions.directoryUri;
-          await storage.set("export_directory_uri", directoryUri);
-        } catch (permError) {
-          console.error("StorageAccessFramework error:", permError);
-          await storage.remove("export_directory_uri");
-          alert(
-            "Storage Access Framework not available. Download to device not supported on Android.",
-          );
-          return;
-        }
-      }
-
-      if (!directoryUri || !StorageAccessFramework) {
-        await Share.shareAsync(uri, {
-          mimeType: "application/pdf",
-          dialogTitle: `Export ${fileName}`,
-        });
-        return;
-      }
-
-      const base64 = await readAsStringAsync(uri, {
-        encoding: EncodingType.Base64,
-      });
-
-      try {
-        const newUri = await StorageAccessFramework.createFileAsync(
-          directoryUri,
-          fileName,
-          "application/pdf",
-        );
-        await writeAsStringAsync(newUri, base64, {
-          encoding: EncodingType.Base64,
-        });
-      } catch (e) {
-        await storage.remove("export_directory_uri");
-        alert(
-          "Download folder not found or permission revoked. Please try again.",
-        );
-      }
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred during download.");
-    }
-  } else {
-    await Share.shareAsync(uri, {
-      mimeType: "application/pdf",
-      dialogTitle: `Export ${fileName}`,
-    });
-  }
-};
-
 const getMonthSuffix = (filter: MonthFilter): string => {
   if (!filter) return "";
-  if (!filter.month) return `_${filter.year}`;
-  return `_${filter.year}_${String(filter.month).padStart(2, "0")}`;
+  if (!filter.month) return `_FY${filter.year}`;
+  return `_FY${filter.year}_${String(filter.month).padStart(2, "0")}`;
+};
+
+/** Build a fiscal-year label like "२०८०/८१" from the start year. */
+const getFiscalYearLabel = (startYear: number): string => {
+  return `${convertToNepaliNumber(startYear)}/${convertToNepaliNumber(startYear + 1)}`;
 };
 
 export const exportCollectedDataToPdf = async (filter: MonthFilter = null) => {
   try {
-    const htmlContent = wrapHtml(await generateCollectedDataTable(filter));
+    // Always scope to a fiscal year so the Total column is never all-time.
+    const effectiveFilter: MonthFilter = filter ?? { year: getCurrentFiscalYear() };
+    const htmlContent = wrapHtml(await generateCollectedDataTable(effectiveFilter));
     await savePdfToDevice(
       htmlContent,
-      `FCHV_Collected_Data${getMonthSuffix(filter)}.pdf`,
+      `FCHV_Collected_Data${getMonthSuffix(effectiveFilter)}.pdf`,
     );
   } catch (error) {
     console.error("Error generating Collected Data PDF:", error);
@@ -2277,8 +2186,112 @@ export const exportCollectedDataToPdf = async (filter: MonthFilter = null) => {
   }
 };
 
+/**
+ * Discover all unique fiscal years present in an array of records.
+ * Each record must have reg_year/reg_month/created_at fields.
+ */
+const detectFiscalYears = (records: any[]): number[] => {
+  const fySet = new Set<number>();
+  records.forEach((r) => {
+    const resolved = resolveNepaliYearMonth(r.reg_year, r.reg_month, r.created_at);
+    if (resolved) {
+      fySet.add(getFiscalYear(resolved.year, resolved.month));
+    }
+  });
+  return Array.from(fySet).sort((a, b) => a - b);
+};
+
 export const exportAllDataToPdf = async (filter: MonthFilter = null) => {
   try {
+    // ── When filter is null, generate one section per fiscal year ────────────
+    if (!filter) {
+      // Fetch all records unfiltered
+      const [
+        allPregnancies,
+        allMaternalDeaths,
+        allNewbornDeaths,
+        allInfants,
+        allAdolescents,
+      ] = await Promise.all([
+        getPregnantWomenList(),
+        getAllMaternalDeaths(),
+        getAllNewbornDeaths(),
+        getAllInfantMonitorings(),
+        getAllAdolescentIfa(),
+      ]);
+
+      // Collect all fiscal years across every data type
+      const fySet = new Set<number>([
+        ...detectFiscalYears(allPregnancies),
+        ...detectFiscalYears(allMaternalDeaths),
+        ...detectFiscalYears(allNewbornDeaths),
+        ...detectFiscalYears(allInfants),
+        ...detectFiscalYears(allAdolescents),
+      ]);
+      const fiscalYears = Array.from(fySet).sort((a, b) => a - b);
+
+      // If no data at all, fall back to current Nepali fiscal year
+      if (fiscalYears.length === 0) {
+        const today = adToBs(new Date());
+        const fallbackFY = getFiscalYear(today.year, today.month);
+        fiscalYears.push(fallbackFY);
+      }
+
+      const parts: string[] = [];
+      for (let i = 0; i < fiscalYears.length; i++) {
+        const fy = fiscalYears[i];
+        const fyFilter: MonthFilter = { year: fy };
+
+        const fyPregnancies = allPregnancies.filter((r) =>
+          matchesMonthFilter(fyFilter, r),
+        );
+        const fyMaternalDeaths = allMaternalDeaths.filter((r) =>
+          matchesMonthFilter(fyFilter, r),
+        );
+        const fyNewbornDeaths = allNewbornDeaths.filter((r) =>
+          matchesMonthFilter(fyFilter, r),
+        );
+        const fyInfants = allInfants.filter((r) =>
+          matchesMonthFilter(fyFilter, r),
+        );
+        const fyAdolescents = allAdolescents.filter((r) =>
+          matchesMonthFilter(fyFilter, r),
+        );
+
+        if (i > 0) parts.push(`<div class="page-break"></div>`);
+
+        // Fiscal-year heading
+        parts.push(`
+          <div style="text-align:center;font-size:18px;font-weight:700;
+               padding:14px 0 8px;letter-spacing:0.5px;">
+            आर्थिक वर्ष ${getFiscalYearLabel(fy)} (श्रावण–असार)
+          </div>
+        `);
+
+        parts.push(await generateCollectedDataTable(fyFilter));
+        parts.push(`<div class="page-break"></div>`);
+        parts.push(await generatePregnancyTable(fyPregnancies));
+        parts.push(`<div class="page-break"></div>`);
+        parts.push(await generateMaternalDeathTable(fyMaternalDeaths));
+        parts.push(`<div class="page-break"></div>`);
+        parts.push(generateNewbornDeathTable(fyNewbornDeaths));
+        parts.push(`<div class="page-break"></div>`);
+        parts.push(generateChildDeathTable(fyNewbornDeaths));
+        parts.push(`<div class="page-break"></div>`);
+        parts.push(
+          generateInfantCareTable(fyInfants) +
+            (await generatePncMonitoringTable(fyInfants)),
+        );
+        parts.push(`<div class="page-break"></div>`);
+        parts.push(generateAdolescentIfaTable(fyAdolescents));
+      }
+
+      const htmlContent = wrapHtml(parts.join(""));
+      await savePdfToDevice(htmlContent, `FCHV_Export_All_FY.pdf`);
+      return;
+    }
+
+    // ── Single fiscal year (or single month) export ───────────────────────
     const pregnancies = (await getPregnantWomenList()).filter((r) =>
       matchesMonthFilter(filter, r),
     );
@@ -2294,31 +2307,32 @@ export const exportAllDataToPdf = async (filter: MonthFilter = null) => {
     const adolescents = (await getAllAdolescentIfa()).filter((r) =>
       matchesMonthFilter(filter, r),
     );
-    const collectedDataTable = await generateCollectedDataTable(filter);
 
-    // Render each section into its own PDF to avoid the native Android PDF
-    // writer running out of memory on a single huge document, then merge
-    // the sections into one final PDF with pdf-lib.
-    const sections: string[] = [
-      collectedDataTable,
+    // Build one combined document and render it in a single pass. Rendering
+    // each section as a separate PDF and merging with pdf-lib caused the
+    // native Android writer to fail ("An error occured while writing the PDF
+    // data") due to repeated WebView renders. A single render keeps the whole
+    // export on the same proven path used by the individual reports.
+    const combined = [
+      await generateCollectedDataTable(filter),
+      `<div class="page-break"></div>`,
       await generatePregnancyTable(pregnancies),
+      `<div class="page-break"></div>`,
       await generateMaternalDeathTable(maternalDeaths),
+      `<div class="page-break"></div>`,
       generateNewbornDeathTable(newbornDeaths),
+      `<div class="page-break"></div>`,
       generateChildDeathTable(newbornDeaths),
+      `<div class="page-break"></div>`,
       generateInfantCareTable(infants) +
         (await generatePncMonitoringTable(infants)),
+      `<div class="page-break"></div>`,
       generateAdolescentIfaTable(adolescents),
-    ];
+    ].join("");
 
-    const pdfUris: string[] = [];
-    for (const section of sections) {
-      pdfUris.push(await renderHtmlToPdf(section));
-    }
-
-    const mergedUri = await mergePdfFiles(pdfUris);
-
-    await savePdfUriToDevice(
-      mergedUri,
+    const htmlContent = wrapHtml(combined);
+    await savePdfToDevice(
+      htmlContent,
       `FCHV_Export_All${getMonthSuffix(filter)}.pdf`,
     );
   } catch (error) {

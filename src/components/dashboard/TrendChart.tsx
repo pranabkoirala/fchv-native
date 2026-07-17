@@ -1,11 +1,10 @@
 import { useLanguage } from "@/context/LanguageContext";
 import React, { useEffect, useState } from "react";
 import { Dimensions, Text, View } from "react-native";
-import Animated, { Easing, useAnimatedProps, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
-import Svg, { Line, Path, Rect, Text as SvgText } from "react-native-svg";
+import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
+import Svg, { Line, Rect, Text as SvgText } from "react-native-svg";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 interface TrendData {
   label: string;
@@ -43,39 +42,12 @@ const TrendChart = ({ pregnancyData, childData, motherData }: TrendChartProps) =
 
   const stepX = chartWidth / Math.max(pregnancyData.length, 1);
 
-  const getPath = (data: TrendData[], offset: number) => {
-    if (data.length === 0) return "";
-    let path = `M ${paddingLeft + (0 + 0.5) * stepX + offset} ${height - paddingBottom - (data[0].value / maxVal) * chartHeight}`;
-    for (let i = 0; i < data.length - 1; i++) {
-      const x1 = paddingLeft + (i + 0.5) * stepX + offset;
-      const y1 = height - paddingBottom - (data[i].value / maxVal) * chartHeight;
-      const x2 = paddingLeft + (i + 1.5) * stepX + offset;
-      const y2 = height - paddingBottom - (data[i + 1].value / maxVal) * chartHeight;
-      const cx1 = x1 + (x2 - x1) / 2;
-      const cy1 = y1;
-      const cx2 = x1 + (x2 - x1) / 2;
-      const cy2 = y2;
-      path += ` C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`;
-    }
-    return path;
-  };
-
-  const pregPath = getPath(pregnancyData, 0);
-  const childPath = getPath(childData, 12);
-  const motherPath = getPath(motherData || [], -12);
-
   // Animation values
   const progress = useSharedValue(0);
-  const lineOpacity = useSharedValue(0);
 
   useEffect(() => {
     progress.value = withTiming(1, { duration: 1000, easing: Easing.out(Easing.exp) });
-    lineOpacity.value = withDelay(500, withTiming(1, { duration: 800 }));
   }, []);
-
-  const animatedPregPathProps = useAnimatedProps(() => ({
-    opacity: lineOpacity.value,
-  }));
 
   return (
     <View style={{ width: "100%" }} onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
@@ -106,11 +78,6 @@ const TrendChart = ({ pregnancyData, childData, motherData }: TrendChartProps) =
             </React.Fragment>
           );
         })}
-
-        {/* Background Curves */}
-        <AnimatedPath animatedProps={animatedPregPathProps} d={motherPath} fill="none" stroke="#D1FAE5" strokeWidth={2.5} />
-        <AnimatedPath animatedProps={animatedPregPathProps} d={pregPath} fill="none" stroke="#E2E8F0" strokeWidth={2.5} />
-        <AnimatedPath animatedProps={animatedPregPathProps} d={childPath} fill="none" stroke="#BAE6FD" strokeWidth={2.5} />
 
         {/* Bars */}
         {pregnancyData.map((d, i) => {

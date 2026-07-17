@@ -45,7 +45,9 @@ import ModalWithSafeArea from "@/components/common/ModalWithSafeArea";
 import DatabaseViewer from "@/components/DatabaseViewer";
 import { clearDatabase } from "@/hooks/database/db";
 import {
-  getCurrentNepaliDate,
+  getCurrentFiscalMonth,
+  getCurrentFiscalYear,
+  getFiscalYearLabel,
   NepaliMonthNames,
   NepaliMonthNamesNp,
 } from "@/utils/dateHelper";
@@ -60,6 +62,7 @@ import {
   exportNewbornDeathToPdf,
   exportPncMonitoringToPdf,
   exportPregnancyToPdf,
+  FISCAL_MONTH_ORDER,
   MonthFilter,
 } from "@/utils/pdfGenerator";
 import storage from "@/utils/storage";
@@ -120,13 +123,13 @@ export default function UserProfileScreen() {
     ((filter: MonthFilter) => Promise<void>) | null
   >(null);
   const [pendingExportKey, setPendingExportKey] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState<number>(
-    () => getCurrentNepaliDate().year,
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<number | null>(
+    null,
   );
 
   const nepaliYearOptions = useMemo(() => {
-    const current = getCurrentNepaliDate().year;
-    return [current - 2, current - 1, current, current + 1];
+    const current = getCurrentFiscalYear();
+    return [current - 2, current - 1, current];
   }, []);
 
   useEffect(() => {
@@ -212,7 +215,7 @@ export default function UserProfileScreen() {
   ) => {
     setPendingExportFn(() => exportFn);
     setPendingExportKey(key);
-    setSelectedYear(getCurrentNepaliDate().year);
+    setSelectedFiscalYear(null);
     setShowMonthPicker(true);
   };
 
@@ -224,6 +227,13 @@ export default function UserProfileScreen() {
     }
     setPendingExportFn(null);
     setPendingExportKey(null);
+    setSelectedFiscalYear(null);
+  };
+
+  /** Closes the picker and resets transient selection state */
+  const closeMonthPicker = () => {
+    setShowMonthPicker(false);
+    setSelectedFiscalYear(null);
   };
 
   const reportItems = [
@@ -759,7 +769,9 @@ export default function UserProfileScreen() {
               <View className="bg-slate-50 px-4 py-2 border-b border-slate-100 gap-1.5">
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => handleExport(exportAllDataToPdf, "all", null)}
+                  onPress={() =>
+                    openMonthPicker(exportAllDataToPdf, "all")
+                  }
                   disabled={!!exportingItem}
                   className="flex-row items-center py-2 border-b border-slate-100"
                 >
@@ -777,11 +789,7 @@ export default function UserProfileScreen() {
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={() =>
-                    handleExport(
-                      exportCollectedDataToPdf,
-                      "collected_data",
-                      null,
-                    )
+                    openMonthPicker(exportCollectedDataToPdf, "collected_data")
                   }
                   disabled={!!exportingItem}
                   className="flex-row items-center py-2 border-b border-slate-100"
@@ -849,18 +857,22 @@ export default function UserProfileScreen() {
         <DatabaseViewer onClose={() => setIsDbOpen(false)} />
       </ModalWithSafeArea>
 
-      {/* Month Picker Modal */}
+      {/* Fiscal Year / Month Picker Modal */}
       <Modal
         visible={showMonthPicker}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowMonthPicker(false)}
+        onRequestClose={() => {
+          closeMonthPicker();
+        }}
       >
         <Pressable
-          onPress={() => setShowMonthPicker(false)}
+          onPress={() => {
+            closeMonthPicker();
+          }}
           style={{
             flex: 1,
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: "rgba(0,0,0,0.55)",
             justifyContent: "flex-end",
           }}
         >
@@ -870,37 +882,42 @@ export default function UserProfileScreen() {
               backgroundColor: "white",
               borderTopLeftRadius: 28,
               borderTopRightRadius: 28,
-              paddingBottom: insets.bottom + 16,
-              maxHeight: "80%",
+              paddingBottom: insets.bottom + 20,
+              maxHeight: "85%",
             }}
           >
-            {/* Header */}
-            <View className="items-center pt-2 pb-1">
-              <View className="w-10 h-1 rounded-full bg-slate-300 mb-3" />
-              <View className="flex-row items-center justify-between w-full px-6 pb-2">
-                <View className="flex-row items-center gap-3">
-                  <View className="w-10 h-10 bg-slate-100 rounded-xl items-center justify-center">
-                    <Download size={20} color="#475569" />
-                  </View>
-                  <View>
-                    <Text className="text-[19px] font-semibold text-slate-800">
-                      {pendingExportKey === "collected_data"
+            {/* ── Drag handle + header ─────────────────────────────────── */}
+            <View className="items-center pt-3 pb-1">
+              <View className="w-10 h-1 rounded-full bg-slate-200 mb-4" />
+              <View className="flex-row items-center justify-between w-full px-6 pb-3">
+                <View className="flex-1 pr-3">
+                  <Text className="text-[16px] font-medium text-slate-800">
+                    {pendingExportKey === "all"
+                      ? t("profile_settings.select_fiscal_year") ||
+                        "Select Fiscal Year"
+                      : pendingExportKey === "collected_data"
                         ? t("profile_settings.select_collected_period") ||
                           "Select Period"
-                        : t("profile_settings.select_month")}
-                    </Text>
-                    <Text className="text-[13px] text-slate-500 font-medium mt-0.5">
-                      {pendingExportKey === "collected_data"
+                        : t("profile_settings.select_year_label") ||
+                          "Select Fiscal Year"}
+                  </Text>
+                  <Text className="text-[12px] text-slate-400 mt-1">
+                    {pendingExportKey === "all"
+                      ? t("profile_settings.select_fiscal_year_subtitle") ||
+                        "Choose a fiscal year (Shrawan–Ashar)"
+                      : pendingExportKey === "collected_data"
                         ? t(
                             "profile_settings.select_collected_period_subtitle",
-                          ) || "Choose a Nepali year or a single month"
-                        : t("profile_settings.select_month_subtitle")}
-                    </Text>
-                  </View>
+                          ) || "Choose a fiscal year to download its data"
+                        : t("profile_settings.select_year_subtitle") ||
+                          "Tap a year to download that fiscal year's data"}
+                  </Text>
                 </View>
                 <TouchableOpacity
-                  onPress={() => setShowMonthPicker(false)}
-                  className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center active:bg-slate-200"
+                  onPress={() => {
+                    closeMonthPicker();
+                  }}
+                  className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center"
                 >
                   <X size={18} color="#475569" />
                 </TouchableOpacity>
@@ -909,108 +926,179 @@ export default function UserProfileScreen() {
 
             <View className="h-[1px] bg-slate-100 mx-6" />
 
-            {/* Year Selector */}
-            <View className="flex-row items-center justify-center gap-3 px-6 py-4">
-              {nepaliYearOptions.map((yr) => {
-                const isSelected = selectedYear === yr;
-                return (
-                  <TouchableOpacity
-                    key={yr}
-                    onPress={() => setSelectedYear(yr)}
-                    activeOpacity={0.7}
-                    style={{
-                      paddingHorizontal: 18,
-                      paddingVertical: 8,
-                      borderRadius: 14,
-                      backgroundColor: isSelected ? "#475569" : "#F1F5F9",
-                      borderWidth: 0,
-                    }}
-                  >
-                    <Text
-                      className={`text-[15px] font-semibold ${
-                        isSelected ? "text-white" : "text-slate-600"
-                      }`}
+            <ScrollView
+              className="px-6 pt-5"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* ── Stage 1: choose a fiscal year ─────────────────────── */}
+              {selectedFiscalYear === null ? (
+                <>
+                  {/* "All Fiscal Years" — only for "Download All Data" */}
+                  {pendingExportKey === "all" && (
+                    <TouchableOpacity
+                      onPress={() => onMonthSelected(null)}
+                      activeOpacity={0.7}
+                      className="flex-row items-center py-3.5 px-4 mb-5 rounded-xl bg-slate-50 border border-slate-100"
                     >
-                      {language === "np"
-                        ? convertToNepaliNumber(yr)
-                        : String(yr)}
+                      <View className="flex-1">
+                        <Text className="text-[15px] font-normal text-slate-700">
+                          {t("profile_settings.download_all_years") ||
+                            "Download All Fiscal Years"}
+                        </Text>
+                        <Text className="text-[12px] text-slate-400 mt-0.5">
+                          {t("profile_settings.download_all_years_subtitle") ||
+                            "Export all data across all fiscal years"}
+                        </Text>
+                      </View>
+                      <ChevronRight size={16} color="#94A3B8" />
+                    </TouchableOpacity>
+                  )}
+
+                  <Text className="text-[12px] font-normal text-slate-400 mb-3">
+                    {t("profile_settings.choose_fiscal_year") ||
+                      "Choose a fiscal year"}
+                  </Text>
+
+                  <View className="gap-2 pb-8">
+                    {nepaliYearOptions.map((yr) => {
+                      const isCurrent = yr === getCurrentFiscalYear();
+                      return (
+                        <TouchableOpacity
+                          key={yr}
+                          onPress={() => setSelectedFiscalYear(yr)}
+                          activeOpacity={0.6}
+                          className={`flex-row items-center justify-between px-4 py-3.5 rounded-xl border ${
+                            isCurrent
+                              ? "border-slate-200 bg-white"
+                              : "border-slate-100 bg-white"
+                          }`}
+                        >
+                          <View className="flex-row items-center">
+                            <Text className="text-[15px] font-normal text-slate-700">
+                              {t("profile_settings.fiscal_year_label") ||
+                                "Fiscal Year"}{" "}
+                              {getFiscalYearLabel(yr, language)}
+                            </Text>
+                            {isCurrent && (
+                              <View className="ml-2 px-2 py-0.5 rounded-full bg-slate-100">
+                                <Text className="text-[11px] font-normal text-slate-500">
+                                  {t("profile_settings.current_year_badge") ||
+                                    "Current"}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                          <ChevronRight size={16} color="#CBD5E1" />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              ) : (() => {
+                const activeYear = selectedFiscalYear || getCurrentFiscalYear();
+                return (
+                /* ── Stage 2: choose whole year or a specific month ──── */
+                <>
+                  {/* Back to years */}
+                  <TouchableOpacity
+                    onPress={() => setSelectedFiscalYear(null)}
+                    activeOpacity={0.6}
+                    className="flex-row items-center mb-3"
+                  >
+                    <ChevronLeft size={16} color="#64748B" />
+                    <Text className="text-[13px] font-normal text-slate-500 ml-1">
+                      {t("profile_settings.choose_fiscal_year") ||
+                        "Choose a fiscal year"}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
 
-            <ScrollView className="px-6" showsVerticalScrollIndicator={false}>
-              {/* "All Data" option */}
-              <TouchableOpacity
-                onPress={() =>
-                  onMonthSelected(
-                    pendingExportKey === "collected_data"
-                      ? { year: selectedYear }
-                      : null,
-                  )
-                }
-                activeOpacity={0.7}
-                className="flex-row items-center py-4 px-5 mb-4 rounded-2xl bg-slate-50 border border-slate-200"
-              >
-                <View className="w-11 h-11 rounded-xl bg-slate-600 items-center justify-center mr-4">
-                  <Download size={20} color="white" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[16px] font-semibold text-slate-800">
-                    {pendingExportKey === "collected_data"
-                      ? t("profile_settings.download_yearly_collected_data") ||
-                        "Download Yearly Data"
-                      : t("profile_settings.download_all_data")}
-                  </Text>
-                  <Text className="text-[13px] text-slate-500 font-medium mt-0.5">
-                    {pendingExportKey === "collected_data"
-                      ? t(
-                          "profile_settings.download_yearly_collected_data_subtitle",
-                        ) || "Export all months for the selected Nepali year"
-                      : t("profile_settings.download_all_data_subtitle")}
-                  </Text>
-                </View>
-                <View className="w-7 h-7 rounded-full bg-slate-200 items-center justify-center">
-                  <ChevronRight size={14} color="#475569" />
-                </View>
-              </TouchableOpacity>
+                  {/* Download the whole fiscal year */}
+                  <TouchableOpacity
+                    onPress={() => onMonthSelected({ year: activeYear })}
+                    activeOpacity={0.6}
+                    className="flex-row items-center justify-between px-4 py-3.5 mb-5 rounded-xl bg-slate-50 border border-slate-100"
+                  >
+                    <View className="flex-1 pr-2">
+                      <Text className="text-[15px] font-normal text-slate-700">
+                        {t("profile_settings.download_year_data") ||
+                          "Download This Fiscal Year's Data"}
+                      </Text>
+                      <Text className="text-[12px] text-slate-400 mt-0.5">
+                        {`${t("profile_settings.download_year_data_subtitle") || "Export all 12 months of"} ${getFiscalYearLabel(activeYear, language)}`}
+                      </Text>
+                    </View>
+                    <Download size={18} color="#64748B" />
+                  </TouchableOpacity>
 
-              {/* Month Grid */}
-              <View className="flex-row flex-wrap gap-3 pb-6">
-                {Array.from({ length: 12 }).map((_, i) => {
-                  const monthNum = i + 1;
-                  const monthLabel =
-                    language === "np"
-                      ? NepaliMonthNamesNp[i]
-                      : NepaliMonthNames[i];
-                  const yearLabel =
-                    language === "np"
-                      ? convertToNepaliNumber(selectedYear)
-                      : String(selectedYear);
+                  {/* Month selection is offered for every report except
+                      "Collected Data", which downloads a whole fiscal year. */}
+                  {pendingExportKey !== "collected_data" ? (
+                    <>
+                      <Text className="text-[12px] font-normal text-slate-400 mb-3">
+                        {t("profile_settings.choose_month") ||
+                          "Or choose a specific month"}
+                      </Text>
 
-                  return (
-                    <TouchableOpacity
-                      key={monthNum}
-                      onPress={() =>
-                        onMonthSelected({ year: selectedYear, month: monthNum })
-                      }
-                      activeOpacity={0.7}
-                      className="w-[30.5%] py-4 rounded-2xl border border-slate-100 bg-white items-center"
-                    >
-                      <View className="w-9 h-9 rounded-xl bg-slate-50 items-center justify-center mb-2.5">
-                        <Calendar size={17} color="#64748B" />
+                      {/* Month grid (fiscal order: Shrawan → Ashadh) */}
+                      <View className="flex-row flex-wrap gap-2.5 pb-8">
+                        {FISCAL_MONTH_ORDER.map((monthNum, idx) => {
+                          const fiscalPos = idx + 1; // 1 = Shrawan … 12 = Ashadh
+                          const isCurrentFy =
+                            activeYear === getCurrentFiscalYear();
+                          const isFuture =
+                            isCurrentFy &&
+                            fiscalPos > getCurrentFiscalMonth();
+                      const monthLabel =
+                        language === "np"
+                          ? NepaliMonthNamesNp[monthNum - 1]
+                          : NepaliMonthNames[monthNum - 1];
+                      // Calendar year the month falls in within the fiscal year
+                      const calendarYear =
+                        monthNum >= 4 ? activeYear : activeYear + 1;
+                      const yearLabel =
+                        language === "np"
+                          ? convertToNepaliNumber(calendarYear)
+                          : String(calendarYear);
+                      return (
+                        <TouchableOpacity
+                          key={monthNum}
+                          onPress={() =>
+                            !isFuture &&
+                            onMonthSelected({
+                              year: activeYear,
+                              month: monthNum,
+                            })
+                          }
+                          disabled={isFuture}
+                          activeOpacity={isFuture ? 1 : 0.6}
+                          className={`w-[31%] py-3 rounded-xl border items-center ${
+                            isFuture
+                              ? "border-slate-100 bg-slate-50"
+                              : "border-slate-100 bg-white"
+                          }`}
+                        >
+                          <Text
+                            className={`text-[14px] font-normal ${
+                              isFuture ? "text-slate-300" : "text-slate-700"
+                            }`}
+                          >
+                            {monthLabel}
+                          </Text>
+                          <Text className="text-[11px] text-slate-400 mt-1">
+                            {isFuture
+                              ? t("profile_settings.coming_soon") ||
+                                "Coming soon"
+                              : yearLabel}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                       </View>
-                      <Text className="text-[15px] font-semibold text-slate-800">
-                        {monthLabel}
-                      </Text>
-                      <Text className="text-[12px] text-slate-400 font-medium mt-0.5">
-                        {yearLabel}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                    </>
+                  ) : null}
+                </>
+                );
+              })()}
             </ScrollView>
           </Pressable>
         </Pressable>

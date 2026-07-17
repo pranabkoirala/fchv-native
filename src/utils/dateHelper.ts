@@ -168,3 +168,71 @@ export const getRecentNepaliMonthKeys = (monthCount = 3): string[] => {
     return getRecentNepaliMonthBuckets(monthCount).map(getNepaliMonthKey);
 };
 
+/**
+ * Returns the fiscal year start (Nepali calendar year whose Shrawan begins the
+ * fiscal year) for the given date. Fiscal year runs Shrawan (month 4) → Ashadh
+ * (month 3). Months 1–3 belong to the previous fiscal year.
+ */
+export const getCurrentFiscalYear = (date: Date = new Date()): number => {
+    const { year, month } = getCurrentNepaliDate();
+    return month >= 4 ? year : year - 1;
+};
+
+/**
+ * Returns the current month expressed as its position within the fiscal year
+ * (1 = Shrawan … 12 = Ashadh). Used to disable future months in the picker.
+ */
+export const getCurrentFiscalMonth = (): number => {
+    const { month } = getCurrentNepaliDate();
+    // Shrawan (calendar 4) is position 1; wrap months 1–3 to positions 10–12.
+    return month >= 4 ? month - 3 : month + 9;
+};
+
+/**
+ * Nepali calendar month numbers in Nepali fiscal-year order.
+ * Fiscal year starts from Shrawan (month 4) and ends in Ashar (month 3).
+ * Order: Shrawan=4, Bhadra=5, Ashwin=6, Kartik=7, Mangsir=8, Poush=9,
+ *        Magh=10, Falgun=11, Chaitra=12, Baisakh=1, Jestha=2, Ashar=3
+ */
+export const FISCAL_MONTH_ORDER: number[] = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
+
+/**
+ * English month names in Nepali fiscal-year order (Shrawan → Ashar).
+ * Index 0 = Shrawan, index 11 = Ashar.
+ */
+export const NepaliMonthNamesFiscal = [
+    "Shrawan", "Bhadra", "Ashwin", "Kartik", "Mangsir", "Poush",
+    "Magh", "Falgun", "Chaitra", "Baisakh", "Jestha", "Ashar",
+];
+
+/**
+ * Nepali month names in Nepali fiscal-year order (Shrawan → Ashar).
+ * Index 0 = श्रावण, index 11 = असार.
+ */
+export const NepaliMonthNamesFiscalNp = [
+    "श्रावण", "भदौ", "असोज", "कार्तिक", "मंसिर", "पौष",
+    "माघ", "फाल्गुन", "चैत्र", "बैशाख", "जेठ", "असार",
+];
+
+/**
+ * Returns the calendar year that a given calendar month belongs to,
+ * within a given fiscal year.
+ * Months 4–12 → the fiscal year start year.
+ * Months 1–3  → the fiscal year start year + 1.
+ */
+export const calendarYearForFiscalMonth = (fiscalYear: number, calendarMonth: number): number => {
+    return calendarMonth >= 4 ? fiscalYear : fiscalYear + 1;
+};
+
+/** Build a fiscal-year label like "२०८०/८१" from the start year. */
+export const getFiscalYearLabel = (
+    startYear: number,
+    language: string,
+): string => {
+    const next = startYear + 1;
+    if (language === "np") {
+        return `${toNepaliNumbers(startYear)}/${toNepaliNumbers(next)}`;
+    }
+    return `${startYear}/${String(next).slice(-2)}`;
+};
+

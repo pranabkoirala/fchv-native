@@ -1466,14 +1466,18 @@ export default function VisitScreen() {
                 const oneTimeAnswered =
                   childOneTimeAnswered[child.id] || new Set();
 
-                const isConditionBad = !!childAnswers["good_health_condition"];
+                const isConditionBad = !!childAnswers["not_good_health_condition"];
                 const hasDiarrhea = !!childAnswers["has_diarrhea"];
                 const hasBreathingProblems =
                   !!childAnswers["has_breathing_problems"];
 
                 const filterHealthQuestions = (q: any) => {
-                  if (q.id === "good_health_condition") return true;
+                  // The screening question is always shown so the FCHV can flag
+                  // a bad health condition for the child.
+                  if (q.id === "not_good_health_condition") return true;
+                  // Follow-up questions only appear once a bad condition is flagged.
                   if (!isConditionBad) return false;
+                  // Diarrhea-related follow-ups depend on the diarrhea question.
                   if (
                     q.id === "diarrhea_treated_with_ors_zinc" ||
                     q.id === "ors_for_child" ||
@@ -1481,6 +1485,7 @@ export default function VisitScreen() {
                   ) {
                     return hasDiarrhea;
                   }
+                  // Breathing-related follow-ups depend on the breathing question.
                   if (
                     q.id === "has_pneumonia" ||
                     q.id === "referred_breathing_problems" ||

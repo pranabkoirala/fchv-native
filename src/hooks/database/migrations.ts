@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-export const SCHEMA_VERSION = 86;
+export const SCHEMA_VERSION = 87;
 
 type Migration = {
   version: number;
